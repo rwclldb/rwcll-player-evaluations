@@ -1,6 +1,6 @@
 # RWCLL Player Evaluations — Proposed Database Design
 
-**Status:** Proposed design; not implemented. The choices in this document reflect confirmed product requirements and the three database-design decisions confirmed on 2026-11-02. Review this design before writing or applying migrations.
+**Status:** Proposed design; not implemented. The choices in this document reflect confirmed product requirements and database-design decisions confirmed on 2026-11-02. Review this design before writing or applying migrations.
 
 ## Confirmed design decisions
 
@@ -11,6 +11,8 @@
 5. Administrators can inspect individual submissions.
 6. A Not Evaluated record contains no ratings and is excluded from averages.
 7. Historical evaluations are read-only and excluded from current-season averages.
+8. A player may appear on only one roster in a season; the player may move to another team in a later season.
+9. Each player has a season-specific `evaluation_number` that matches the number the player wears during evaluations. It is not the permanent player ID or a jersey number carried forward to future seasons.
 
 ## Proposed tables
 
@@ -23,9 +25,11 @@
 | `season_divisions` | A division participating in a particular season; unique season/division pair. |
 | `teams` | Team within a `season_division`; team name and season/division association. |
 | `players` | Stable player identity across seasons; name and only the minimum personal data needed. |
-| `player_seasons` | Player's season-specific roster record; season division, optional team, league age, external registration identifier if available, import/match status. |
+| `player_seasons` | Player's season-specific roster record; `player_id`, `season_id`, `season_division_id`, optional `team_id`, `league_age`, `evaluation_number`, external registration identifier if available, import/match status. |
 
-Use one stable `players` row per child and a separate `player_seasons` row per season. A team belongs to a season/division, so the season/division can be derived through the team where appropriate; retaining the season-division relationship on the roster row can also support players not yet assigned to a team. Add database constraints to prevent a player from having duplicate roster records in the same season division.
+Use one stable `players` row per child and a separate `player_seasons` row per season. Include `season_id` directly on `player_seasons` so the database can enforce `UNIQUE (player_id, season_id)`: a player can have only one roster record—and therefore at most one team assignment—in a given season, even if they change teams or divisions in a later season. Retain `season_division_id` on the roster row so a player can be registered in a division before a team is assigned. Use a composite foreign key or equivalent constraint to ensure the `season_division_id` belongs to the same `season_id`; if `team_id` is present, validate that the team belongs to that same season division.
+
+`evaluation_number` is a season-specific integer stored on `player_seasons`. It is the number shown on the evaluation screen so coaches/evaluators can match the on-screen player to the number the child is wearing during the evaluation. It is not a permanent player identifier and must not be copied forward to the next season. Assign a fresh number each season. Because there is one session per division per season, require assigned values to be unique within a `season_division` (for example, a partial unique index on `(season_division_id, evaluation_number)` where `evaluation_number IS NOT NULL`). The field can remain null until an administrator assigns the evaluation number. It must not be confused with a permanent player ID or assumed to be a jersey number that persists across seasons.
 
 Calculate Little League age for each season using the official Aug. 31 rule. Store the season-specific result; do not treat birthdate as a substitute for league age. Confirm whether the league needs to retain full birthdates after import. The existing Sports Connect export inspected for this project did not contain a stable member ID, so do not silently match people by name or birthdate. Use an external registration ID if one becomes available; otherwise require administrator review and confirmation of matches.
 
@@ -56,7 +60,7 @@ Do not create a separate password system. A Supabase-authenticated account is no
 
 The one-session-per-division rule is represented by one `evaluation_sessions` row per `season_division`, not by one session per evaluator. Multiple evaluator assignments point to the same session. Multiple evaluators can independently submit an evaluation for the same player.
 
-Add a uniqueness constraint so an evaluator cannot create duplicate evaluation records for the same player in the same session. If a coach evaluates a player in more than one assigned team context, use the player's single season roster record and the division session; do not duplicate the player's evaluation merely because the coach has multiple team assignments.
+Add a uniqueness constraint so an evaluator cannot create duplicate evaluation records for the same player in the same session. The evaluation screen should display the player's season-specific `evaluation_number` prominently alongside the player record, so evaluators can identify the player by the number being worn. Do not use `evaluation_number` as the evaluation foreign key or as a stable player identifier. If a coach evaluates a player in more than one assigned team context, use the player's single season roster record and the division session; do not duplicate the player's evaluation merely because the coach has multiple team assignments.
 
 For a submitted evaluation, require all five core categories: Hitting, Throwing, Grounders, Fly balls, and Running / Awareness. Pitching and catching categories are optional for AAA, Majors, Juniors, and Seniors. Experience/interest questions use Yes/No/Unknown and are not numeric ratings. A Not Evaluated submission has no `ratings` rows and must never be converted to a zero score. Drafts are not included in averages.
 
@@ -127,7 +131,7 @@ Independent evaluator names/IDs must not appear in coach-facing aggregate respon
 
 - Final visibility rules for shared coach notes.
 - Whether historical AA ratings should be visible only for the matching player and how to present missing historical coverage.
-- Whether a player can be rostered without a team at evaluation time and the precise roster uniqueness constraints.
+- Whether a player can be rostered without a team at evaluation time (the proposed design allows a nullable `team_id`); the one-roster-per-player-per-season rule and evaluation-number uniqueness scope are confirmed.
 - Whether the league can obtain a stable Sports Connect identifier or a trusted mapping for historical records.
 - Data retention policy for children’s names and birthdates.
 

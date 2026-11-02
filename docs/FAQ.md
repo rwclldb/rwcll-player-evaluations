@@ -58,6 +58,8 @@ Prefer version-controlled SQL migrations as the schema develops. Do not load liv
 - Independent evaluator identities are hidden from coaches.
 - Administrators can inspect individual submissions.
 - There is one evaluation session per division per season, with multiple evaluators assigned to it.
+- A player can appear on only one team roster in a season; the player can move to a different team in a later season.
+- Each player has a season-specific `evaluation_number` matching the number they wear during evaluations. It is not a permanent ID and does not carry over to the next season.
 - Not Evaluated is not zero and is excluded from averages.
 - Blank optional categories are not zero; show counts alongside averages.
 - Five required core ratings: Hitting, Throwing, Grounders, Fly balls, Running / Awareness.
@@ -65,7 +67,7 @@ Prefer version-controlled SQL migrations as the schema develops. Do not load liv
 - Historical ratings are read-only and excluded from current averages.
 - Private coach notes must not leak through shared notes or score queries.
 
-The schema document describes the intended tables and relationships. It is still a proposal: no RWCLL database tables, aggregate functions, or RLS policies have been created yet. Use secure database-side aggregate functions/views; frontend hiding alone is not sufficient. Test access with separate coach accounts assigned to different teams, as well as independent evaluator and administrator accounts.
+The `evaluation_number` is stored with the player's season roster record, shown to coaches/evaluators on the evaluation screen, and must be unique within that season division when assigned. It is a new value for each season. The schema document describes the intended tables and relationships. It is still a proposal: no RWCLL database tables, aggregate functions, or RLS policies have been created yet. Use secure database-side aggregate functions/views; frontend hiding alone is not sufficient. Test access with separate coach accounts assigned to different teams, as well as independent evaluator and administrator accounts.
 
 ## Authentication and roles
 The starter includes sign-up UI. The intended RWCLL app uses administrator-managed invitations, not public registration. A Supabase-authenticated user is not automatically an RWCLL administrator; application roles and permissions must be implemented separately. Enforce access with database RLS, not just frontend visibility.

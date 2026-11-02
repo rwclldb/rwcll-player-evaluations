@@ -17,6 +17,8 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [x] Coaches may be assigned to multiple teams in a season.
 - [x] Coaches can view assigned-team and division-wide group averages.
 - [x] One evaluation session per division per season, with multiple evaluators.
+- [x] Each player has one roster assignment per season (no multiple team rosters in the same season).
+- [x] Store a season-specific `evaluation_number` for identifying the player by the number they wear during evaluations; it does not carry over.
 
 ## 2. Development foundation
 - [x] Create private GitHub repository and clone locally.
@@ -36,9 +38,11 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [x] Confirm season-scoped many-to-many coach/team assignments.
 - [x] Confirm coach aggregate visibility: assigned team plus division-wide.
 - [x] Confirm one evaluation session per season division, with multiple evaluators.
+- [x] Confirm one player roster record per season.
+- [x] Confirm season-specific evaluation number displayed to evaluators; does not carry over between seasons.
 - [ ] Review and approve detailed database design before migration work.
 - [ ] Design seasons, divisions, teams, players, user profiles, and roles.
-- [ ] Separate stable player identity from season-specific registration/team/division/league age.
+- [ ] Separate stable player identity from season-specific registration/team/division/league age and `evaluation_number`.
 - [ ] Define season-specific Little League age calculation (official Aug. 31 rule).
 - [ ] Confirm whether Sports Connect exports a stable member/registration ID.
 - [ ] Design import preview, duplicate detection, and admin-confirmed matching; no silent name/DOB matching.
@@ -83,6 +87,6 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 ## Current checkpoint
 **Verified:** local app runs; `.env.local` is Git-ignored; scaffold is pushed; Supabase sign-in and protected-page claims work.
 
-**Design confirmed, not implemented:** coaches may be assigned to multiple teams; coaches receive assigned-team and division-wide group averages; one session exists per division per season with multiple evaluators.
+**Design confirmed, not implemented:** coaches may be assigned to multiple teams; coaches receive assigned-team and division-wide group averages; one session exists per division per season with multiple evaluators; each player has one roster record per season; `evaluation_number` is season-specific and used to match the on-screen player to the number worn during evaluations.
 
 **Next:** add these updated docs to the repository, review/approve `docs/DATABASE-DESIGN.md`, then establish the SQL migration workflow. Database tables, aggregate functions, and RLS are not yet implemented.

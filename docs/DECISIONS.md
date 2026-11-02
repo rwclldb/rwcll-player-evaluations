@@ -23,6 +23,8 @@ Record durable decisions and rationale. When a decision changes, add a new entry
 | 2026-11-02 | Coach assignments | A coach may be assigned to multiple teams in a season. | Use a season-scoped many-to-many `team_coach_assignments` table; do not assume one coach equals one team. | Confirmed; schema proposed, not implemented |
 | 2026-11-02 | Coach visibility | Coaches can see both assigned-team and division-wide group averages. | Provide two aggregate scopes while withholding individual ratings and evaluator identities. | Confirmed; secure aggregate implementation pending |
 | 2026-11-02 | Evaluation sessions | One evaluation session per division per season, with multiple evaluators. | Enforce one session per `season_division`; evaluator assignments and submissions belong to that shared session. | Confirmed; schema proposed, not implemented |
+| 2026-11-02 | Player roster | A player may appear on only one roster in a season. | Enforce one `player_seasons` row per `(player_id, season_id)`; a player may be on a different team in a later season. | Confirmed; schema proposed, not implemented |
+| 2026-11-02 | Evaluation identifier | Each player has an `evaluation_number` for that season, corresponding to the number coaches/evaluators see the player wearing during evaluations. It is not a permanent player ID or a jersey number carried forward. | Store it on `player_seasons`; make it unique within the season division when assigned, and assign a new number in each season. | Confirmed; schema proposed, not implemented |
 
 ## Open decisions
 - What are the final visibility rules for shared coach notes?
