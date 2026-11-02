@@ -17,14 +17,17 @@ Record durable decisions and rationale. When a decision changes, add a new entry
 | 2026-11-02 | History | Historical data read-only and excluded from current averages. | Preserve context without mixing seasons. | Requirement confirmed |
 | 2026-11-02 | Imports | Sports Connect CSV/Excel import with preview and admin confirmation. | Existing export lacked a permanent ID; name-only matching is unsafe. | Requirement confirmed; implementation pending |
 | 2026-11-02 | Data model | Stable player identity separate from season-specific registration/team/division/league age. | Players may move teams/divisions between seasons. | Direction confirmed; schema pending |
-| 2026-11-02 | Security | RLS for league data; test separate roles before loading real data. | Frontend hiding is not a security boundary. | Requirement confirmed |
+| 2026-11-02 | Security | RLS for league data; test separate roles before loading real data. | Frontend hiding is not a security boundary. | Requirement confirmed; implementation pending |
 | 2026-11-02 | Secrets | `.env.local` stays local and Git-ignored. | Verified with `git check-ignore -v .env.local`. | Verified |
 | 2026-11-02 | Setup | Supabase Auth tested using starter login and protected page. | Test user signed in and page displayed claims; does not verify database schema or RLS. | Verified |
+| 2026-11-02 | Coach assignments | A coach may be assigned to multiple teams in a season. | Use a season-scoped many-to-many `team_coach_assignments` table; do not assume one coach equals one team. | Confirmed; schema proposed, not implemented |
+| 2026-11-02 | Coach visibility | Coaches can see both assigned-team and division-wide group averages. | Provide two aggregate scopes while withholding individual ratings and evaluator identities. | Confirmed; secure aggregate implementation pending |
+| 2026-11-02 | Evaluation sessions | One evaluation session per division per season, with multiple evaluators. | Enforce one session per `season_division`; evaluator assignments and submissions belong to that shared session. | Confirmed; schema proposed, not implemented |
 
 ## Open decisions
-- Can Sports Connect export a stable member ID or registration number?
 - What are the final visibility rules for shared coach notes?
 - What league policy and retention period apply to children’s names and birthdates? Minimize DOB retention where feasible.
+- What stable Sports Connect member ID or trusted player-matching method can be used?
 - What hosting plan and pricing will be used at launch?
 - What is the admin process for inviting, disabling, and removing users?
 - Are there additional league approval or audit requirements?

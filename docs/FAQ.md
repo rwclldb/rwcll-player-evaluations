@@ -5,6 +5,7 @@
 - Local development: Windows, PowerShell, VS Code
 - Local folder: `D:\sandbox\RWCLL\rwcll-player-evaluations`
 - Private GitHub repository: `rwcll-player-evaluations`
+- Detailed proposed schema: [`DATABASE-DESIGN.md`](DATABASE-DESIGN.md)
 
 ## Verified setup (2026-11-02)
 - [x] Next.js + Supabase starter created.
@@ -12,7 +13,7 @@
 - [x] `.env.local` is Git-ignored (`git check-ignore -v .env.local` confirmed `.gitignore:34:.env*.local`).
 - [x] Initial scaffold committed as `34f85d2` and pushed to `main`.
 - [x] Supabase test user created; sign-in succeeded and protected page displayed user claims.
-- [ ] RWCLL database tables and RLS policies created and tested.
+- [ ] RWCLL database tables, aggregate functions, and RLS policies created and tested.
 
 Successful sign-in verifies Supabase Auth, not the RWCLL database schema, queries, or authorization policies.
 
@@ -49,16 +50,22 @@ Variable names: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE
 
 Prefer version-controlled SQL migrations as the schema develops. Do not load live league data before RLS policies are implemented and tested.
 
-## Product rules to preserve
-- Coach and independent-evaluator averages remain separate.
-- Coaches see group averages, not individual coach ratings.
+## Confirmed database and access rules
+- A coach can be assigned to multiple teams in a season. Assignments are season-scoped.
+- Coaches can see group averages for their assigned teams and division-wide group averages.
+- Coaches do not see individual coach ratings or individual independent-evaluator ratings.
+- Coach and independent-evaluator averages remain separate; never combine the groups.
 - Independent evaluator identities are hidden from coaches.
 - Administrators can inspect individual submissions.
+- There is one evaluation session per division per season, with multiple evaluators assigned to it.
 - Not Evaluated is not zero and is excluded from averages.
+- Blank optional categories are not zero; show counts alongside averages.
 - Five required core ratings: Hitting, Throwing, Grounders, Fly balls, Running / Awareness.
 - Pitching/catching categories are optional for AAA and above.
 - Historical ratings are read-only and excluded from current averages.
 - Private coach notes must not leak through shared notes or score queries.
+
+The schema document describes the intended tables and relationships. It is still a proposal: no RWCLL database tables, aggregate functions, or RLS policies have been created yet. Use secure database-side aggregate functions/views; frontend hiding alone is not sufficient. Test access with separate coach accounts assigned to different teams, as well as independent evaluator and administrator accounts.
 
 ## Authentication and roles
 The starter includes sign-up UI. The intended RWCLL app uses administrator-managed invitations, not public registration. A Supabase-authenticated user is not automatically an RWCLL administrator; application roles and permissions must be implemented separately. Enforce access with database RLS, not just frontend visibility.
@@ -71,4 +78,4 @@ The starter includes sign-up UI. The intended RWCLL app uses administrator-manag
 **Sign-in fails:** confirm the user exists in Supabase Authentication and check email confirmation status. Remove tokens and personal information before sharing error text.
 
 ## Documentation upkeep
-Update the FAQ with verified procedures, the roadmap with implementation-and-test status, and the decision log with durable decisions. After substantive project updates, update all three where relevant.
+Update the FAQ with verified procedures, the roadmap with implementation-and-test status, and the decision log with durable decisions. Update the database design when structural decisions change. After substantive project updates, update all relevant docs. The current updated documentation has not yet been confirmed copied into the Git repository.

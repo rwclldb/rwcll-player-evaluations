@@ -1,6 +1,6 @@
 # RWCLL Player Evaluations — Roadmap
 
-A task is checked only after it is implemented **and tested**.
+A task is checked only after it is implemented **and tested**. A confirmed requirement or design decision is not the same as an implemented feature.
 
 ## 1. Requirements agreed
 - [x] One league; approximately 30–50 users.
@@ -14,6 +14,9 @@ A task is checked only after it is implemented **and tested**.
 - [x] Historical ratings are read-only and excluded from current averages.
 - [x] Admin-managed invitations; no public registration in intended product.
 - [x] Preserve prior seasons.
+- [x] Coaches may be assigned to multiple teams in a season.
+- [x] Coaches can view assigned-team and division-wide group averages.
+- [x] One evaluation session per division per season, with multiple evaluators.
 
 ## 2. Development foundation
 - [x] Create private GitHub repository and clone locally.
@@ -24,11 +27,16 @@ A task is checked only after it is implemented **and tested**.
 - [x] Commit scaffold (`34f85d2`) and push to `main`.
 - [x] Create Supabase test user.
 - [x] Sign in and display protected-page user claims.
-- [ ] Add these docs to the Git repository and commit them.
+- [ ] Add these updated docs to the Git repository and commit them.
 - [ ] Establish version-controlled SQL migration workflow.
 - [ ] Verify lint and production build.
 
 ## 3. Database foundation
+- [x] Agree on conceptual entities and relationships; see `docs/DATABASE-DESIGN.md` (proposed only).
+- [x] Confirm season-scoped many-to-many coach/team assignments.
+- [x] Confirm coach aggregate visibility: assigned team plus division-wide.
+- [x] Confirm one evaluation session per season division, with multiple evaluators.
+- [ ] Review and approve detailed database design before migration work.
 - [ ] Design seasons, divisions, teams, players, user profiles, and roles.
 - [ ] Separate stable player identity from season-specific registration/team/division/league age.
 - [ ] Define season-specific Little League age calculation (official Aug. 31 rule).
@@ -36,21 +44,23 @@ A task is checked only after it is implemented **and tested**.
 - [ ] Design import preview, duplicate detection, and admin-confirmed matching; no silent name/DOB matching.
 - [ ] Implement and test database migrations.
 - [ ] Implement and test RLS for all league data.
+- [ ] Implement and test secure aggregate outputs for assigned-team and division views; no individual rating access for coaches.
 
 ## 4. Evaluations and permissions
-- [ ] Create evaluation sessions and evaluator assignments.
+- [ ] Create one evaluation session per season division and evaluator assignments.
 - [ ] Implement coach and independent-evaluator submission flows.
+- [ ] Support coaches assigned to multiple teams in a season.
 - [ ] Require five core ratings for submitted evaluations.
 - [ ] Implement optional pitching/catching ratings for AAA, Majors, Juniors, Seniors.
 - [ ] Implement experience/interest Yes/No/Unknown questions.
 - [ ] Implement Not Evaluated and average/count calculations.
 - [ ] Keep evaluator-group averages separate.
-- [ ] Enforce group-average-only coach access.
+- [ ] Enforce assigned-team and division-wide aggregate visibility for coaches.
 - [ ] Hide independent evaluator identities from coaches.
-- [ ] Restrict individual submissions to administrators.
+- [ ] Restrict individual submissions to administrators and appropriate authors.
 - [ ] Implement private coach notes and separately controlled shared notes.
 - [ ] Implement draft/submitted/locked states, author/timestamp, and audit trail.
-- [ ] Test permissions with separate role accounts.
+- [ ] Test permissions with separate role accounts, including coaches assigned to multiple teams.
 
 ## 5. Imports and history
 - [ ] Build CSV/Excel import preview, mapping, duplicate detection, confirmation.
@@ -62,7 +72,7 @@ A task is checked only after it is implemented **and tested**.
 
 ## 6. User experience and launch
 - [ ] Build role-specific dashboards and evaluation screens.
-- [ ] Support multiple sessions by age group.
+- [ ] Support one session per division with multiple evaluator workflows.
 - [ ] Test phone, tablet, and desktop layouts.
 - [ ] Test backup/restore and retention procedures.
 - [ ] Confirm league policy for children’s names, birthdates, and retention.
@@ -73,4 +83,6 @@ A task is checked only after it is implemented **and tested**.
 ## Current checkpoint
 **Verified:** local app runs; `.env.local` is Git-ignored; scaffold is pushed; Supabase sign-in and protected-page claims work.
 
-**Next:** add these docs to the repository, then design the database and migration approach. Database tables and RLS are not yet implemented.
+**Design confirmed, not implemented:** coaches may be assigned to multiple teams; coaches receive assigned-team and division-wide group averages; one session exists per division per season with multiple evaluators.
+
+**Next:** add these updated docs to the repository, review/approve `docs/DATABASE-DESIGN.md`, then establish the SQL migration workflow. Database tables, aggregate functions, and RLS are not yet implemented.
