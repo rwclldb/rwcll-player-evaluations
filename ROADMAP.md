@@ -49,8 +49,8 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [ ] Design seasons, divisions, teams, players, user profiles, and roles.
 - [ ] Separate stable player identity from season-specific registration/team/division/league age and `evaluation_number`.
 - [ ] Define season-specific Little League age calculation (official Aug. 31 rule).
-- [x] Confirm the reviewed Sports Connect export does not appear to provide a stable player/member primary key.
-- [x] Agree on import identity rules: internal generated `player_id`, name/birthdate as match suggestions only, administrator-confirmed linking, and pending review for uncertain rows.
+- [x] Confirm Sports Connect IDs are useful external registration identifiers but not universal child IDs: the same child can receive a different ID when a different parent registers them in a later season.
+- [x] Agree on import identity rules: permanent internal `player_id`; season-scoped Sports Connect ID as a matching clue only; name/birthdate as candidate suggestions; administrator-confirmed linking; and pending review for uncertain rows.
 - [ ] Design and implement import preview, duplicate detection, audit of match decisions, and admin-confirmed matching; no silent name/DOB matching.
 - [ ] Implement and test database migrations.
 - [ ] Implement and test RLS for all league data.

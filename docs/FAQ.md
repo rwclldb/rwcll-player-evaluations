@@ -3,7 +3,7 @@
 ## Project overview
 - Stack: Next.js, Supabase (PostgreSQL and Auth), npm
 - Local development: Windows, PowerShell, VS Code
-- Local folder: `D:\sandbox\RWCLL\rwcll-player-evaluations`
+- Local folder: `D:\sandbox\GitHubRepos\rwcll-player-evaluations`
 - Private GitHub repository: `rwcll-player-evaluations`
 - Detailed proposed schema: [`DATABASE-DESIGN.md`](DATABASE-DESIGN.md)
 
@@ -13,7 +13,7 @@
 - [x] `.env.local` is Git-ignored (`git check-ignore -v .env.local` confirmed `.gitignore:34:.env*.local`).
 - [x] Initial scaffold committed as `34f85d2` and pushed to `main`.
 - [x] Supabase test user created; sign-in succeeded and protected page displayed user claims.
-- [ ] RWCLL database tables, aggregate functions, and RLS policies created and tested.
+- [ ] Complete end-to-end validation of database schema, RLS policies, and reporting/aggregate outputs.
 
 Successful sign-in verifies Supabase Auth, not the RWCLL database schema, queries, or authorization policies.
 
@@ -44,11 +44,45 @@ Variable names: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE
 
 ## Supabase dashboard
 - **Authentication → Users:** manage test accounts.
-- **SQL Editor:** apply reviewed schema SQL/migrations.
+- **SQL Editor:** inspect the database and run carefully reviewed SQL.
 - **Table Editor:** inspect development data.
-- **Project Settings → API:** view project URL and publishable key.
+- **Project Settings → API:** view the project URL and publishable key.
 
 Prefer version-controlled SQL migrations as the schema develops. Do not load live league data before RLS policies are implemented and tested.
+
+### Switch Supabase CLI accounts or projects
+The Supabase Dashboard browser login and the Supabase CLI login are separate. The CLI account also does not automatically determine which project this repository is linked to.
+
+To switch the account used by the CLI, from the repository folder in VS Code PowerShell:
+
+```powershell
+npx supabase logout
+npx supabase login
+```
+
+1. Sign in to the Supabase Dashboard using the account that owns the intended project. If necessary, use a private/incognito browser window so you do not disturb your usual browser session.
+2. In that account, create a personal access token under **Account → Access Tokens** in the Supabase Dashboard.
+3. Run `npx supabase login` and provide the token only in your own terminal when prompted. Never paste the token into chat, commit it, or put it in `.env.local`.
+4. Verify which projects the CLI account can access:
+
+   ```powershell
+   npx supabase projects list
+   ```
+
+5. Link this repository to the intended project:
+
+   ```powershell
+   npx supabase link
+   ```
+
+   Follow the prompts and choose the correct project. Check the project reference carefully before any remote database command.
+
+Signing out of the CLI does not sign you out of the Dashboard browser, and switching the CLI account does not itself change this repository's existing project link. Verify both the account and project before remote operations. Do not share personal access tokens, database passwords, API keys, or connection strings.
+
+### Database snapshot and migration safety
+As of 2026-11-03, the initial tables, helper/trigger functions, triggers, and RLS policies have been created directly in the hosted RWCLL Supabase project. The four checked tables (`players`, `player_seasons`, `teams`, `evaluations`) currently contain zero records. A schema-only reference snapshot named `schema-baseline-review.sql` was exported from the `public` schema (60,543 bytes) to the local repository root. It is a review artifact, not yet an approved or replayable migration, and it has not been confirmed committed to Git.
+
+Do not run `npx supabase db pull`, `npx supabase db push`, or `npx supabase db reset` as a shortcut. In this CLI version, `db pull` can update remote migration history. First review the snapshot and reconcile the live schema, establish the baseline deliberately, and validate migrations locally. The database schema and access policies are not launch-ready; do not import real league data yet.
 
 ## Season lifecycle (design confirmed; implementation pending)
 - Each season is a separate record; creating a new season must not overwrite previous seasons, rosters, or evaluations.
@@ -80,7 +114,7 @@ Prefer version-controlled SQL migrations as the schema develops. Do not load liv
 - Historical ratings are read-only and excluded from current averages.
 - Private coach notes must not leak through shared notes or score queries.
 
-The `evaluation_number` is stored with the player's season roster record, shown to coaches/evaluators on the evaluation screen, and must be unique within that season division when assigned. It is a new value for each season. For imports, `player_id` is generated internally and remains stable across seasons; name and birthdate are matching clues only, and an administrator must confirm a match before records are linked. The schema document describes the intended tables and relationships. It is still a proposal: no RWCLL database tables, aggregate functions, or RLS policies have been created yet. Use secure database-side aggregate functions/views; frontend hiding alone is not sufficient. Test access with separate coach accounts assigned to different teams, as well as independent evaluator and administrator accounts.
+The `evaluation_number` is stored with the player's season roster record, shown to coaches/evaluators on the evaluation screen, and must be unique within that season division when assigned. It is a new value for each season. For imports, `player_id` is generated internally and remains stable across seasons; name and birthdate are matching clues only, and an administrator must confirm a match before records are linked. The schema document describes intended tables and relationships; the initial tables, helper/trigger functions, triggers, and RLS policies have now been created directly in the hosted Supabase project, but they are not yet fully reconciled with this design or tested end-to-end. Secure database-side aggregate functions/views are still required; frontend hiding alone is not sufficient. Test access with separate coach accounts assigned to different teams, as well as independent evaluator and administrator accounts. Do not import real league data until these checks pass.
 
 ## Authentication and roles
 The starter includes sign-up UI. The intended RWCLL app uses administrator-managed invitations, not public registration. A Supabase-authenticated user is not automatically an RWCLL administrator; application roles and permissions must be implemented separately. Enforce access with database RLS, not just frontend visibility.
@@ -102,6 +136,22 @@ Update the FAQ with verified procedures, the roadmap with implementation-and-tes
 - Administrators can generate evaluation numbers beginning at a chosen number, override numbers manually, or import numbers from CSV. Players may be evaluated without a number.
 - Evaluators can find and evaluate any player in their assigned division. Coaches may evaluate players in any division.
 - The system records absences and provides an administrator report. Players who miss required evaluations are flagged for administrator follow-up and are not eligible to play unless the issue is resolved.
+
+### Sports Connect IDs and matching returning players
+- Sports Connect provides a player ID, but the same child can receive a different ID in a later season if a different parent registers them. Treat it as a season-specific external registration ID, not the app’s permanent player ID.
+- A matching Sports Connect ID can help suggest a returning player. A changed ID does not rule out a match. Names and dates of birth also only suggest candidates; they must not trigger an automatic merge.
+- An administrator must explicitly confirm any link to an existing player. Keep ambiguous rows pending review, and record the decision. If uncertain, do not merge or overwrite an existing external ID.
+
+Before trusting the import-matching workflow, test with synthetic/anonymized records:
+1. Same child, same Sports Connect ID in two seasons: candidate should be suggested; admin confirmation is still required.
+2. Same child, different Sports Connect IDs in two seasons: candidate should still be suggested from other matching details; the ID difference must not block review.
+3. Different children with similar names or the same date of birth: show possible candidates but never auto-merge.
+4. One source row with no plausible candidate: allow an admin to create a new internal player.
+5. An ambiguous source row: keep it pending until an admin decides; do not create a duplicate automatically.
+6. Repeated non-null Sports Connect ID in the same season: flag a duplicate/conflict for review rather than silently assigning the ID to multiple player-season rows.
+7. Same external ID reused in different seasons: permit it; external ID uniqueness is season-scoped, not global.
+
+Use test names and IDs only—never paste real children’s identifiers into chat or public issue trackers.
 
 ### Drafts, missing work, and locking
 - Evaluators can save a draft and return to it later. They can edit their submitted evaluations until the session is locked.
