@@ -144,3 +144,32 @@ Independent evaluator names/IDs must not appear in coach-facing aggregate respon
 ## Implementation status
 
 No RWCLL tables, migrations, aggregate functions, or RLS policies have been created yet. The existing successful sign-in test verifies Supabase Auth only; it does not verify this proposed database design.
+
+
+## Additional workflow design requirements (confirmed 2026-11-02)
+
+These requirements refine the proposed schema and policies. They remain design-only until implemented and tested.
+
+### Evaluation numbers and absence tracking
+- Keep `player_seasons.evaluation_number` nullable. A missing number must not prevent creating or submitting an evaluation.
+- Admin workflow must support generating numbers from a chosen starting integer, manual overrides, and CSV import with validation and an import audit trail. Preserve the season-division uniqueness rule for non-null numbers.
+- Add or define a per-player/per-session attendance status that can distinguish at least `present`, `absent`, and `not_recorded` (final naming may be refined during implementation). Absence is not a rating and must not be represented by zeroes.
+- Provide an admin-only absence report. A player marked absent is flagged for admin resolution and is not eligible to play under the confirmed league rule until handled. The exact resolution states should be designed before implementation.
+
+### Evaluator access, drafts, and session completion
+- Evaluator search scope: any player in the evaluator's assigned division/session, not only a preselected player list. Coach evaluation access may span divisions, subject to explicit role/assignment authorization. Implement these rules through server-side checks and RLS/RPC design, not just hidden UI controls.
+- Evaluations need explicit draft/submitted state and timestamps. Authors may edit their own submitted evaluations until the session is locked.
+- Missing required ratings and missing evaluator submissions should be queryable flags/reports. They do not force the session to remain open; an administrator decides completion.
+- After session lock, only administrators may correct a submitted evaluation. Preserve an audit entry including actor, timestamp, affected record, and correction details; avoid silent updates.
+
+### Optional proposed-team generation
+- This feature creates planning suggestions only. It must not create or change official team assignments unless a future, separately approved workflow explicitly does so.
+- Input constraints include coach assignments first, target team size chosen by an administrator, and coach-child placement constraints. A coach-child designation is sensitive and must not be returned by coach-facing queries, reports, exports, or views. Admin-only access is required.
+- Suggested balance factors may include submitted rating information, league age, experience answers, and pitching/catching information. Missing values remain null/unknown; do not fabricate scores. Document how incomplete records affect suggestions and make suggestions reviewable by admins.
+- When a roster size does not divide evenly, suggested team sizes may differ by one player. Do not infer an exact number of teams from the target size without an explicit admin setting; confirm the UI semantics when implementing.
+- Proposed rosters should support CSV export and a print-friendly presentation. Protect the coach-child designation from these outputs where the audience may include coaches.
+- Players added after team formation may have no ratings. Keep this case valid and visibly flagged rather than manufacturing evaluation data.
+
+### Historical integrity
+- Current evaluation averages exclude drafts and historical evaluation records. Do not alter existing ratings or overwrite historical data when generating team suggestions or processing late additions.
+- Any changes to submitted data, player-season data, absence status, coach-child designation, or generated-roster constraints should be authorized and audited appropriately.

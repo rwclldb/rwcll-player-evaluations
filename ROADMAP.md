@@ -96,3 +96,20 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 **Design confirmed, not implemented:** a new season carries forward only the editable division setup; teams/team names and coach assignments are not copied, and teams are named after evaluations; evaluations and historical results are never copied into a new season. Coaches may be assigned to multiple teams; coaches receive assigned-team and division-wide group averages; one session exists per division per season with multiple evaluators; each player has one roster record per season; `evaluation_number` is season-specific and used to match the on-screen player to the number worn during evaluations; permanent internal player IDs are generated independently of personal data, and import matches require administrator confirmation; completed seasons are closed by default and require an explicit, audited administrator action to reopen.
 
 **Next:** review/approve `docs/DATABASE-DESIGN.md`, then establish the SQL migration workflow. Database tables, aggregate functions, and RLS are not yet implemented.
+
+
+## 2. Confirmed workflow requirements (2026-11-02)
+
+These are agreed requirements, not implemented features. Keep implementation checkboxes unchecked until the feature is built and tested.
+
+- [ ] Evaluation numbers can be generated from an administrator-chosen starting number, manually overridden, and imported from CSV; a player may be evaluated without a number.
+- [ ] Evaluators can find and evaluate any player in their assigned division; coaches can evaluate players in any division.
+- [ ] Record absences and provide an administrator absence report. Players who miss required evaluations are flagged for administrator handling and are not eligible to play unless the issue is resolved.
+- [ ] Evaluators can save drafts, resume later, and edit submitted evaluations until session lock.
+- [ ] Administrators determine completion; flag missing player ratings and missing evaluator submissions without requiring all submissions to be present.
+- [ ] After lock, administrator corrections to submitted evaluations are permitted and audited.
+- [ ] Optional team-balancing tool generates proposed rosters only; it is not the official team-management system. Export proposed rosters to CSV and provide a print-friendly view.
+- [ ] For generated rosters, administrators set target team sizes; team sizes may differ by one player when the count does not divide evenly. Coaches are assigned first.
+- [ ] An administrator can flag a coach's child for automatic placement on that coach's team. This relationship must not be exposed to coaches.
+- [ ] Team suggestions may use available ratings, age, experience, and pitching/catching information. Missing ratings remain missing; use available information without inventing scores.
+- [ ] Players added after team formation may have no evaluations. Preserve existing and historical ratings; do not silently alter or overwrite them.

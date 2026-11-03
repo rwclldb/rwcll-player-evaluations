@@ -94,3 +94,23 @@ The starter includes sign-up UI. The intended RWCLL app uses administrator-manag
 
 ## Documentation upkeep
 Update the FAQ with verified procedures, the roadmap with implementation-and-test status, and the decision log with durable decisions. Update the database design when structural decisions change. After substantive project updates, update all relevant docs. The current updated documentation has not yet been confirmed copied into the Git repository.
+
+
+## Evaluation workflow rules (confirmed 2026-11-02)
+
+### Evaluation numbers and finding players
+- Administrators can generate evaluation numbers beginning at a chosen number, override numbers manually, or import numbers from CSV. Players may be evaluated without a number.
+- Evaluators can find and evaluate any player in their assigned division. Coaches may evaluate players in any division.
+- The system records absences and provides an administrator report. Players who miss required evaluations are flagged for administrator follow-up and are not eligible to play unless the issue is resolved.
+
+### Drafts, missing work, and locking
+- Evaluators can save a draft and return to it later. They can edit their submitted evaluations until the session is locked.
+- Administrators decide when a session is complete. The system flags missing ratings and missing evaluator submissions, but these gaps do not automatically block completion.
+- Once locked, an evaluation can be corrected only by an administrator, and the correction must be recorded in the audit trail.
+
+### Optional team suggestions
+- Team generation is an optional planning aid, not the league's official team-management system. Administrators remain responsible for reviewing and using any proposed rosters.
+- Administrators set the target team size. If player counts do not divide evenly, suggested teams may differ in size by one player. Coaches are assigned before players are placed.
+- Administrators can flag a coach's child for automatic placement on that coach's proposed team. The designation must not be visible to coaches.
+- Balancing may use available ratings, age, experience, and pitching/catching information. Missing ratings are not invented.
+- Suggested rosters should be exportable to CSV and printable. Players added after teams are formed may have no evaluation scores; existing ratings and historical data must not be silently overwritten.

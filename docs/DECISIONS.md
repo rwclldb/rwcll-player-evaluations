@@ -36,3 +36,20 @@ Record durable decisions and rationale. When a decision changes, add a new entry
 - What hosting plan and pricing will be used at launch?
 - What is the admin process for inviting, disabling, and removing users?
 - Are there additional league approval or audit requirements?
+
+
+## 2026-11-02 — Evaluation and roster workflow decisions
+
+| Date | Area | Decision | Rationale / notes | Status |
+|---|---|---|---|---|
+| 2026-11-02 | Evaluation numbers | Admins can generate numbers from a chosen starting value, override individual numbers, or import them from CSV. Evaluation without a number is allowed. | Support different check-in and roster workflows. | Confirmed |
+| 2026-11-02 | Evaluator access | Evaluators can search/evaluate any player in their assigned division; coaches may evaluate players in any division. | Role-based access remains distinct from evaluator assignment and coach reporting access. | Confirmed |
+| 2026-11-02 | Absences | Record absent players and provide an absence report for admins. Players missing required evaluations are flagged for admin handling and are not eligible to play unless the issue is resolved. | Absence is a workflow status, not a fabricated zero score. | Confirmed |
+| 2026-11-02 | Drafts and edits | Evaluators can save drafts and resume later; submitted evaluations remain editable by their author until session lock. | Support real-world evaluation sessions. | Confirmed |
+| 2026-11-02 | Completion | Admin decides when the session is complete. Missing ratings and missing evaluator submissions are flagged but are allowed. | Completion is an administrative decision, not an automatic all-submissions requirement. | Confirmed |
+| 2026-11-02 | Locked corrections | Admin may correct submitted evaluations after session lock; corrections must be audited. | Preserve accountability and historical traceability. | Confirmed |
+| 2026-11-02 | Team balancing | Optional tool generates proposed balanced rosters only, never official team assignments. It should support CSV export and print-friendly output. | Main team-management system remains authoritative. | Confirmed |
+| 2026-11-02 | Team size | Admin specifies target team size for generated rosters; sizes may differ by one when players cannot be divided evenly. | Keep proposed rosters practical and balanced in size. | Confirmed |
+| 2026-11-02 | Coach's child | Admin can designate a coach's child; the player is placed on that coach's proposed team automatically. Coaches must not see the designation. | Honor placement constraints without exposing sensitive roster-building details. | Confirmed |
+| 2026-11-02 | Balancing inputs | Suggested team balancing may use available ratings, age, experience, and pitching/catching information. | Missing information must remain missing; no scores are invented. | Confirmed |
+| 2026-11-02 | Late additions and history | Players added after team formation may lack evaluation scores; existing ratings and historical data are not silently changed or overwritten. | Explicitly handle incomplete data and preserve history. | Confirmed |
