@@ -5,7 +5,7 @@
 ## Confirmed design decisions
 
 1. A coach may be assigned to multiple teams in a season.
-2. Coaches can view group averages for both their assigned teams and the wider division.
+2. Coach-facing views must not show a comparison of assigned-team averages against division-wide averages; avoid juxtaposing those scopes for coaches.
 3. There is one evaluation session per division per season. Multiple coaches and independent evaluators participate in that session.
 4. Coach and independent-evaluator results remain separate. Coaches see aggregate results only, never individual ratings. Independent evaluator identities are hidden from coaches.
 5. Administrators can inspect individual submissions.
@@ -110,12 +110,7 @@ This diagram is conceptual. Exact foreign keys, nullable fields, delete behavior
 
 ## Coach views and average calculations
 
-Provide two authorized aggregate scopes to coaches:
-
-- **Assigned-team view:** group averages for each team to which that coach is assigned for the season.
-- **Division-wide view:** group averages across the division.
-
-For both scopes, calculate coach-submitted and independent-evaluator-submitted averages separately. Never combine the two evaluator groups. Show the number of actual ratings used alongside each average, such as `4.2 (5 of 6 evaluators)`. Only submitted numeric ratings count; drafts, Not Evaluated submissions, and blank optional categories do not count. Historical scores are displayed separately as context and never enter current averages.
+Calculate group averages for assigned teams and division-wide groups as needed for authorized workflows, keeping coach-submitted and independent-evaluator-submitted averages separate. Never combine evaluator groups. Show counts alongside averages, such as `4.2 (5 of 6 evaluators)`. Only submitted numeric ratings count; drafts, Not Evaluated submissions, and blank optional categories do not count. Historical scores are displayed separately as context and never enter current averages. **Coach-facing screens must not compare or juxtapose assigned-team averages with division-wide averages.** Define and test the exact coach-facing presentation so that coaches cannot infer a team-versus-division comparison from the interface or exported coach-facing reports.
 
 The application must not give coaches direct read access to individual `ratings` or `evaluations` rows in a way that lets them reconstruct individual scores. Use carefully scoped database views or, preferably where needed, security-definer functions/RPCs that return only approved aggregates. Review function ownership, `search_path`, grants, and RLS carefully. Do not rely on frontend filtering to hide individual scores. Test team and division aggregates using separate coach accounts with different team assignments, plus independent evaluator and administrator accounts.
 
@@ -164,10 +159,10 @@ These requirements refine the proposed schema and policies. They remain design-o
 
 ### Optional proposed-team generation
 - This feature creates planning suggestions only. It must not create or change official team assignments unless a future, separately approved workflow explicitly does so.
-- Input constraints include coach assignments first, target team size chosen by an administrator, and coach-child placement constraints. A coach-child designation is sensitive and must not be returned by coach-facing queries, reports, exports, or views. Admin-only access is required.
+- Input constraints include coach assignments first, target team size chosen by an administrator, and coach-child placement constraints. A coach-child designation is visible to all coaches. It may be used to automatically place the child on the designated coach's proposed team. Apply appropriate access controls to prevent unrelated private data from being exposed, but do not hide the designation from coaches.
 - Suggested balance factors may include submitted rating information, league age, experience answers, and pitching/catching information. Missing values remain null/unknown; do not fabricate scores. Document how incomplete records affect suggestions and make suggestions reviewable by admins.
 - When a roster size does not divide evenly, suggested team sizes may differ by one player. Do not infer an exact number of teams from the target size without an explicit admin setting; confirm the UI semantics when implementing.
-- Proposed rosters should support CSV export and a print-friendly presentation. Protect the coach-child designation from these outputs where the audience may include coaches.
+- Proposed rosters should support CSV export and a print-friendly presentation. Coach-facing CSV and print exports may show coach-child designations, consistent with the rule that all coaches can see them. Do not include assigned-team-versus-division average comparisons in coach-facing exports.
 - Players added after team formation may have no ratings. Keep this case valid and visibly flagged rather than manufacturing evaluation data.
 
 ### Historical integrity

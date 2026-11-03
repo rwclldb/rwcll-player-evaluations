@@ -63,7 +63,7 @@ Prefer version-controlled SQL migrations as the schema develops. Do not load liv
 
 ## Confirmed database and access rules
 - A coach can be assigned to multiple teams in a season. Assignments are season-scoped.
-- Coaches can see group averages for their assigned teams and division-wide group averages.
+- Coaches must not see a comparison of assigned-team averages against division-wide averages. Coach-facing screens must not juxtapose these scopes or otherwise present a team-versus-division comparison.
 - Coaches do not see individual coach ratings or individual independent-evaluator ratings.
 - Coach and independent-evaluator averages remain separate; never combine the groups.
 - Independent evaluator identities are hidden from coaches.
@@ -111,6 +111,6 @@ Update the FAQ with verified procedures, the roadmap with implementation-and-tes
 ### Optional team suggestions
 - Team generation is an optional planning aid, not the league's official team-management system. Administrators remain responsible for reviewing and using any proposed rosters.
 - Administrators set the target team size. If player counts do not divide evenly, suggested teams may differ in size by one player. Coaches are assigned before players are placed.
-- Administrators can flag a coach's child for automatic placement on that coach's proposed team. The designation must not be visible to coaches.
+- Administrators can flag a coach's child for automatic placement on that coach's proposed team. All coaches can see which players are designated as a coach's child.
 - Balancing may use available ratings, age, experience, and pitching/catching information. Missing ratings are not invented.
 - Suggested rosters should be exportable to CSV and printable. Players added after teams are formed may have no evaluation scores; existing ratings and historical data must not be silently overwritten.

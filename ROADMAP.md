@@ -18,7 +18,7 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [x] When creating a new season, carry forward only the editable division setup; do not copy teams/team names, coach assignments, player evaluations, or historical results. Team names are assigned after evaluations.
 - [x] Generate a permanent internal player ID; use name/birthdate only to suggest import matches, with administrator confirmation and no silent merges.
 - [x] Coaches may be assigned to multiple teams in a season.
-- [x] Coaches can view assigned-team and division-wide group averages.
+- [x] Coaches can view authorized group averages, but must not see a comparison of their assigned-team averages against division-wide averages.
 - [x] One evaluation session per division per season, with multiple evaluators.
 - [x] Each player has one roster assignment per season (no multiple team rosters in the same season).
 - [x] Store a season-specific `evaluation_number` for identifying the player by the number they wear during evaluations; it does not carry over.
@@ -39,7 +39,7 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 ## 3. Database foundation
 - [x] Agree on conceptual entities and relationships; see `docs/DATABASE-DESIGN.md` (proposed only).
 - [x] Confirm season-scoped many-to-many coach/team assignments.
-- [x] Confirm coach aggregate visibility: assigned team plus division-wide.
+- [x] Confirm coach-facing visibility rule: do not show a comparison between assigned-team averages and division-wide averages.
 - [x] Confirm one evaluation session per season division, with multiple evaluators.
 - [x] Confirm one player roster record per season.
 - [x] Confirm season-specific evaluation number displayed to evaluators; does not carry over between seasons.
@@ -65,7 +65,7 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [ ] Implement experience/interest Yes/No/Unknown questions.
 - [ ] Implement Not Evaluated and average/count calculations.
 - [ ] Keep evaluator-group averages separate.
-- [ ] Enforce assigned-team and division-wide aggregate visibility for coaches.
+- [ ] Implement and test coach-facing aggregate views that do not compare or juxtapose assigned-team averages against division-wide averages.
 - [ ] Hide independent evaluator identities from coaches.
 - [ ] Restrict individual submissions to administrators and appropriate authors.
 - [ ] Implement private coach notes and separately controlled shared notes.
@@ -93,7 +93,7 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 ## Current checkpoint
 **Verified:** local app runs; `.env.local` is Git-ignored; scaffold is pushed; Supabase sign-in and protected-page claims work.
 
-**Design confirmed, not implemented:** a new season carries forward only the editable division setup; teams/team names and coach assignments are not copied, and teams are named after evaluations; evaluations and historical results are never copied into a new season. Coaches may be assigned to multiple teams; coaches receive assigned-team and division-wide group averages; one session exists per division per season with multiple evaluators; each player has one roster record per season; `evaluation_number` is season-specific and used to match the on-screen player to the number worn during evaluations; permanent internal player IDs are generated independently of personal data, and import matches require administrator confirmation; completed seasons are closed by default and require an explicit, audited administrator action to reopen.
+**Design confirmed, not implemented:** a new season carries forward only the editable division setup; teams/team names and coach assignments are not copied, and teams are named after evaluations; evaluations and historical results are never copied into a new season. Coaches may be assigned to multiple teams; coach-facing views must not show a comparison between assigned-team averages and division-wide averages; one session exists per division per season with multiple evaluators; each player has one roster record per season; `evaluation_number` is season-specific and used to match the on-screen player to the number worn during evaluations; permanent internal player IDs are generated independently of personal data, and import matches require administrator confirmation; completed seasons are closed by default and require an explicit, audited administrator action to reopen.
 
 **Next:** review/approve `docs/DATABASE-DESIGN.md`, then establish the SQL migration workflow. Database tables, aggregate functions, and RLS are not yet implemented.
 
@@ -110,6 +110,6 @@ These are agreed requirements, not implemented features. Keep implementation che
 - [ ] After lock, administrator corrections to submitted evaluations are permitted and audited.
 - [ ] Optional team-balancing tool generates proposed rosters only; it is not the official team-management system. Export proposed rosters to CSV and provide a print-friendly view.
 - [ ] For generated rosters, administrators set target team sizes; team sizes may differ by one player when the count does not divide evenly. Coaches are assigned first.
-- [ ] An administrator can flag a coach's child for automatic placement on that coach's team. This relationship must not be exposed to coaches.
+- [ ] An administrator can flag a coach's child for automatic placement on that coach's team. All coaches may see which players are designated as a coach's child; the designation is not hidden from coaches.
 - [ ] Team suggestions may use available ratings, age, experience, and pitching/catching information. Missing ratings remain missing; use available information without inventing scores.
 - [ ] Players added after team formation may have no evaluations. Preserve existing and historical ratings; do not silently alter or overwrite them.
