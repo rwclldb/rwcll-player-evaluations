@@ -26,6 +26,7 @@ Record durable decisions and rationale. When a decision changes, add a new entry
 | 2026-11-02 | Evaluation sessions | One evaluation session per division per season, with multiple evaluators. | Enforce one session per `season_division`; evaluator assignments and submissions belong to that shared session. | Confirmed; schema proposed, not implemented |
 | 2026-11-02 | Player roster | A player may appear on only one roster in a season. | Enforce one `player_seasons` row per `(player_id, season_id)`; a player may be on a different team in a later season. | Confirmed; schema proposed, not implemented |
 | 2026-11-02 | Evaluation identifier | Each player has an `evaluation_number` for that season, corresponding to the number coaches/evaluators see the player wearing during evaluations. It is not a permanent player ID or a jersey number carried forward. | Store it on `player_seasons`; make it unique within the season division when assigned, and assign a new number in each season. | Confirmed; schema proposed, not implemented |
+| 2026-11-02 | Season lifecycle | A completed season is closed by default and remains viewable. Only an explicit administrator action can reopen it for corrections; log the administrator, timestamp, and reason, and allow it to be closed again. | Preserve historical integrity while providing a controlled correction path. Season closure is separate from evaluation-session locking. | Confirmed; schema/workflow proposed, not implemented |
 
 ## Open decisions
 - What are the final visibility rules for shared coach notes?

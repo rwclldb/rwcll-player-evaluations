@@ -50,6 +50,12 @@ Variable names: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE
 
 Prefer version-controlled SQL migrations as the schema develops. Do not load live league data before RLS policies are implemented and tested.
 
+## Season lifecycle (design confirmed; implementation pending)
+- Each season is a separate record; creating a new season must not overwrite previous seasons, rosters, or evaluations.
+- A season is closed by default once completed. Closed seasons remain available for authorized viewing, but ordinary users cannot change their historical data.
+- Only an administrator may explicitly reopen a closed season to make a correction. The reopen action, administrator, timestamp, and reason should be recorded in the audit log; the administrator can close it again afterward.
+- Closing/reopening a season is distinct from locking an evaluation session. Session locks continue to control evaluation submissions.
+
 ## Confirmed database and access rules
 - A coach can be assigned to multiple teams in a season. Assignments are season-scoped.
 - Coaches can see group averages for their assigned teams and division-wide group averages.

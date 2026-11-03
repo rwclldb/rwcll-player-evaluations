@@ -14,6 +14,7 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [x] Historical ratings are read-only and excluded from current averages.
 - [x] Admin-managed invitations; no public registration in intended product.
 - [x] Preserve prior seasons.
+- [x] Seasons are closed by default after completion; an administrator may explicitly reopen a season for corrections, with the action recorded in an audit trail.
 - [x] Generate a permanent internal player ID; use name/birthdate only to suggest import matches, with administrator confirmation and no silent merges.
 - [x] Coaches may be assigned to multiple teams in a season.
 - [x] Coaches can view assigned-team and division-wide group averages.
@@ -42,6 +43,7 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [x] Confirm one player roster record per season.
 - [x] Confirm season-specific evaluation number displayed to evaluators; does not carry over between seasons.
 - [ ] Review and approve detailed database design before migration work.
+- [x] Confirm season lifecycle: closed by default; explicit administrator-only reopen for corrections, with audit logging.
 - [ ] Design seasons, divisions, teams, players, user profiles, and roles.
 - [ ] Separate stable player identity from season-specific registration/team/division/league age and `evaluation_number`.
 - [ ] Define season-specific Little League age calculation (official Aug. 31 rule).
@@ -89,6 +91,6 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 ## Current checkpoint
 **Verified:** local app runs; `.env.local` is Git-ignored; scaffold is pushed; Supabase sign-in and protected-page claims work.
 
-**Design confirmed, not implemented:** coaches may be assigned to multiple teams; coaches receive assigned-team and division-wide group averages; one session exists per division per season with multiple evaluators; each player has one roster record per season; `evaluation_number` is season-specific and used to match the on-screen player to the number worn during evaluations; permanent internal player IDs are generated independently of personal data, and import matches require administrator confirmation.
+**Design confirmed, not implemented:** coaches may be assigned to multiple teams; coaches receive assigned-team and division-wide group averages; one session exists per division per season with multiple evaluators; each player has one roster record per season; `evaluation_number` is season-specific and used to match the on-screen player to the number worn during evaluations; permanent internal player IDs are generated independently of personal data, and import matches require administrator confirmation; completed seasons are closed by default and require an explicit, audited administrator action to reopen.
 
 **Next:** add these updated docs to the repository, review/approve `docs/DATABASE-DESIGN.md`, then establish the SQL migration workflow. Database tables, aggregate functions, and RLS are not yet implemented.
