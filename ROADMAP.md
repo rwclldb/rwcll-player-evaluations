@@ -14,6 +14,7 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [x] Historical ratings are read-only and excluded from current averages.
 - [x] Admin-managed invitations; no public registration in intended product.
 - [x] Preserve prior seasons.
+- [x] Generate a permanent internal player ID; use name/birthdate only to suggest import matches, with administrator confirmation and no silent merges.
 - [x] Coaches may be assigned to multiple teams in a season.
 - [x] Coaches can view assigned-team and division-wide group averages.
 - [x] One evaluation session per division per season, with multiple evaluators.
@@ -44,8 +45,9 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [ ] Design seasons, divisions, teams, players, user profiles, and roles.
 - [ ] Separate stable player identity from season-specific registration/team/division/league age and `evaluation_number`.
 - [ ] Define season-specific Little League age calculation (official Aug. 31 rule).
-- [ ] Confirm whether Sports Connect exports a stable member/registration ID.
-- [ ] Design import preview, duplicate detection, and admin-confirmed matching; no silent name/DOB matching.
+- [x] Confirm the reviewed Sports Connect export does not appear to provide a stable player/member primary key.
+- [x] Agree on import identity rules: internal generated `player_id`, name/birthdate as match suggestions only, administrator-confirmed linking, and pending review for uncertain rows.
+- [ ] Design and implement import preview, duplicate detection, audit of match decisions, and admin-confirmed matching; no silent name/DOB matching.
 - [ ] Implement and test database migrations.
 - [ ] Implement and test RLS for all league data.
 - [ ] Implement and test secure aggregate outputs for assigned-team and division views; no individual rating access for coaches.
@@ -87,6 +89,6 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 ## Current checkpoint
 **Verified:** local app runs; `.env.local` is Git-ignored; scaffold is pushed; Supabase sign-in and protected-page claims work.
 
-**Design confirmed, not implemented:** coaches may be assigned to multiple teams; coaches receive assigned-team and division-wide group averages; one session exists per division per season with multiple evaluators; each player has one roster record per season; `evaluation_number` is season-specific and used to match the on-screen player to the number worn during evaluations.
+**Design confirmed, not implemented:** coaches may be assigned to multiple teams; coaches receive assigned-team and division-wide group averages; one session exists per division per season with multiple evaluators; each player has one roster record per season; `evaluation_number` is season-specific and used to match the on-screen player to the number worn during evaluations; permanent internal player IDs are generated independently of personal data, and import matches require administrator confirmation.
 
 **Next:** add these updated docs to the repository, review/approve `docs/DATABASE-DESIGN.md`, then establish the SQL migration workflow. Database tables, aggregate functions, and RLS are not yet implemented.

@@ -24,14 +24,14 @@
 | `divisions` | Tee Ball, A, AA, AAA, Majors, Juniors, Seniors. |
 | `season_divisions` | A division participating in a particular season; unique season/division pair. |
 | `teams` | Team within a `season_division`; team name and season/division association. |
-| `players` | Stable player identity across seasons; name and only the minimum personal data needed. |
+| `players` | Stable player identity across seasons; randomly generated internal `player_id` (UUID primary key), name, and only the minimum personal data needed. Never derive the primary key from name or birthdate. |
 | `player_seasons` | Player's season-specific roster record; `player_id`, `season_id`, `season_division_id`, optional `team_id`, `league_age`, `evaluation_number`, external registration identifier if available, import/match status. |
 
 Use one stable `players` row per child and a separate `player_seasons` row per season. Include `season_id` directly on `player_seasons` so the database can enforce `UNIQUE (player_id, season_id)`: a player can have only one roster record—and therefore at most one team assignment—in a given season, even if they change teams or divisions in a later season. Retain `season_division_id` on the roster row so a player can be registered in a division before a team is assigned. Use a composite foreign key or equivalent constraint to ensure the `season_division_id` belongs to the same `season_id`; if `team_id` is present, validate that the team belongs to that same season division.
 
 `evaluation_number` is a season-specific integer stored on `player_seasons`. It is the number shown on the evaluation screen so coaches/evaluators can match the on-screen player to the number the child is wearing during the evaluation. It is not a permanent player identifier and must not be copied forward to the next season. Assign a fresh number each season. Because there is one session per division per season, require assigned values to be unique within a `season_division` (for example, a partial unique index on `(season_division_id, evaluation_number)` where `evaluation_number IS NOT NULL`). The field can remain null until an administrator assigns the evaluation number. It must not be confused with a permanent player ID or assumed to be a jersey number that persists across seasons.
 
-Calculate Little League age for each season using the official Aug. 31 rule. Store the season-specific result; do not treat birthdate as a substitute for league age. Confirm whether the league needs to retain full birthdates after import. The existing Sports Connect export inspected for this project did not contain a stable member ID, so do not silently match people by name or birthdate. Use an external registration ID if one becomes available; otherwise require administrator review and confirmation of matches.
+Calculate Little League age for each season using the official Aug. 31 rule. Store the season-specific result; do not treat birthdate as a substitute for league age. Confirm whether the league needs to retain full birthdates after import. The Sports Connect export inspected for this project did not contain a stable member ID. Generate a permanent internal `player_id` (UUID) when a player record is created; never build it from name or birthdate. During import, use normalized name and birthdate only to suggest possible matches. Show the administrator the source row and candidate records, require an explicit confirmation before linking to an existing player, and allow creation of a new player when no candidate is confirmed. Ambiguous or uncertain rows must remain pending review and must not be silently merged. Record the import batch and the administrator decision in an audit-friendly way. If a stable external ID becomes available later, it may be stored as a matching attribute but should not replace the internal primary key.
 
 ### Users and team assignments
 
@@ -132,7 +132,7 @@ Independent evaluator names/IDs must not appear in coach-facing aggregate respon
 - Final visibility rules for shared coach notes.
 - Whether historical AA ratings should be visible only for the matching player and how to present missing historical coverage.
 - Whether a player can be rostered without a team at evaluation time (the proposed design allows a nullable `team_id`); the one-roster-per-player-per-season rule and evaluation-number uniqueness scope are confirmed.
-- Whether the league can obtain a stable Sports Connect identifier or a trusted mapping for historical records.
+- Whether the league needs to retain full birthdates after import, and for how long.
 - Data retention policy for children’s names and birthdates.
 
 ## Implementation status

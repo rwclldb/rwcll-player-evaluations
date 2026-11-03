@@ -17,6 +17,7 @@ Record durable decisions and rationale. When a decision changes, add a new entry
 | 2026-11-02 | History | Historical data read-only and excluded from current averages. | Preserve context without mixing seasons. | Requirement confirmed |
 | 2026-11-02 | Imports | Sports Connect CSV/Excel import with preview and admin confirmation. | Existing export lacked a permanent ID; name-only matching is unsafe. | Requirement confirmed; implementation pending |
 | 2026-11-02 | Data model | Stable player identity separate from season-specific registration/team/division/league age. | Players may move teams/divisions between seasons. | Direction confirmed; schema pending |
+| 2026-11-02 | Player IDs and imports | Generate a permanent internal `player_id`; do not derive it from name or birthdate. Use name/birthdate only to suggest possible matches, with administrator confirmation before linking an import row to an existing player. If no match is confirmed, the administrator can create a new player; uncertain rows remain pending review. | Names and birthdates are not guaranteed unique and can change or contain errors. Avoid silent merges and preserve reliable identity across seasons. | Confirmed; implementation pending |
 | 2026-11-02 | Security | RLS for league data; test separate roles before loading real data. | Frontend hiding is not a security boundary. | Requirement confirmed; implementation pending |
 | 2026-11-02 | Secrets | `.env.local` stays local and Git-ignored. | Verified with `git check-ignore -v .env.local`. | Verified |
 | 2026-11-02 | Setup | Supabase Auth tested using starter login and protected page. | Test user signed in and page displayed claims; does not verify database schema or RLS. | Verified |
@@ -29,7 +30,7 @@ Record durable decisions and rationale. When a decision changes, add a new entry
 ## Open decisions
 - What are the final visibility rules for shared coach notes?
 - What league policy and retention period apply to children’s names and birthdates? Minimize DOB retention where feasible.
-- What stable Sports Connect member ID or trusted player-matching method can be used?
+- What exact review/audit details should be retained for each administrator-confirmed import match?
 - What hosting plan and pricing will be used at launch?
 - What is the admin process for inviting, disabling, and removing users?
 - Are there additional league approval or audit requirements?
