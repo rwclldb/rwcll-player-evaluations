@@ -56,6 +56,11 @@ Prefer version-controlled SQL migrations as the schema develops. Do not load liv
 - Only an administrator may explicitly reopen a closed season to make a correction. The reopen action, administrator, timestamp, and reason should be recorded in the audit log; the administrator can close it again afterward.
 - Closing/reopening a season is distinct from locking an evaluation session. Session locks continue to control evaluation submissions.
 
+## Creating a new season (design confirmed; implementation pending)
+- Carry forward only the division setup from the previous season. Divisions remain editable for the new season. The usual evaluation divisions are AA, AAA, Majors, Juniors, and Seniors; the season setup should allow the administrator to edit which divisions apply.
+- Do not copy team names, coach assignments, player evaluations, or historical results into a new season.
+- Coaches are registered and assigned anew for each season. Team names are not entered until after evaluations, when teams are formed.
+
 ## Confirmed database and access rules
 - A coach can be assigned to multiple teams in a season. Assignments are season-scoped.
 - Coaches can see group averages for their assigned teams and division-wide group averages.
