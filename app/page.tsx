@@ -1,57 +1,162 @@
-import { DeployButton } from "@/components/deploy-button";
-import { EnvVarWarning } from "@/components/env-var-warning";
+
 import { AuthButton } from "@/components/auth-button";
-import { Hero } from "@/components/hero";
-import { ThemeSwitcher } from "@/components/theme-switcher";
-import { ConnectSupabaseSteps } from "@/components/tutorial/connect-supabase-steps";
-import { SignUpUserSteps } from "@/components/tutorial/sign-up-user-steps";
+import { EnvVarWarning } from "@/components/env-var-warning";
 import { hasEnvVars } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/server";
+import { createSeason } from "./actions";
 import Link from "next/link";
 import { Suspense } from "react";
 
+function SeasonLoading() {
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <p className="text-sm text-gray-500">Loading seasons...</p>
+    </section>
+  );
+}
+
+async function SeasonDashboard() {
+  const supabase = await createClient();
+
+  const { data: seasons, error } = await supabase
+    .from("seasons")
+    .select("id, name, start_date, end_date, is_closed")
+    .order("start_date", { ascending: false, nullsFirst: false });
+
+  return (
+    <>
+      <section className="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-semibold">Create a season</h2>
+        <p className="mt-1 text-sm text-gray-600">
+          Add a season to begin setting up your evaluation workspace.
+        </p>
+
+        <form action={createSeason} className="mt-5 grid gap-4 sm:grid-cols-3">
+          <div>
+            <label htmlFor="name" className="mb-1 block text-sm font-medium">
+              Season name
+            </label>
+            <input
+              id="name"
+              name="name"
+              required
+              placeholder="Spring 2027"
+              className="w-full rounded-md border border-gray-300 px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="start_date" className="mb-1 block text-sm font-medium">
+              Start date
+            </label>
+            <input
+              id="start_date"
+              name="start_date"
+              type="date"
+              className="w-full rounded-md border border-gray-300 px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="end_date" className="mb-1 block text-sm font-medium">
+              End date
+            </label>
+            <input
+              id="end_date"
+              name="end_date"
+              type="date"
+              className="w-full rounded-md border border-gray-300 px-3 py-2"
+            />
+          </div>
+
+          <div className="sm:col-span-3">
+            <button
+              type="submit"
+              className="rounded-md bg-blue-700 px-5 py-2 font-medium text-white hover:bg-blue-800"
+            >
+              Create season
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-semibold">Seasons</h2>
+
+        {error ? (
+          <p className="mt-4 text-sm text-red-700">
+            Could not load seasons: {error.message}
+          </p>
+        ) : seasons && seasons.length > 0 ? (
+          <div className="mt-4 divide-y divide-gray-200">
+            {seasons.map((season) => (
+              <div
+                key={season.id}
+                className="flex flex-wrap items-center justify-between gap-3 py-4"
+              >
+                <div>
+                  <h3 className="font-semibold">{season.name}</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {season.start_date || "No start date"} –{" "}
+                    {season.end_date || "No end date"}
+                  </p>
+                </div>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                    season.is_closed
+                      ? "bg-gray-100 text-gray-600"
+                      : "bg-green-100 text-green-800"
+                  }`}
+                >
+                  {season.is_closed ? "Closed" : "Open"}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-gray-600">
+            No seasons have been created yet.
+          </p>
+        )}
+      </section>
+    </>
+  );
+}
+
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col items-center">
-      <div className="flex-1 w-full flex flex-col gap-20 items-center">
-        <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-          <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
-            <div className="flex gap-5 items-center font-semibold">
-              <Link href={"/"}>Next.js Supabase Starter</Link>
-              <div className="flex items-center gap-2">
-                <DeployButton />
-              </div>
-            </div>
-            {!hasEnvVars ? (
-              <EnvVarWarning />
-            ) : (
-              <Suspense>
-                <AuthButton />
-              </Suspense>
-            )}
-          </div>
-        </nav>
-        <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
-          <Hero />
-          <main className="flex-1 flex flex-col gap-6 px-4">
-            <h2 className="font-medium text-xl mb-4">Next steps</h2>
-            {hasEnvVars ? <SignUpUserSteps /> : <ConnectSupabaseSteps />}
-          </main>
+    <main className="min-h-screen bg-gray-50 text-gray-900">
+      <header className="border-b border-gray-200 bg-white">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+          <Link href="/" className="text-lg font-bold tracking-tight">
+            Redwood City Little League
+          </Link>
+          {!hasEnvVars ? (
+            <EnvVarWarning />
+          ) : (
+            <Suspense fallback={<span className="text-sm text-gray-500">Loading account...</span>}>
+              <AuthButton />
+            </Suspense>
+          )}
         </div>
+      </header>
 
-        <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-16">
-          <p>
-            Powered by{" "}
-            <a
-              href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
-              target="_blank"
-              className="font-bold hover:underline"
-              rel="noreferrer"
-            >
-              Supabase
-            </a>
+      <div className="mx-auto max-w-7xl px-6 py-10">
+        <section className="mb-8">
+          <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-700">
+            Administration
           </p>
-          <ThemeSwitcher />
-        </footer>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Player Evaluation Center
+          </h1>
+          <p className="mt-3 text-gray-600">
+            Manage seasons and prepare your league's player evaluations.
+          </p>
+        </section>
+
+        <Suspense fallback={<SeasonLoading />}>
+          <SeasonDashboard />
+        </Suspense>
       </div>
     </main>
   );
