@@ -164,3 +164,16 @@ Use test names and IDs only—never paste real children’s identifiers into cha
 - Administrators can flag a coach's child for automatic placement on that coach's proposed team. All coaches can see which players are designated as a coach's child.
 - Balancing may use available ratings, age, experience, and pitching/catching information. Missing ratings are not invented.
 - Suggested rosters should be exportable to CSV and printable. Players added after teams are formed may have no evaluation scores; existing ratings and historical data must not be silently overwritten.
+
+
+## 2026-11-03 workflow update
+
+The prior FAQ/schema notes describe division-based sessions. They are superseded for future implementation by the age-based workflow in [`DATABASE-DESIGN.md`](DATABASE-DESIGN.md), [`IMPORT-WORKFLOW-DESIGN.md`](IMPORT-WORKFLOW-DESIGN.md), and [`PROPOSED-DATA-MODEL-REVIEW.md`](PROPOSED-DATA-MODEL-REVIEW.md).
+
+- Spring 2027 is 2027-01-01 through 2027-06-30; preserve the existing season record.
+- Import Completed and Pending registrations; pending is payment status only and does not block evaluation.
+- Show registration status on player lists/details/reports, but not on evaluation screens.
+- Import out-of-scope programs for review, but exclude them from the active evaluation pool by default.
+- Evaluations are age-group based, with primary and makeup events; track attendance separately from ratings.
+- The app records post-draft assignments and optional advisory AA team suggestions; it does not replace official rostering.
+- The revised schema and import process are not implemented yet. Do not import real data until migrations, RLS, and role tests pass.

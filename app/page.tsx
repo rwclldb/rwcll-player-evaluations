@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createSeason } from "./actions";
 import Link from "next/link";
 import { Suspense } from "react";
+import { connection } from "next/server";
 
 function SeasonLoading() {
   return (
@@ -123,7 +124,11 @@ async function SeasonDashboard() {
   );
 }
 
-export default function Home() {
+async function HomeContent() {
+  // Supabase auth and season data are request-specific. Keep this route out of
+  // build-time prerendering when Cache Components are enabled.
+  await connection();
+
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">
       <header className="border-b border-gray-200 bg-white">
@@ -159,5 +164,20 @@ export default function Home() {
         </Suspense>
       </div>
     </main>
+  );
+}
+
+
+export default function Home() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-gray-50 p-6 text-gray-900">
+          <p className="mx-auto max-w-7xl text-sm text-gray-500">Loading Player Evaluation Center...</p>
+        </main>
+      }
+    >
+      <HomeContent />
+    </Suspense>
   );
 }

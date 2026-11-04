@@ -1,5 +1,31 @@
 # RWCLL secure evaluation workflow — local test plan
 
+> **Status:** The original tests below were written for a division-based evaluation model. The 2026-11-03 confirmed workflow is age-based and allows one age group to span eventual divisions. Do not treat the old division-specific setup as the final regression suite. Use the migration/design review documents to update the fixtures and foreign-key expectations before executing this plan.
+
+## Status after 2026-11-03 age-based workflow decisions
+- No migration for age-based evaluation groups, primary/makeup events, registration status, per-player attendance, or exemptions has been implemented by this documentation update.
+- Do not run this legacy test plan as the sole acceptance test for the revised workflow.
+- Do not apply migrations to hosted Supabase during this phase.
+- Preserve existing migrations; add reviewed migrations rather than editing already-applied files.
+
+## Required additional regression coverage
+1. One player-season registration can exist without a division/team assignment.
+2. One age-based group can contain players later assigned to different divisions.
+3. A group supports primary and makeup events; each player's attendance is stored separately per event.
+4. Pending and completed registrations are importable and evaluation-eligible; payment status is not exposed by evaluation reads.
+5. Registration status appears in authorized player lists/details/reports.
+6. Duplicate Player IDs within a batch block unsafe commit and never auto-merge players.
+7. Same external ID across seasons is allowed; matching remains admin-confirmed; different IDs do not block candidate review.
+8. Out-of-scope source programs are imported with a review flag and excluded from active evaluation by default.
+9. Registration numbers may remain null; assigned values are unique in the agreed season scope.
+10. Injured present players can have no/partial ratings without fabricated scores; attendance and evaluation completeness remain distinct.
+11. Exemptions require admin authorization, explicit scope, reason, approver, timestamp, and audit record.
+12. Final team/division assignment occurs after evaluation; no player has more than one team assignment per season; age-placement rules and exceptions are explicit.
+13. Existing RLS guarantees remain intact for admin, coach, and independent evaluator roles; coach-safe aggregate and private-note protections are tested at database level.
+
+## Legacy division-based tests (retain as reference, update before execution)
+
+
 **Do not run this migration against hosted Supabase.** These checks are for a local database only.
 
 ## Files

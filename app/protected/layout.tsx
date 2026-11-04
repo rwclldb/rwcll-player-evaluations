@@ -5,12 +5,16 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 import { hasEnvVars } from "@/lib/utils";
 import Link from "next/link";
 import { Suspense } from "react";
+import { connection } from "next/server";
 
-export default function ProtectedLayout({
+async function ProtectedLayoutContent({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Auth state is request-specific; render this protected shell per request.
+  await connection();
+
   return (
     <main className="min-h-screen flex flex-col items-center">
       <div className="flex-1 w-full flex flex-col gap-20 items-center">
@@ -51,5 +55,24 @@ export default function ProtectedLayout({
         </footer>
       </div>
     </main>
+  );
+}
+
+
+export default function ProtectedLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen flex items-center justify-center p-6">
+          <p className="text-sm text-muted-foreground">Loading protected workspace...</p>
+        </main>
+      }
+    >
+      <ProtectedLayoutContent>{children}</ProtectedLayoutContent>
+    </Suspense>
   );
 }

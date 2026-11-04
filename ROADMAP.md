@@ -19,7 +19,7 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [x] Generate a permanent internal player ID; use name/birthdate only to suggest import matches, with administrator confirmation and no silent merges.
 - [x] Coaches may be assigned to multiple teams in a season.
 - [x] Coaches can view authorized group averages, but must not see a comparison of their assigned-team averages against division-wide averages.
-- [x] One evaluation session per division per season, with multiple evaluators.
+- [x] Confirm age-based evaluation groups that can include players later drafted to different divisions; this supersedes the prior division-based session assumption.
 - [x] Each player has one roster assignment per season (no multiple team rosters in the same season).
 - [x] Store a season-specific `evaluation_number` for identifying the player by the number they wear during evaluations; it does not carry over.
 
@@ -40,7 +40,7 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [x] Agree on conceptual entities and relationships; see `docs/DATABASE-DESIGN.md` (proposed only).
 - [x] Confirm season-scoped many-to-many coach/team assignments.
 - [x] Confirm coach-facing visibility rule: do not show a comparison between assigned-team averages and division-wide averages.
-- [x] Confirm one evaluation session per season division, with multiple evaluators.
+- [x] Confirm age-based evaluation groups and primary/makeup events; schema implementation remains pending.
 - [x] Confirm one player roster record per season.
 - [x] Confirm season-specific evaluation number displayed to evaluators; does not carry over between seasons.
 - [ ] Review and approve detailed database design before migration work.
@@ -57,7 +57,7 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [ ] Implement and test secure aggregate outputs for assigned-team and division views; no individual rating access for coaches.
 
 ## 4. Evaluations and permissions
-- [ ] Create one evaluation session per season division and evaluator assignments.
+- [ ] Replace division-based evaluation session model with age-based groups, dated primary/makeup events, and evaluator assignments.
 - [ ] Implement coach and independent-evaluator submission flows.
 - [ ] Support coaches assigned to multiple teams in a season.
 - [ ] Require five core ratings for submitted evaluations.
@@ -82,7 +82,7 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 
 ## 6. User experience and launch
 - [ ] Build role-specific dashboards and evaluation screens.
-- [ ] Support one session per division with multiple evaluator workflows.
+- [ ] Support age-group evaluation events with multiple evaluators, per-player attendance, and separate performance records.
 - [ ] Test phone, tablet, and desktop layouts.
 - [ ] Test backup/restore and retention procedures.
 - [ ] Confirm league policy for children’s names, birthdates, and retention.
@@ -93,7 +93,7 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 ## Current checkpoint
 **Verified:** local app runs; `.env.local` is Git-ignored; scaffold is pushed; Supabase sign-in and protected-page claims work.
 
-**Design confirmed, not implemented:** a new season carries forward only the editable division setup; teams/team names and coach assignments are not copied, and teams are named after evaluations; evaluations and historical results are never copied into a new season. Coaches may be assigned to multiple teams; coach-facing views must not show a comparison between assigned-team averages and division-wide averages; one session exists per division per season with multiple evaluators; each player has one roster record per season; `evaluation_number` is season-specific and used to match the on-screen player to the number worn during evaluations; permanent internal player IDs are generated independently of personal data, and import matches require administrator confirmation; completed seasons are closed by default and require an explicit, audited administrator action to reopen.
+**Design confirmed, not implemented:** a new season carries forward only the editable division setup; teams/team names and coach assignments are not copied, and teams are named after evaluations; evaluations and historical results are never copied into a new season. Coaches may be assigned to multiple teams; coach-facing views must not show a comparison between assigned-team averages and division-wide averages; age-based evaluation groups can span multiple eventual divisions, with primary/makeup events and multiple evaluators; each player has one roster record per season; `evaluation_number` is season-specific and used to match the on-screen player to the number worn during evaluations; permanent internal player IDs are generated independently of personal data, and import matches require administrator confirmation; completed seasons are closed by default and require an explicit, audited administrator action to reopen.
 
 **Next:** review/approve `docs/DATABASE-DESIGN.md`, then establish the SQL migration workflow. Database tables, aggregate functions, and RLS are not yet implemented.
 
@@ -113,3 +113,32 @@ These are agreed requirements, not implemented features. Keep implementation che
 - [ ] An administrator can flag a coach's child for automatic placement on that coach's team. All coaches may see which players are designated as a coach's child; the designation is not hidden from coaches.
 - [ ] Team suggestions may use available ratings, age, experience, and pitching/catching information. Missing ratings remain missing; use available information without inventing scores.
 - [ ] Players added after team formation may have no evaluations. Preserve existing and historical ratings; do not silently alter or overwrite them.
+
+## 4. Newly confirmed workflow requirements (2026-11-03)
+- [x] Spring 2027 season is 2027-01-01 through 2027-06-30; preserve the existing record.
+- [x] Active baseball divisions: AA, AAA, Majors, Juniors, Seniors.
+- [x] Import all registrations including Pending; pending means payment is outstanding, not evaluation-ineligible. The app does not process payments.
+- [x] Show registration status on player lists, player details, and reports; never show it on evaluation screens.
+- [x] Import out-of-scope programs but flag for admin review and exclude from active evaluation pool by default.
+- [x] Use supplied registration/evaluation number if present; otherwise leave blank until assigned.
+- [x] Group evaluations by official Little League age, not final division; one age group may span multiple eventual divisions.
+- [x] Track per-player attendance at each primary/makeup event separately from ratings; injured present players may have no or partial ratings.
+- [x] Admin exemptions can resolve attendance and/or evaluation requirements only with explicit scope, reason, approver, and timestamp.
+- [x] App records post-draft team/division assignments; it does not perform the official draft or replace official rostering.
+- [x] Draft order is Seniors → Juniors → Majors → AAA → AA; mandatory top-age placement rules and admin-approved exceptions must be explicit and based on verified league rules.
+- [x] Optional AA random team suggestions are advisory and require admin review.
+
+## 5. Next implementation sequence (not yet implemented)
+1. [ ] Reconcile the existing schema with the proposed age-based workflow; do not apply a migration yet.
+2. [ ] Finalize and review `docs/IMPORT-WORKFLOW-DESIGN.md` and `docs/PROPOSED-DATA-MODEL-REVIEW.md`.
+3. [ ] Implement CSV preview/validation, duplicate conflict handling, explicit identity matching, and admin-confirmed import transaction.
+4. [ ] Add season registration status and out-of-scope review flags.
+5. [ ] Add age-based evaluation groups, primary/makeup events, per-player attendance, performance records, and audited exemptions.
+6. [ ] Add post-draft division/team assignment and configurable age-placement rules.
+7. [ ] Validate the migration chain on a disposable local Supabase instance; reconcile RLS and regression tests.
+8. [ ] Run `npm run lint` and `npm run build`; record results.
+9. [ ] Test with separate admin, coach, and evaluator accounts and synthetic import edge cases.
+10. [ ] Only after local review and explicit approval, plan hosted migration deployment.
+
+**Status note:** the project ZIP contains five migrations, but their presence is not proof that this newly proposed workflow exists or is fully tested. Do not mark the new workflow complete until implementation and tests pass.
+
