@@ -22,7 +22,8 @@
                     "manual:import-commit-retry": "node scripts/test-import-commit-retry.cjs",
                     "manual:import-commit-regressions": "npm run manual:import-commit-duplicate-identifiers && npm run manual:import-commit-retry",
                     "manual:import-commit-approved-match": "node scripts/test-import-commit-approved-match.cjs",
-                    "manual:import-commit-registration-conflict-local": "node scripts/test-import-commit-registration-conflict-local.cjs"
+                    "manual:import-commit-registration-conflict-local": "node scripts/test-import-commit-registration-conflict-local.cjs",
+                    "manual:import-commit-registration-conflict-remote": "node scripts/test-import-commit-registration-conflict-remote.cjs"
                 },
     "dependencies":  {
                          "@radix-ui/react-checkbox":  "^1.3.1",

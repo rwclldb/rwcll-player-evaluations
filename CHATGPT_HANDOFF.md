@@ -107,40 +107,28 @@ See `docs/DECISIONS.md` and `ROADMAP.md` for the fuller record. If a conflict ap
 - Remote test artifact intentionally retained: import batch ID 2, staged row ID 9. It is approved but uncommitted. Do not treat it as a real registration; inspect it before any cleanup.
 - The fake import batch 1 also contains intentionally duplicated `TEST-DUP` staged rows 5 and 6. Preserve these unless cleanup is explicitly planned.
 
-### Phase 5.5 — Import Commit Regression Test Status
+## Phase 5.5 — Remote duplicate-registration protection
 
-**Commit workflow:** The Phase 5.5 Sports Connect commit migration is `20261104230000_phase_5_5_sports_connect_commit.sql`. The import workflow uses protected staging, explicit administrative review, and a database commit RPC. Do not bypass staging or review by directly writing imported data to player or player-season tables.
+**Migration:** `20261105010000_handle_existing_registration_in_import_commit.sql`
 
-**Automated tests:** `npm run test:all` runs the project's consolidated automated checks, including lint, TypeScript, production build, and registered test scripts. Keep remote database tests requiring credentials or remote writes outside the default suite.
+- Applied to local Supabase and the hosted development Supabase project.
+- Prevents an approved-match import from creating a second registration for the same player and season.
+- Rejects the conflicting commit without changing the existing player's identity, creating another registration, incrementing the batch's processed count, or recording a commit audit event for the rejected row.
+- Preserves successful approved-match behavior and retry idempotency.
 
-**Duplicate-identifier regression tests:**
-- `manual:import-commit-duplicate-id`: tests database rejection of a duplicate external player ID.
-- `manual:import-commit-duplicate-registration-id`: tests database rejection of a duplicate external registration number.
-- `manual:import-commit-duplicate-identifiers`: runs both tests sequentially.
+**Verification completed:**
+- `npm run test:all` — passed.
+- `git diff --check` — passed.
+- Remote approved-match regression test — passed. Synthetic registration and audit records were intentionally retained.
+- Remote duplicate-registration conflict test — passed. Synthetic test records were intentionally retained.
+- Migration history verified locally and remotely.
 
-**Verified duplicate-registration test:** Passed all 11 checks against the configured remote Supabase project. The database rejected the duplicate `REG-7003` registration with SQLSTATE `23505`. No player, player-season registration, or commit-audit event was created. The original registration remained intact, and the staged row remained `approved_new` and uncommitted.
+**Manual test command added:**
+- `npm run manual:import-commit-registration-conflict-remote`
 
-**Retained test artifact:** Batch `3`, staged row `10`, intentionally remains for inspection. It is approved but uncommitted. Do not treat this test artifact as a real player registration.
+**Environment note:** `.env.local` remains configured for local Supabase development. Remote test scripts require explicit authorization and verify the expected hosted project. Do not weaken the local-only guard on the local conflict test.
 
-**Remaining Phase 5.5 verification:** Continue testing authorization boundaries, rejected or invalid commits, idempotent retries, transaction rollback/partial failure, audit consistency, and row-level security. A passing duplicate-identifier test does not establish that all import-commit failure paths are safe.
-
-**Remote test safety:** Remote regression tests require explicit opt-in via `ALLOW_REMOTE_IMPORT_TESTS=YES`, the expected project URL guard, and administrator authentication. Do not remove these safeguards or include remote-write tests in `test:all` by default.
-
-### Idempotent Import Commit Retry — Verified
-
-- Remote retry regression test passed all 15 checks.
-- Verified the expected hosted Supabase project and administrator authorization.
-- Test batch ID: 5.
-- Staged row ID: 11.
-- Player-season registration ID: 5.
-- First commit created exactly one player, one registration, and one
-  `sports_connect_import_row_committed` audit event.
-- Retrying the same committed row returned the original registration ID
-  without creating additional players, registrations, or commit audit events.
-- The staged row remained committed and referenced the original registration.
-- Synthetic test records were intentionally retained for inspection.
-- Full local test suite: 10 passed, 0 failed.
-- Remote write tests remain separate from the default `npm run test:all` suite.
+**Next:** Continue Phase 5.5 regression coverage and review the remaining import workflow before moving to the next roadmap milestone.
 
 ## Safety and handling notes
 
