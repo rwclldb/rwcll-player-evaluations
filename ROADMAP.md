@@ -193,14 +193,22 @@ These are agreed requirements, not implemented features. Keep implementation che
 - [x] Verify the original registration remains intact.
 - [x] Verify the failed row remains uncommitted and no commit audit event is written.
 - [x] Run the consolidated automated suite: 10 passed, 0 failed.
-- [ ] Test duplicate external registration numbers.
+- [X] Test duplicate external registration numbers.
 - [ ] Test duplicate identifiers across batches and seasons.
 - [ ] Test approved-match behavior for preservation of existing player master data.
 - [ ] Continue broader authorization, RLS, audit, and failure-recovery testing.
+- [ ] Verify non-administrator authorization and rejected commit paths.
+- [ ] Verify invalid or incomplete rows cannot be committed.
+- [ ] Verify idempotent retries do not create duplicate registrations or audit events.
+- [ ] Verify transaction rollback and partial-failure behavior.
+- [ ] Verify audit consistency and relevant RLS protections.
+- [ ] Re-run the full default test suite after code changes.
 
 **Retained remote test artifact:** batch 2, row 9. This is a disposable approved-but-uncommitted staging record, not a committed registration. Review it before deciding whether to clean it up.
 
 **Migration status:** all eight migrations are recorded as applied in both local and remote migration lists. No hosted migration or schema change is authorized by this status update.
+
+**Safety boundary:** Keep remote-write regression tests separate from npm run test:all. Preserve the remote URL guard, explicit ALLOW_REMOTE_IMPORT_TESTS=YES opt-in, and administrator authentication. Do not apply additional migrations or make unrelated schema changes as part of this testing work.
 
 
 **Status note:** the project ZIP contains five migrations, but their presence is not proof that this newly proposed workflow exists or is fully tested. Do not mark the new workflow complete until implementation and tests pass.

@@ -24,7 +24,7 @@ function askEmail() {
   });
 
   return new Promise((resolve) => {
-    rl.question("Local administrator email: ", (email) => {
+    rl.question("Administrator email: ", (email) => {
       rl.close();
       resolve(email.trim());
     });
@@ -142,9 +142,9 @@ if (process.env.ALLOW_REMOTE_IMPORT_TESTS !== "YES") {
     await supabase.auth.signInWithPassword({ email, password });
 
   if (signInError || !signIn?.user) {
-    throw new Error("Could not sign in to the local Supabase project.");
+    throw new Error("Could not sign in to the configured Supabase project.");
   }
-  console.log("PASS: Signed in to local Supabase.");
+  console.log("PASS: Signed in to the configured Supabase.");
 
   const { data: isAdmin, error: adminError } =
     await supabase.rpc("is_admin");

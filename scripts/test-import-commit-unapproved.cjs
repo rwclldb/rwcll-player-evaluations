@@ -75,7 +75,7 @@ async function main() {
   }
 
   try {
-    const email = await ask("Local administrator email: ");
+    const email = await ask("Administrator email: ");
     //const password = process.env.LOCAL_TEST_PASSWORD;
      const password = await readHiddenPassword();
     if (!password) {

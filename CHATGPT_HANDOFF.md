@@ -107,14 +107,24 @@ See `docs/DECISIONS.md` and `ROADMAP.md` for the fuller record. If a conflict ap
 - Remote test artifact intentionally retained: import batch ID 2, staged row ID 9. It is approved but uncommitted. Do not treat it as a real registration; inspect it before any cleanup.
 - The fake import batch 1 also contains intentionally duplicated `TEST-DUP` staged rows 5 and 6. Preserve these unless cleanup is explicitly planned.
 
-### Remaining Phase 5.5 validation
+### Phase 5.5 — Import Commit Regression Test Status
 
-- Test duplicate external registration numbers against existing registrations and across batches.
-- Verify matching an existing player does not overwrite master player data.
-- Expand tests across seasons and staged batches.
-- Continue authorization, RLS, audit, and failure-recovery verification.
-- Do not infer that the entire application security workflow is complete from the current import tests.
-- Do not apply migrations, reset the hosted database, or change hosted records without explicit approval.
+**Commit workflow:** The Phase 5.5 Sports Connect commit migration is `20261104230000_phase_5_5_sports_connect_commit.sql`. The import workflow uses protected staging, explicit administrative review, and a database commit RPC. Do not bypass staging or review by directly writing imported data to player or player-season tables.
+
+**Automated tests:** `npm run test:all` runs the project's consolidated automated checks, including lint, TypeScript, production build, and registered test scripts. Keep remote database tests requiring credentials or remote writes outside the default suite.
+
+**Duplicate-identifier regression tests:**
+- `manual:import-commit-duplicate-id`: tests database rejection of a duplicate external player ID.
+- `manual:import-commit-duplicate-registration-id`: tests database rejection of a duplicate external registration number.
+- `manual:import-commit-duplicate-identifiers`: runs both tests sequentially.
+
+**Verified duplicate-registration test:** Passed all 11 checks against the configured remote Supabase project. The database rejected the duplicate `REG-7003` registration with SQLSTATE `23505`. No player, player-season registration, or commit-audit event was created. The original registration remained intact, and the staged row remained `approved_new` and uncommitted.
+
+**Retained test artifact:** Batch `3`, staged row `10`, intentionally remains for inspection. It is approved but uncommitted. Do not treat this test artifact as a real player registration.
+
+**Remaining Phase 5.5 verification:** Continue testing authorization boundaries, rejected or invalid commits, idempotent retries, transaction rollback/partial failure, audit consistency, and row-level security. A passing duplicate-identifier test does not establish that all import-commit failure paths are safe.
+
+**Remote test safety:** Remote regression tests require explicit opt-in via `ALLOW_REMOTE_IMPORT_TESTS=YES`, the expected project URL guard, and administrator authentication. Do not remove these safeguards or include remote-write tests in `test:all` by default.
 
 
 
