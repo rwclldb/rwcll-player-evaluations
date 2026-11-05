@@ -13,6 +13,7 @@
                     "test:import-commit":  "node scripts/test-import-commit.cjs",
                     "test:import-commit-action":  "node scripts/test-import-commit-action.cjs",
                     "test:import-commit-registration-conflict": "node scripts/test-import-commit-registration-conflict.cjs",
+                    "test:import-duplicate-player-id-resolution": "node scripts/test-import-duplicate-player-id-resolution.cjs",
                     "test:all":  "node scripts/run-tests.cjs",
                     "manual:import-commit-nonadmin":  "node scripts/test-import-commit-nonadmin.cjs",
                     "manual:import-commit-unapproved":  "node scripts/test-import-commit-unapproved.cjs",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { saveImportRowReview, commitImportRow } from "../../review-actions";
+import { saveImportRowReview, commitImportRow, resolveDuplicatePlayerIdWarning } from "../../review-actions";
 import { useRouter } from "next/navigation";
 
 
@@ -19,6 +19,9 @@ export function ReviewDecisionForm({
   committedPlayerSeasonId,
   candidates,
   disabled,
+  hasDuplicatePlayerIdFlag,
+  duplicatePlayerIdResolvedAt,
+  duplicatePlayerIdResolutionReason
 }: {
   rowId: number;
   batchId: number;
@@ -28,6 +31,9 @@ export function ReviewDecisionForm({
   committedPlayerSeasonId: number | null;
   candidates: Candidate[];
   disabled: boolean;
+  hasDuplicatePlayerIdFlag: boolean;
+  duplicatePlayerIdResolvedAt: string | null;
+  duplicatePlayerIdResolutionReason: string | null;
 }) {
   const isCommitted = currentDecision === "committed";
   const [decision, setDecision] = useState(currentDecision);
@@ -39,6 +45,9 @@ export function ReviewDecisionForm({
   const router = useRouter();
   const [commitReason, setCommitReason] = useState("");
   const [commitMessage, setCommitMessage] = useState("");
+  const [duplicateResolutionReason, setDuplicateResolutionReason] = useState("");
+  const [duplicateResolutionMessage, setDuplicateResolutionMessage] = useState("");
+  const duplicatePlayerIdResolved = Boolean(duplicatePlayerIdResolvedAt);
   function submit() {
     setMessage("");
     const data = new FormData();
@@ -77,6 +86,30 @@ function submitCommit() {
   });
 }
 
+function submitDuplicateResolution() {
+  setDuplicateResolutionMessage("");
+
+  const data = new FormData();
+  data.set("rowId", String(rowId));
+  data.set("batchId", String(batchId));
+  data.set("reason", duplicateResolutionReason);
+
+  startTransition(async () => {
+    const result = await resolveDuplicatePlayerIdWarning(data);
+
+    if (!result.ok) {
+      setDuplicateResolutionMessage(result.message);
+      return;
+    }
+
+    setDuplicateResolutionMessage(
+      "Duplicate Player ID warning resolved and audit entry recorded.",
+    );
+    setDuplicateResolutionReason("");
+    router.refresh();
+  });
+}
+
   return <div className="flex flex-col gap-3 border-t pt-4">
         {isCommitted && (
       <section
@@ -96,6 +129,69 @@ function submitCommit() {
         </p>
       </section>
     )}
+    
+{hasDuplicatePlayerIdFlag && (
+  <section className="flex flex-col gap-3 rounded-lg border border-amber-500/50 p-4">
+    <h3 className="font-semibold">Duplicate Player ID warning</h3>
+
+    {duplicatePlayerIdResolved ? (
+      <div className="text-sm">
+        <p className="font-medium">Explicitly resolved</p>
+        <p className="mt-1">
+          Resolution reason: {duplicatePlayerIdResolutionReason || "Not available"}
+        </p>
+        <p className="mt-1 text-muted-foreground">
+          The original import warning is preserved. The resolution and its
+          audit entry are recorded separately.
+        </p>
+      </div>
+    ) : (
+      <>
+        <p className="text-sm">
+          This row has a duplicate Player ID warning from the uploaded file.
+          Verify the source rows and intended player identity before resolving
+          it. Saving a review decision alone does not resolve this warning.
+        </p>
+
+        <label className="flex flex-col gap-1 text-sm">
+          Resolution reason (required, 5–1,000 characters)
+          <textarea
+            className="min-h-20 rounded-md border bg-background p-2"
+            minLength={5}
+            maxLength={1000}
+            required
+            value={duplicateResolutionReason}
+            onChange={(e) => setDuplicateResolutionReason(e.target.value)}
+            disabled={disabled || isPending || isCommitted}
+            placeholder="Explain how you checked the duplicate ID and why it is safe to proceed."
+          />
+        </label>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            className="rounded-md border border-amber-600 px-4 py-2 disabled:opacity-50"
+            onClick={submitDuplicateResolution}
+            disabled={
+              disabled ||
+              isPending ||
+              isCommitted ||
+              duplicateResolutionReason.trim().length < 5 ||
+              duplicateResolutionReason.trim().length > 1000
+            }
+          >
+            {isPending ? "Processing…" : "Resolve duplicate Player ID warning"}
+          </button>
+
+          <span aria-live="polite" role="status" className="text-sm">
+            {duplicateResolutionMessage}
+          </span>
+        </div>
+      </>
+    )}
+  </section>
+)}
+
     <h3 className="font-semibold">Review decision</h3>
     <label className="flex flex-col gap-1 text-sm">Decision<select className="rounded-md border bg-background p-2" value={decision} onChange={(e) => setDecision(e.target.value)} disabled={disabled || isPending}>{Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
     {match && <label className="flex flex-col gap-1 text-sm">Existing player (required)<select className="rounded-md border bg-background p-2" value={matchedPlayerId} onChange={(e) => setMatchedPlayerId(e.target.value)} disabled={disabled || isPending}><option value="">Choose a candidate — verify identity</option>{candidates.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>{candidates.length === 0 && <span className="text-amber-700">No suggestions available. Do not approve a match without verifying the player.</span>}</label>}

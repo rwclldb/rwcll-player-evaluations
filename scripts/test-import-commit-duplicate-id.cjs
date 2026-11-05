@@ -93,9 +93,10 @@ async function exactCount(query, label) {
 
 async function main() {
   const env = {
-    ...readEnvFile(path.join(process.cwd(), ".env")),
-    ...readEnvFile(path.join(process.cwd(), ".env.local")),
-  };
+  ...readEnvFile(path.join(process.cwd(), ".env")),
+  ...readEnvFile(path.join(process.cwd(), ".env.local")),
+  ...process.env,
+};
 
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
   const key =

@@ -3,8 +3,10 @@ const path = require("node:path");
 const { createClient } = require("@supabase/supabase-js");
 
 function loadEnvFile(filePath) {
-  const contents = fs.readFileSync(filePath, "utf8");
+  
   const values = {};
+    if (!fs.existsSync(filePath)) return values;
+    const contents = fs.readFileSync(filePath, "utf8");
 
   for (const line of contents.split(/\r?\n/)) {
     const match = line.match(/^\s*(NEXT_PUBLIC_SUPABASE_URL|NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)\s*=\s*(.*?)\s*$/);
@@ -17,7 +19,12 @@ function loadEnvFile(filePath) {
 }
 
 async function main() {
-  const env = loadEnvFile(path.join(process.cwd(), ".env.local"));
+  
+  const env = {
+  ...loadEnvFile(path.join(process.cwd(), ".env")),
+  ...loadEnvFile(path.join(process.cwd(), ".env.local")),
+  ...process.env,
+};
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
   const key = env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 

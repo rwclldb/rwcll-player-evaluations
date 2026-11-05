@@ -10,7 +10,8 @@ type Row = {
   first_name: string; last_name: string; birth_date_text: string | null; birth_date: string | null;
   source_program: string | null; source_division: string | null; registration_number: string | null;
   payment_status: string | null; league_age: number | null; review_flags: unknown; review_state: string;
-  matched_player_id: number | null; committed_player_season_id: number | null;
+  matched_player_id: number | null; committed_player_season_id: number | null; duplicate_player_id_resolved_at: string | null; 
+  duplicate_player_id_resolved_by: string | null; duplicate_player_id_resolution_reason: string | null;
 };
 type Player = { id: number; first_name: string; last_name: string; date_of_birth: string | null };
 
@@ -34,7 +35,7 @@ async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId:
   if (batchError || !batch) return <main className="mx-auto max-w-4xl p-6"><h1 className="text-2xl font-bold">Batch unavailable</h1><p role="alert">Could not load this player import batch. No data was changed.</p><Link className="underline" href="/protected/import-batches">Back to batches</Link></main>;
 
   const { data: rows, error: rowsError } = await supabase.from("sports_connect_import_rows")
-    .select("id, source_row_number, external_player_id, first_name, last_name, birth_date_text, birth_date, source_program, source_division, registration_number, payment_status, league_age, review_flags, review_state, matched_player_id, committed_player_season_id")
+    .select("id, source_row_number, external_player_id, first_name, last_name, birth_date_text, birth_date, source_program, source_division, registration_number, payment_status, league_age, review_flags, review_state, matched_player_id, committed_player_season_id, duplicate_player_id_resolved_at, duplicate_player_id_resolved_by, duplicate_player_id_resolution_reason")
     .eq("import_batch_id", id).order("source_row_number", { ascending: true }).limit(5000);
   const { data: players, error: playersError } = await supabase.from("players")
     .select("id, first_name, last_name, date_of_birth").order("id", { ascending: true }).limit(1000);
@@ -89,8 +90,28 @@ async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId:
         <div className="flex flex-wrap items-start justify-between gap-2"><div><h2 className="text-lg font-semibold">Row {rowData.source_row_number}: {rowData.first_name} {rowData.last_name}</h2><p className="text-sm text-muted-foreground">Staged row #{rowData.id} · State: {rowData.review_state}</p></div><span className="rounded-full border px-3 py-1 text-xs">{rowData.review_state}</span></div>
         <dl className="grid gap-2 text-sm sm:grid-cols-2"><div><dt className="font-medium">Sports Connect ID</dt><dd>{rowData.external_player_id || "—"}</dd></div><div><dt className="font-medium">Birth date</dt><dd>{rowData.birth_date_text || rowData.birth_date || "—"}</dd></div><div><dt className="font-medium">Program / division</dt><dd>{rowData.source_program || "—"} / {rowData.source_division || "—"}</dd></div><div><dt className="font-medium">Registration / payment</dt><dd>{rowData.registration_number || "—"} / {rowData.payment_status || "—"}</dd></div><div><dt className="font-medium">League age</dt><dd>{rowData.league_age ?? "—"}</dd></div></dl>
         {flags(rowData.review_flags).length > 0 && <div className="rounded-md bg-muted p-3 text-sm"><strong>Flags:</strong> {flags(rowData.review_flags).join(" · ")}</div>}
-        <ReviewDecisionForm rowId={rowData.id} batchId={id} currentDecision={rowData.review_state} currentMatchedPlayerId={rowData.matched_player_id} committedPlayerLabel={committedPlayerLabel} committedPlayerSeasonId={rowData.committed_player_season_id} candidates={matches.map((p) => ({ id: p.id, label: `#${p.id} · ${p.first_name} ${p.last_name}${p.date_of_birth ? ` · ${p.date_of_birth}` : ""}` }))} disabled={rowData.review_state === "committed" || Boolean(rowsError)} />
-      </article>;
+        <ReviewDecisionForm
+  rowId={rowData.id}
+  batchId={id}
+  currentDecision={rowData.review_state}
+  currentMatchedPlayerId={rowData.matched_player_id}
+  committedPlayerLabel={committedPlayerLabel}
+  committedPlayerSeasonId={rowData.committed_player_season_id}
+  candidates={matches.map((p) => ({
+    id: p.id,
+    label: `#${p.id} · ${p.first_name} ${p.last_name}${
+      p.date_of_birth ? ` · ${p.date_of_birth}` : ""
+    }`,
+  }))}
+  hasDuplicatePlayerIdFlag={flags(rowData.review_flags).includes(
+    "Duplicate Player ID in file",
+  )}
+  duplicatePlayerIdResolvedAt={rowData.duplicate_player_id_resolved_at}
+  duplicatePlayerIdResolutionReason={
+    rowData.duplicate_player_id_resolution_reason
+  }
+  disabled={rowData.review_state === "committed" || Boolean(rowsError)}
+/></article>;
     })}
     <p className="text-xs text-muted-foreground">Candidate list is limited to the first 1,000 visible players and up to 10 suggestions per row. A suggestion is not an identity match; verify manually.</p>
   </main>;
