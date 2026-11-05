@@ -10,7 +10,7 @@ type Row = {
   first_name: string; last_name: string; birth_date_text: string | null; birth_date: string | null;
   source_program: string | null; source_division: string | null; registration_number: string | null;
   payment_status: string | null; league_age: number | null; review_flags: unknown; review_state: string;
-  matched_player_id: number | null;
+  matched_player_id: number | null; committed_player_season_id: number | null;
 };
 type Player = { id: number; first_name: string; last_name: string; date_of_birth: string | null };
 
@@ -34,11 +34,39 @@ async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId:
   if (batchError || !batch) return <main className="mx-auto max-w-4xl p-6"><h1 className="text-2xl font-bold">Batch unavailable</h1><p role="alert">Could not load this player import batch. No data was changed.</p><Link className="underline" href="/protected/import-batches">Back to batches</Link></main>;
 
   const { data: rows, error: rowsError } = await supabase.from("sports_connect_import_rows")
-    .select("id, source_row_number, external_player_id, first_name, last_name, birth_date_text, birth_date, source_program, source_division, registration_number, payment_status, league_age, review_flags, review_state, matched_player_id")
+    .select("id, source_row_number, external_player_id, first_name, last_name, birth_date_text, birth_date, source_program, source_division, registration_number, payment_status, league_age, review_flags, review_state, matched_player_id, committed_player_season_id")
     .eq("import_batch_id", id).order("source_row_number", { ascending: true }).limit(5000);
   const { data: players, error: playersError } = await supabase.from("players")
     .select("id, first_name, last_name, date_of_birth").order("id", { ascending: true }).limit(1000);
   const candidates = (players ?? []) as Player[];
+    const committedRegistrationIds = (rows ?? [])
+    .map((row) => (row as Row).committed_player_season_id)
+    .filter((value): value is number => value !== null);
+
+  const { data: committedRegistrations } = committedRegistrationIds.length
+    ? await supabase
+        .from("player_seasons")
+        .select("id, player_id")
+        .in("id", committedRegistrationIds)
+    : { data: [] };
+
+  const committedPlayerIds = [
+    ...new Set((committedRegistrations ?? []).map((registration) => registration.player_id)),
+  ];
+
+  const { data: committedPlayers } = committedPlayerIds.length
+    ? await supabase
+        .from("players")
+        .select("id, first_name, last_name, date_of_birth")
+        .in("id", committedPlayerIds)
+    : { data: [] };
+
+  const committedPlayerByRegistrationId = new Map(
+    (committedRegistrations ?? []).map((registration) => [
+      registration.id,
+      (committedPlayers ?? []).find((player) => player.id === registration.player_id),
+    ]),
+  );
 
   return <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
     <div className="flex flex-col gap-2"><Link className="text-sm underline" href={`/protected/import-batches/${id}`}>← Back to batch detail</Link><h1 className="text-3xl font-bold">Administrator row review · Batch #{id}</h1><p className="text-muted-foreground">{batch.source_file_name || "Unnamed file"}</p></div>
@@ -49,11 +77,19 @@ async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId:
       const name = `${rowData.first_name} ${rowData.last_name}`.trim().toLocaleLowerCase("en-US");
       const date = rowData.birth_date;
       const matches = candidates.filter((p) => (`${p.first_name} ${p.last_name}`).trim().toLocaleLowerCase("en-US") === name || (date && p.date_of_birth === date)).slice(0, 10);
+            const committedRegistrationId = rowData.committed_player_season_id;
+      const committedPlayer =
+        committedRegistrationId == null
+          ? undefined
+          : committedPlayerByRegistrationId.get(committedRegistrationId);
+      const committedPlayerLabel = committedPlayer
+        ? `#${committedPlayer.id} · ${committedPlayer.first_name} ${committedPlayer.last_name}`
+        : null;
       return <article key={rowData.id} className="flex flex-col gap-4 rounded-xl border p-5">
         <div className="flex flex-wrap items-start justify-between gap-2"><div><h2 className="text-lg font-semibold">Row {rowData.source_row_number}: {rowData.first_name} {rowData.last_name}</h2><p className="text-sm text-muted-foreground">Staged row #{rowData.id} · State: {rowData.review_state}</p></div><span className="rounded-full border px-3 py-1 text-xs">{rowData.review_state}</span></div>
         <dl className="grid gap-2 text-sm sm:grid-cols-2"><div><dt className="font-medium">Sports Connect ID</dt><dd>{rowData.external_player_id || "—"}</dd></div><div><dt className="font-medium">Birth date</dt><dd>{rowData.birth_date_text || rowData.birth_date || "—"}</dd></div><div><dt className="font-medium">Program / division</dt><dd>{rowData.source_program || "—"} / {rowData.source_division || "—"}</dd></div><div><dt className="font-medium">Registration / payment</dt><dd>{rowData.registration_number || "—"} / {rowData.payment_status || "—"}</dd></div><div><dt className="font-medium">League age</dt><dd>{rowData.league_age ?? "—"}</dd></div></dl>
         {flags(rowData.review_flags).length > 0 && <div className="rounded-md bg-muted p-3 text-sm"><strong>Flags:</strong> {flags(rowData.review_flags).join(" · ")}</div>}
-        <ReviewDecisionForm rowId={rowData.id} batchId={id} currentDecision={rowData.review_state} currentMatchedPlayerId={rowData.matched_player_id} candidates={matches.map((p) => ({ id: p.id, label: `#${p.id} · ${p.first_name} ${p.last_name}${p.date_of_birth ? ` · ${p.date_of_birth}` : ""}` }))} disabled={rowData.review_state === "committed" || Boolean(rowsError)} />
+        <ReviewDecisionForm rowId={rowData.id} batchId={id} currentDecision={rowData.review_state} currentMatchedPlayerId={rowData.matched_player_id} committedPlayerLabel={committedPlayerLabel} committedPlayerSeasonId={rowData.committed_player_season_id} candidates={matches.map((p) => ({ id: p.id, label: `#${p.id} · ${p.first_name} ${p.last_name}${p.date_of_birth ? ` · ${p.date_of_birth}` : ""}` }))} disabled={rowData.review_state === "committed" || Boolean(rowsError)} />
       </article>;
     })}
     <p className="text-xs text-muted-foreground">Candidate list is limited to the first 1,000 visible players and up to 10 suggestions per row. A suggestion is not an identity match; verify manually.</p>

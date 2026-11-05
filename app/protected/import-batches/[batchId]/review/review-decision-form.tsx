@@ -10,8 +10,24 @@ const labels: Record<string, string> = {
   needs_review: "Needs review", ready_for_match_review: "Ready for match review", approved_new: "Approve as new player (decision only)", approved_match: "Approve match to existing player", ignored: "Ignore this row",
 committed: "Committed (cannot change)",};
 
-export function ReviewDecisionForm({ rowId, batchId, currentDecision, currentMatchedPlayerId, candidates, disabled }: {
-  rowId: number; batchId: number; currentDecision: string; currentMatchedPlayerId: number | null; candidates: Candidate[]; disabled: boolean;
+export function ReviewDecisionForm({
+  rowId,
+  batchId,
+  currentDecision,
+  currentMatchedPlayerId,
+  committedPlayerLabel,
+  committedPlayerSeasonId,
+  candidates,
+  disabled,
+}: {
+  rowId: number;
+  batchId: number;
+  currentDecision: string;
+  currentMatchedPlayerId: number | null;
+  committedPlayerLabel: string | null;
+  committedPlayerSeasonId: number | null;
+  candidates: Candidate[];
+  disabled: boolean;
 }) {
   const isCommitted = currentDecision === "committed";
   const [decision, setDecision] = useState(currentDecision);
@@ -62,6 +78,24 @@ function submitCommit() {
 }
 
   return <div className="flex flex-col gap-3 border-t pt-4">
+        {isCommitted && (
+      <section
+        className="rounded-lg border bg-muted/30 p-4 text-sm"
+        aria-label="Committed registration details"
+      >
+        <h3 className="font-semibold">Commit details</h3>
+
+        <p className="mt-2">
+          <span className="font-medium">Player:</span>{" "}
+          {committedPlayerLabel ?? "Could not load the linked player name"}
+        </p>
+
+        <p>
+          <span className="font-medium">Season registration ID:</span>{" "}
+          {committedPlayerSeasonId ?? "—"}
+        </p>
+      </section>
+    )}
     <h3 className="font-semibold">Review decision</h3>
     <label className="flex flex-col gap-1 text-sm">Decision<select className="rounded-md border bg-background p-2" value={decision} onChange={(e) => setDecision(e.target.value)} disabled={disabled || isPending}>{Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
     {match && <label className="flex flex-col gap-1 text-sm">Existing player (required)<select className="rounded-md border bg-background p-2" value={matchedPlayerId} onChange={(e) => setMatchedPlayerId(e.target.value)} disabled={disabled || isPending}><option value="">Choose a candidate — verify identity</option>{candidates.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>{candidates.length === 0 && <span className="text-amber-700">No suggestions available. Do not approve a match without verifying the player.</span>}</label>}

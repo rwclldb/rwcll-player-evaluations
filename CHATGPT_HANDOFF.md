@@ -12,32 +12,40 @@
 - **Purpose:** Internal league player evaluation workflow for approximately 30–50 users; no parent/player accounts.
 - **Source of truth:** The checked-in repository files, especially `ROADMAP.md`, `docs/DECISIONS.md`, `docs/DATABASE-DESIGN.md`, and SQL migrations. Update those documents when durable decisions or implementation status changes.
 
-## Current observed state from the uploaded project archive
+## Current observed state — 2026-11-04
 
-This is based on inspection of the uploaded ZIP, not a live connection to GitHub, Supabase, or the developer's machine. The user has reported that migrations were applied locally and to hosted Supabase; actual live migration histories/schema have not been re-queried during this review.
+This status reflects the developer's reported local environment and test results. It is not a live inspection of GitHub or hosted Supabase.
 
-### Application
+### Application and development environment
 
-- The project contains the standard Next.js/Supabase starter authentication pages and Supabase SSR client/proxy setup.
-- `app/page.tsx` is already more than the original starter landing page: it queries `public.seasons`, displays seasons, and includes a create-season form.
-- `app/actions.ts` contains the `createSeason` server action with basic name/date validation and inserts into `seasons`.
-- `app/protected/page.tsx` still contains starter-template user-claims/tutorial content.
-- The starter sign-up route/UI is still present. The product requirement is admin-managed invitations and no public registration; that requirement is not yet fully implemented.
-- `package.json` defines `dev`, `build`, `start`, and `lint` scripts. No lint/build result was verified during this review.
+- Next.js 16.4.4 with React, TypeScript, and Supabase.
+- Development is performed on Windows using PowerShell.
+- Local project directory: `D:\sandbox\GitHubRepos\rwcll-player-evaluations`.
+- `.env.local` is configured for local Supabase.
+- Local Supabase Studio: `http://127.0.0.1:54323`.
+- Local Supabase API: `http://127.0.0.1:54321`.
+- Lint, standalone TypeScript checking, and production build have passed.
+- `npm run test:all` runs the import-related test scripts, lint, TypeScript, and production build. The latest reported run passed all 10 checks.
+- Detailed test output is written to `test-results/`.
 
-### Database/migrations
+### Database and import workflow
 
-The archive contains five timestamped SQL migrations:
+- Local migrations include the initial schema and subsequent security/workflow migrations through the Phase 5.5 Sports Connect commit workflow.
+- Phase 5.0 stages Sports Connect import rows without directly modifying player or season-registration records.
+- Later phases add row review decisions and an administrator-authorized commit operation.
+- The commit workflow supports approved new-player creation and approved matching to an existing player.
+- Committed rows are displayed as committed and cannot be changed through the review UI.
+- Successful synthetic import tests have been reported for both new-player and existing-player matches.
+- The local test data is synthetic. No real player data is intended to be present.
+- The latest reported validation covers 10 checks, including static import tests, lint, TypeScript, and production build.
 
-1. `20261103170921_initial_schema_baseline.sql`
-2. `20261103180000_add_rls_auto_enable_event_trigger.sql`
-3. `20261103193000_restore_private_correction_authorizations.sql`
-4. `20261103194500_add_evaluation_workflow_triggers.sql`
-5. `20261103200000_restrict_audit_log_writes.sql`
+### Important validation limits
 
-The baseline migration defines the main relational schema, functions, policies, and triggers. A later migration adds a private correction-authorization table and audited correction function; subsequent migrations add workflow guards and restrict direct audit-log writes.
+- Static checks do not replace runtime database-security tests.
+- The full set of rejected-operation, duplicate-identifier, idempotent-retry, rollback, and failure-recovery scenarios still needs verification.
+- Do not infer that all RLS policies, coach-safe reporting, or role-based access requirements are complete from the current test results.
+- Hosted Supabase migration state has not been freshly verified in this checkpoint. Do not assume local migration status proves hosted status.
 
-**Critical status distinction:** SQL files exist in the repository, but this archive does not prove that they have been applied to either a local or hosted Supabase database. The secure workflow test plan explicitly says these migrations have not been executed in this artifact-generation context and must be validated locally first. Do not apply unreviewed migrations to hosted/production Supabase.
 
 ### Documentation present
 
@@ -72,16 +80,20 @@ The baseline migration defines the main relational schema, functions, policies, 
 
 See `docs/DECISIONS.md` and `ROADMAP.md` for the fuller record. If a conflict appears, stop and reconcile it rather than silently choosing one version.
 
+
 ## Immediate next steps
 
-1. **Confirm repository state:** compare this archive to the latest GitHub `main` branch and local working tree. This archive may not include uncommitted work or Git history.
-2. **Review migration sequence and test-plan mismatch:** identify whether the five migrations are the intended final sequence; reconcile `docs/SECURE-WORKFLOW-TEST-PLAN.md` references to absent files with the actual SQL.
-3. **Validate locally only:** use a disposable/local Supabase database and test the full migration chain. Do not run destructive reset commands against hosted Supabase. Capture exact errors and fix via new migrations rather than casually rewriting already-applied migrations.
-4. **Test security with separate admin, coach, and evaluator accounts:** especially RLS, evaluator self-authorization, division/session boundaries, lock/closed-season behavior, audited corrections, audit-log write restrictions, historical read-only behavior, and coach-safe aggregates/notes.
-5. **Implement secure reporting projections:** the current secure workflow test plan explicitly notes that coach-safe aggregate summaries, identity-safe notes, and separate private/shared notes are not yet implemented. Do not expose raw evaluation joins to coaches.
-6. **Update `ROADMAP.md`, `docs/DECISIONS.md`, and this handoff** only after implementation and tests are actually complete.
-7. Run `npm run lint` and `npm run build`; record results and fix issues.
-8. Continue role-based UI, import preview/matching, absence workflow, and end-to-end test work according to the roadmap.
+1. Finish updating `ROADMAP.md`, `CHATGPT_HANDOFF.md`, and relevant import documentation to reflect the current implementation.
+2. Review the current working-tree changes and generated test reports; preserve all valid work before committing.
+3. Run the consolidated `npm run test:all` validation after further changes.
+4. Test unauthorized and rejected commits against local Supabase.
+5. Test repeat commits and retries to confirm that they do not create duplicate player or registration records.
+6. Test duplicate external IDs and registration numbers across staged rows, batches, seasons, and existing records.
+7. Test transaction rollback, audit behavior, and recovery from database failures.
+8. Verify relevant RLS and authorization behavior using separate administrator and non-administrator accounts.
+9. Continue the broader role-based application, evaluation, and secure reporting work according to the roadmap.
+10. Make no hosted database changes unless the user explicitly approves them.
+
 
 ## Safety and handling notes
 
@@ -95,6 +107,21 @@ See `docs/DECISIONS.md` and `ROADMAP.md` for the fuller record. If a conflict ap
 Upload the latest project ZIP (or connect the repository if an appropriate integration is available) and say: **“Continue the RWCLL Player Evaluations project. Read `CHATGPT_HANDOFF.md` first, then inspect the current roadmap, decision log, database design, and migrations. Confirm the current state before changing anything.”**
 
 At the end of each substantial work session, update this file with the current verified state, changed files, test results, decisions, blockers, and the single best next step. Keep it concise and factual; distinguish confirmed requirements, implemented code, and tested behavior.
+
+
+### Uncommitted work at the 2026-11-04 checkpoint
+
+The developer reported the following working-tree changes:
+
+- Modified import review page and review-decision form.
+- Modified `package.json` and the import-review UI test.
+- New `scripts/run-tests.cjs`.
+- New `scripts/test-import-commit-action.cjs`.
+- New `scripts/test-import-commit.cjs`.
+- New `test-results/` output.
+
+Review the complete working-tree diff and generated reports before committing. Do not discard these changes or assume they have been pushed to GitHub.
+
 
 ## Latest confirmed decisions and active redesign (2026-11-03)
 

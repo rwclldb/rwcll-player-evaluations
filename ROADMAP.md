@@ -33,8 +33,8 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [x] Create Supabase test user.
 - [x] Sign in and display protected-page user claims.
 - [x] Add the project documentation to the Git repository and commit/push updates as design decisions are confirmed.
-- [ ] Establish version-controlled SQL migration workflow.
-- [ ] Verify lint and production build.
+- [x] Establish version-controlled SQL migration workflow.
+- [x] Verify lint and production build.
 
 ## 3. Database foundation
 - [x] Agree on conceptual entities and relationships; see `docs/DATABASE-DESIGN.md` (proposed only).
@@ -43,17 +43,16 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [x] Confirm age-based evaluation groups and primary/makeup events; schema implementation remains pending.
 - [x] Confirm one player roster record per season.
 - [x] Confirm season-specific evaluation number displayed to evaluators; does not carry over between seasons.
-- [ ] Review and approve detailed database design before migration work.
+- [x] Review and approve detailed database design before migration work.
 - [x] Confirm season lifecycle: closed by default; explicit administrator-only reopen for corrections, with audit logging.
 - [x] Confirm new-season setup: copy only editable division configuration; create coaches/assignments and teams/team names fresh later, after evaluations; never copy evaluations or historical results.
-- [ ] Design seasons, divisions, teams, players, user profiles, and roles.
-- [ ] Separate stable player identity from season-specific registration/team/division/league age and `evaluation_number`.
-- [ ] Define season-specific Little League age calculation (official Aug. 31 rule).
+- [x] Design seasons, divisions, teams, players, user profiles, and roles.
+- [x] Separate stable player identity from season-specific registration/team/division/league age and `evaluation_number`.
+- [x] Define season-specific Little League age calculation (official Aug. 31 rule).
 - [x] Confirm Sports Connect IDs are useful external registration identifiers but not universal child IDs: the same child can receive a different ID when a different parent registers them in a later season.
 - [x] Agree on import identity rules: permanent internal `player_id`; season-scoped Sports Connect ID as a matching clue only; name/birthdate as candidate suggestions; administrator-confirmed linking; and pending review for uncertain rows.
-- [ ] Design and implement import preview, duplicate detection, audit of match decisions, and admin-confirmed matching; no silent name/DOB matching.
-- [ ] Implement and test database migrations.
-- [ ] Implement and test RLS for all league data.
+- [x] Design and implement import preview, duplicate detection, audit of match decisions, and admin-confirmed matching; no silent name/DOB matching.
+- [ ] Implement and test the complete database migration chain and all RLS policies.
 - [ ] Implement and test secure aggregate outputs for assigned-team and division views; no individual rating access for coaches.
 
 ## 4. Evaluations and permissions
@@ -80,7 +79,35 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [ ] Label historical coverage as partial (one team), keep read-only.
 - [ ] Verify historical data is excluded from current averages.
 
-## 6. User experience and launch
+
+## 6. Sports Connect import implementation and validation
+
+- [x] Stage Sports Connect CSV rows in a protected import batch without directly modifying player or registration records.
+- [x] Preview staged rows and identify validation flags, including out-of-scope registrations.
+- [x] Review candidate player matches without silently merging records.
+- [x] Save administrator review decisions and reasons.
+- [x] Require administrator authorization and approved review state before committing an import row.
+- [x] Support approved new-player and existing-player match commits.
+- [x] Create season registration records during approved commits without assigning a division, team, or evaluation number automatically.
+- [x] Record commit outcomes and audit information.
+- [x] Prevent committed rows from being edited through the review UI.
+- [x] Add static checks for the import preview, review, and commit workflow.
+- [x] Add a consolidated `npm run test:all` runner that records output and PASS/FAIL results.
+- [x] Validate the current suite: 10 of 10 checks passed, including import tests, lint, TypeScript, and production build.
+
+### Remaining import-safety validation
+
+- [ ] Test unauthorized commits and rejected review states against the local database.
+- [ ] Verify repeat commits are idempotent, including retries after an uncertain client response.
+- [ ] Test duplicate registration numbers and external IDs across rows, batches, seasons, and existing records.
+- [ ] Test transaction rollback and partial-failure behavior.
+- [ ] Verify audit records and database state after both successful and failed operations.
+- [ ] Test relevant RLS and database-function protections using authenticated non-admin and admin accounts.
+- [ ] Verify the complete workflow using fresh synthetic data and document the results.
+
+**Scope boundary:** This import workflow stages and links registration data; it does not process payments, determine final divisions, perform the official draft, or replace Sports Connect as the official roster system.
+
+## 7. User experience and launch
 - [ ] Build role-specific dashboards and evaluation screens.
 - [ ] Support age-group evaluation events with multiple evaluators, per-player attendance, and separate performance records.
 - [ ] Test phone, tablet, and desktop layouts.
@@ -90,12 +117,28 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [ ] Run end-to-end pilot with test data and representative users.
 - [ ] Obtain board approval before live data or launch.
 
-## Current checkpoint
-**Verified:** local app runs; `.env.local` is Git-ignored; scaffold is pushed; Supabase sign-in and protected-page claims work.
 
-**Design confirmed, not implemented:** a new season carries forward only the editable division setup; teams/team names and coach assignments are not copied, and teams are named after evaluations; evaluations and historical results are never copied into a new season. Coaches may be assigned to multiple teams; coach-facing views must not show a comparison between assigned-team averages and division-wide averages; age-based evaluation groups can span multiple eventual divisions, with primary/makeup events and multiple evaluators; each player has one roster record per season; `evaluation_number` is season-specific and used to match the on-screen player to the number worn during evaluations; permanent internal player IDs are generated independently of personal data, and import matches require administrator confirmation; completed seasons are closed by default and require an explicit, audited administrator action to reopen.
+## Current checkpoint — 2026-11-04
 
-**Next:** review/approve `docs/DATABASE-DESIGN.md`, then establish the SQL migration workflow. Database tables, aggregate functions, and RLS are not yet implemented.
+**Verified locally**
+- The application passes `npm run lint`, `npx tsc --noEmit`, and `npm run build`.
+- Sports Connect import staging, candidate review, administrator decisions, and commit actions have been implemented.
+- Synthetic tests have exercised approved new-player and existing-player commits.
+- The consolidated `npm run test:all` runner completed successfully: 10 checks passed, 0 failed.
+- The runner writes a detailed report to `test-results/`.
+- The working tree contains uncommitted import-workflow changes and test-runner files; review them before committing.
+
+**Not yet established by the current test suite**
+- Complete database-level authorization and RLS coverage.
+- All duplicate-identifier and cross-batch conflict scenarios.
+- Transaction rollback and failure recovery under real database errors.
+- Full role-based access and reporting security across admin, coach, and evaluator accounts.
+- Production readiness or approval to deploy migrations to hosted Supabase.
+
+**Next milestone:** complete end-to-end import-safety testing against local Supabase using synthetic data. Cover rejected operations, repeat commits, duplicate identifiers, rollback, audit outcomes, and authorization boundaries.
+
+**Safety boundary:** continue local-only validation. Do not apply migrations to hosted Supabase or modify hosted data without explicit approval.
+
 
 
 ## 2. Confirmed workflow requirements (2026-11-02)

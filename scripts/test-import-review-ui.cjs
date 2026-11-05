@@ -18,7 +18,18 @@ for (const [label, condition] of [
   ['batch/row relationship validation', action.includes('Number(row.import_batch_id) !== batchId')],
   ['audited review RPC', action.includes('review_sports_connect_import_row')],
   ['review reason length validation', action.includes('reason.length < 5') && action.includes('reason.length > 1000')],
-  ['no import commit or player creation in action', !/\.from\("players"\)\s*\.insert|\.from\("players"\)\s*\.update|commit_sports_connect_import/i.test(action)],
+  [
+  'review action does not commit or create players',
+  (() => {
+    const reviewAction = action.split('export async function commitImportRow')[0];
+    return !/\.from\("players"\)\s*\.insert|\.from\("players"\)\s*\.update|commit_sports_connect_import_row/i.test(reviewAction);
+  })(),
+],
+[
+  'commit action uses protected commit RPC',
+  action.includes('export async function commitImportRow') &&
+    action.includes('commit_sports_connect_import_row'),
+],
   ['administrator-gated page', page.includes('supabase.rpc("is_admin")')],
   ['explicit read-only boundary', page.includes('does not create or update players or registrations')],
   ['reason-required UI', form.includes('required') && form.includes('minLength={5}')],
