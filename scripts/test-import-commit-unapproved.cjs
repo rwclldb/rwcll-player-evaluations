@@ -1,4 +1,4 @@
-﻿const fs = require("node:fs");
+const fs = require("node:fs");
 const path = require("node:path");
 const readline = require("node:readline");
 const { createClient } = require("@supabase/supabase-js");
@@ -76,8 +76,11 @@ async function main() {
 
   try {
     const email = await ask("Local administrator email: ");
-    const password = await ask("Password (input hidden): ", true);
-
+    //const password = process.env.LOCAL_TEST_PASSWORD;
+     const password = await readHiddenPassword();
+    if (!password) {
+      throw new Error("Missing LOCAL_TEST_PASSWORD. Run this test through the secure PowerShell prompt.");
+    }
     const supabase = createClient(url, key, {
       auth: {
         persistSession: false,
@@ -129,6 +132,47 @@ async function main() {
     rl.close();
   }
 }
+
+function readHiddenPassword() {
+  return new Promise((resolve, reject) => {
+    if (!process.stdin.isTTY || typeof process.stdin.setRawMode !== "function") {
+      reject(new Error("Run this script in an interactive PowerShell terminal."));
+      return;
+    }
+
+    process.stdout.write("Password for local admin account (input hidden): ");
+    let password = "";
+
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding("utf8");
+
+    function cleanup() {
+      process.stdin.removeListener("data", onData);
+      process.stdin.setRawMode(false);
+      process.stdin.pause();
+    }
+
+    function onData(char) {
+      if (char === "\u0003") {
+        cleanup();
+        process.stdout.write("\nCancelled.\n");
+        reject(new Error("Cancelled by user."));
+      } else if (char === "\r" || char === "\n") {
+        cleanup();
+        process.stdout.write("\n");
+        resolve(password);
+      } else if (char === "\u007f" || char === "\b") {
+        password = password.slice(0, -1);
+      } else {
+        password += char;
+      }
+    }
+
+    process.stdin.on("data", onData);
+  });
+}
+
 
 main().catch((error) => {
   console.error("FAIL:", error.message);

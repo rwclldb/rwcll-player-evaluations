@@ -95,6 +95,29 @@ See `docs/DECISIONS.md` and `ROADMAP.md` for the fuller record. If a conflict ap
 10. Make no hosted database changes unless the user explicitly approves them.
 
 
+## Sports Connect import — verified Phase 5.5 status (2026-11-05 UTC)
+
+- All eight migrations are recorded as applied in both local and remote Supabase migration lists, through `20261104230000_phase_5_5_sports_connect_commit.sql`.
+- The remote duplicate-external-player-ID regression test passed.
+- The test used existing `TEST-1003` in season 1 as the duplicate identifier and a separately generated registration number.
+- The database rejected the commit with SQLSTATE `23505`.
+- Verified after rejection: no player or player-season registration was created, the existing registration remained intact, the staged row remained `approved_new` with no committed registration ID, and no commit audit event was written for the failed row.
+- The full automated suite passed: 10 passed, 0 failed. The consolidated runner includes automated tests, lint, TypeScript checking, and production build.
+- The duplicate-ID regression test is a manual test and is excluded from `test:all`. It requires administrator credentials and an explicit remote-test opt-in.
+- Remote test artifact intentionally retained: import batch ID 2, staged row ID 9. It is approved but uncommitted. Do not treat it as a real registration; inspect it before any cleanup.
+- The fake import batch 1 also contains intentionally duplicated `TEST-DUP` staged rows 5 and 6. Preserve these unless cleanup is explicitly planned.
+
+### Remaining Phase 5.5 validation
+
+- Test duplicate external registration numbers against existing registrations and across batches.
+- Verify matching an existing player does not overwrite master player data.
+- Expand tests across seasons and staged batches.
+- Continue authorization, RLS, audit, and failure-recovery verification.
+- Do not infer that the entire application security workflow is complete from the current import tests.
+- Do not apply migrations, reset the hosted database, or change hosted records without explicit approval.
+
+
+
 ## Safety and handling notes
 
 - Never commit `.env`, `.env.local`, Supabase service-role keys, database passwords, JWT secrets, or other credentials.

@@ -183,5 +183,25 @@ These are agreed requirements, not implemented features. Keep implementation che
 9. [ ] Test with separate admin, coach, and evaluator accounts and synthetic import edge cases.
 10. [ ] Only after local review and explicit approval, plan hosted migration deployment.
 
+
+### Phase 5.5 — Sports Connect commit safeguards
+
+**Verified:** the commit RPC and duplicate external-player-ID constraint were tested against the configured remote Supabase project.
+
+- [x] Reject a duplicate external player ID within the same season using the database unique constraint.
+- [x] Verify a rejected commit creates no player or player-season registration.
+- [x] Verify the original registration remains intact.
+- [x] Verify the failed row remains uncommitted and no commit audit event is written.
+- [x] Run the consolidated automated suite: 10 passed, 0 failed.
+- [ ] Test duplicate external registration numbers.
+- [ ] Test duplicate identifiers across batches and seasons.
+- [ ] Test approved-match behavior for preservation of existing player master data.
+- [ ] Continue broader authorization, RLS, audit, and failure-recovery testing.
+
+**Retained remote test artifact:** batch 2, row 9. This is a disposable approved-but-uncommitted staging record, not a committed registration. Review it before deciding whether to clean it up.
+
+**Migration status:** all eight migrations are recorded as applied in both local and remote migration lists. No hosted migration or schema change is authorized by this status update.
+
+
 **Status note:** the project ZIP contains five migrations, but their presence is not proof that this newly proposed workflow exists or is fully tested. Do not mark the new workflow complete until implementation and tests pass.
 
