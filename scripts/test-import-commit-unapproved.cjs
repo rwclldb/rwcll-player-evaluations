@@ -1,0 +1,136 @@
+﻿const fs = require("node:fs");
+const path = require("node:path");
+const readline = require("node:readline");
+const { createClient } = require("@supabase/supabase-js");
+
+function readEnvFile(filePath) {
+  const values = {};
+  if (!fs.existsSync(filePath)) return values;
+
+  for (const line of fs.readFileSync(filePath, "utf8").split(/\r?\n/)) {
+    const match = line.match(/^\s*([^#=\s]+)\s*=\s*(.*)\s*$/);
+    if (match) {
+      values[match[1]] = match[2].replace(/^["']|["']$/g, "");
+    }
+  }
+  return values;
+}
+
+async function main() {
+  const env = {
+    ...readEnvFile(path.join(process.cwd(), ".env")),
+    ...readEnvFile(path.join(process.cwd(), ".env.local")),
+  };
+
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    throw new Error("Missing Supabase URL or publishable/anon key in local env files.");
+  }
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  function ask(question, hidden = false) {
+    return new Promise((resolve) => {
+      if (!hidden) {
+        rl.question(question, resolve);
+        return;
+      }
+
+      const stdin = process.stdin;
+      const wasRaw = stdin.isRaw;
+      process.stdout.write(question);
+      stdin.setRawMode?.(true);
+      stdin.resume();
+      let answer = "";
+
+      const onData = (chunk) => {
+        const value = chunk.toString("utf8");
+        if (value === "\r" || value === "\n") {
+          stdin.removeListener("data", onData);
+          stdin.setRawMode?.(wasRaw || false);
+          process.stdout.write("\n");
+          resolve(answer);
+          return;
+        }
+        if (value === "\u0003") {
+          process.stdout.write("\n");
+          process.exit(130);
+        }
+        if (value === "\u007f" || value === "\b") {
+          answer = answer.slice(0, -1);
+        } else {
+          answer += value;
+        }
+      };
+
+      stdin.on("data", onData);
+    });
+  }
+
+  try {
+    const email = await ask("Local administrator email: ");
+    const password = await ask("Password (input hidden): ", true);
+
+    const supabase = createClient(url, key, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    });
+
+    const { data: signIn, error: signInError } =
+      await supabase.auth.signInWithPassword({ email, password });
+
+    if (signInError || !signIn?.user) {
+      throw new Error("Could not sign in with the supplied local test account.");
+    }
+
+    console.log("PASS: Signed in to the local Supabase project.");
+
+    const { data, error } = await supabase.rpc(
+      "commit_sports_connect_import_row",
+      {
+        p_row_id: 4,
+        p_reason: "Unapproved row rejection test",
+      }
+    );
+
+    if (!error) {
+      console.error("FAIL: The database accepted an unapproved row.");
+      console.error("Unexpected returned registration ID:", data);
+      process.exitCode = 1;
+      return;
+    }
+
+    if (
+      error.message?.includes(
+        "Only approved_new or approved_match rows can be committed"
+      )
+    ) {
+      console.log("PASS: Database rejected the unapproved row.");
+      console.log("PASS: Rejection matched the expected review-state guard.");
+      console.log("The test did not approve or commit the row.");
+      return;
+    }
+
+    console.error("FAIL: RPC was rejected, but not for the expected reason.");
+    console.error("SQLSTATE:", error.code || "(not provided)");
+    console.error("Error:", error.message);
+    process.exitCode = 1;
+  } finally {
+    rl.close();
+  }
+}
+
+main().catch((error) => {
+  console.error("FAIL:", error.message);
+  process.exitCode = 1;
+});
