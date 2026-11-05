@@ -1,0 +1,506 @@
+
+const fs = require("node:fs");
+const path = require("node:path");
+const readline = require("node:readline");
+const { createClient } = require("@supabase/supabase-js");
+
+const EXPECTED_HOST = "szklvgrecvrxcgmkopso.supabase.co";
+const SEASON_ID = 1;
+
+function readEnvFile(filePath) {
+  const values = {};
+  if (!fs.existsSync(filePath)) return values;
+
+  for (const line of fs.readFileSync(filePath, "utf8").split(/\r?\n/)) {
+    const match = line.match(/^\s*([^#=\s]+)\s*=\s*(.*)\s*$/);
+    if (match) {
+      values[match[1]] = match[2].replace(/^["']|["']$/g, "");
+    }
+  }
+
+  return values;
+}
+
+function readHiddenPassword() {
+  return new Promise((resolve, reject) => {
+    const stdin = process.stdin;
+
+    if (!stdin.isTTY || typeof stdin.setRawMode !== "function") {
+      reject(
+        new Error("Run this test in an interactive VS Code PowerShell terminal.")
+      );
+      return;
+    }
+
+    process.stdout.write(
+      "Password for remote test administrator (input hidden): "
+    );
+
+    let password = "";
+    const wasRaw = stdin.isRaw;
+
+    function cleanup() {
+      stdin.removeListener("data", onData);
+      stdin.setRawMode(wasRaw || false);
+      stdin.pause();
+    }
+
+    function onData(chunk) {
+      for (const char of chunk.toString("utf8")) {
+        if (char === "\u0003") {
+          cleanup();
+          process.stdout.write("\nCancelled.\n");
+          reject(new Error("Cancelled by user."));
+          return;
+        }
+
+        if (char === "\r" || char === "\n") {
+          cleanup();
+          process.stdout.write("\n");
+          resolve(password);
+          return;
+        }
+
+        if (char === "\u007f" || char === "\b") {
+          password = password.slice(0, -1);
+        } else {
+          password += char;
+        }
+      }
+    }
+
+    stdin.setRawMode(true);
+    stdin.resume();
+    stdin.setEncoding("utf8");
+    stdin.on("data", onData);
+  });
+}
+
+async function exactCount(supabase, table, configure = (query) => query) {
+  const query = configure(
+    supabase.from(table).select("id", { count: "exact", head: true })
+  );
+
+  const { count, error } = await query;
+
+  if (error) {
+    throw new Error(`Could not count ${table}: ${error.message}`);
+  }
+
+  if (count === null) {
+    throw new Error(`The exact count for ${table} was not returned.`);
+  }
+
+  return count;
+}
+
+async function main() {
+  if (process.env.ALLOW_REMOTE_IMPORT_TESTS !== "YES") {
+    throw new Error(
+      "Safety stop: set ALLOW_REMOTE_IMPORT_TESTS=YES in PowerShell to authorize this remote test."
+    );
+  }
+
+  const env = {
+  ...readEnvFile(path.join(process.cwd(), ".env")),
+  ...readEnvFile(path.join(process.cwd(), ".env.local")),
+  ...process.env,
+};
+
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    throw new Error(
+      "Missing configured Supabase URL or publishable/anon key."
+    );
+  }
+
+  let configuredUrl;
+
+  try {
+    configuredUrl = new URL(url);
+  } catch {
+    throw new Error("The configured Supabase URL is invalid.");
+  }
+
+  if (
+    configuredUrl.protocol !== "https:" ||
+    configuredUrl.hostname !== EXPECTED_HOST
+  ) {
+    throw new Error(
+      `Safety stop: expected HTTPS project ${EXPECTED_HOST}; refusing to run against ${configuredUrl.hostname}.`
+    );
+  }
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  const ask = (question) =>
+    new Promise((resolve) => rl.question(question, resolve));
+
+  let supabase;
+
+  try {
+    const email = (await ask("Remote test administrator email: ")).trim();
+    const password = await readHiddenPassword();
+
+    if (!email || !password) {
+      throw new Error("Administrator email and password are required.");
+    }
+
+    supabase = createClient(url, key, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    });
+
+    const { data: signIn, error: signInError } =
+      await supabase.auth.signInWithPassword({ email, password });
+
+    if (signInError || !signIn?.user) {
+      throw new Error("Could not sign in to the configured Supabase project.");
+    }
+
+    console.log("PASS: Signed in to the expected remote Supabase project.");
+
+    const { data: isAdmin, error: adminError } =
+      await supabase.rpc("is_admin");
+
+    if (adminError || isAdmin !== true) {
+      throw new Error(
+        "Safety stop: signed-in account is not a remote-project administrator."
+      );
+    }
+
+    console.log("PASS: Administrator authorization verified.");
+
+
+    // Find an existing player who has no registration in the target season.
+    // This allows the approved-match test to succeed without creating a
+    // duplicate registration or modifying the existing player.
+    const { data: candidatePlayers, error: candidatePlayersError } =
+      await supabase
+        .from("players")
+        .select("id, first_name, last_name, date_of_birth")
+        .order("id", { ascending: true })
+        .limit(5000);
+
+    if (candidatePlayersError) {
+      throw new Error(
+        `Could not list candidate players: ${candidatePlayersError.message}`
+      );
+    }
+
+    if (!candidatePlayers || candidatePlayers.length === 0) {
+      throw new Error(
+        "Safety stop: no existing players were available for the approved-match test."
+      );
+    }
+
+    const { data: seasonRegistrations, error: seasonRegistrationsError } =
+      await supabase
+        .from("player_seasons")
+        .select("player_id")
+        .eq("season_id", SEASON_ID);
+
+    if (seasonRegistrationsError) {
+      throw new Error(
+        `Could not list registrations for season ${SEASON_ID}: ${seasonRegistrationsError.message}`
+      );
+    }
+
+    const registeredPlayerIds = new Set(
+      (seasonRegistrations || []).map((registration) =>
+        String(registration.player_id)
+      )
+    );
+
+    const originalPlayer = candidatePlayers.find(
+      (player) => !registeredPlayerIds.has(String(player.id))
+    );
+
+    if (!originalPlayer) {
+      throw new Error(
+        `Safety stop: no existing player without a registration in season ${SEASON_ID} was found. No test batch was created.`
+      );
+    }
+
+    const existingPlayerId = Number(originalPlayer.id);
+
+    if (!Number.isSafeInteger(existingPlayerId) || existingPlayerId <= 0) {
+      throw new Error(
+        `Unexpected existing player ID: ${originalPlayer.id}`
+      );
+    }
+
+    console.log(
+      `PASS: Found existing player ${existingPlayerId} without a registration in season ${SEASON_ID}.`
+    );
+
+
+    const playerCountBefore = await exactCount(supabase, "players");
+    const registrationCountBefore = await exactCount(
+      supabase,
+      "player_seasons"
+    );
+
+    const uniqueSuffix = `${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+
+    const externalPlayerId = `MATCH-TEST-${uniqueSuffix}`;
+    const externalRegistrationId = `MATCH-REG-${uniqueSuffix}`;
+    const sourceFileName = `approved-match-${uniqueSuffix}.csv`;
+
+    // Deliberately different source details prove a match commit does not
+    // overwrite the existing player's identity fields.
+    const stagedRow = {
+      line: 2,
+      playerId: externalPlayerId,
+      registrationNumber: externalRegistrationId,
+      firstName: "DoNotOverwrite",
+      lastName: "ApprovedMatchTest",
+      birthDate: "2016-01-01",
+      program: "Baseball",
+      division: "AAA",
+      paymentStatus: "Paid",
+      leagueAge: 10,
+      issues: [],
+    };
+
+    const { data: batchData, error: stageError } = await supabase.rpc(
+      "stage_sports_connect_import",
+      {
+        p_season_id: SEASON_ID,
+        p_source_file_name: sourceFileName,
+        p_rows: [stagedRow],
+      }
+    );
+
+    if (stageError) {
+      throw new Error(`Could not stage test row: ${stageError.message}`);
+    }
+
+    const batchId = Number(batchData);
+
+    if (!Number.isSafeInteger(batchId) || batchId <= 0) {
+      throw new Error(
+        `Unexpected staging batch response: ${JSON.stringify(batchData)}`
+      );
+    }
+
+    console.log(`PASS: Created isolated staging batch ${batchId}.`);
+
+    const { data: stagedRows, error: stagedRowsError } = await supabase
+      .from("sports_connect_import_rows")
+      .select("id")
+      .eq("import_batch_id", batchId);
+
+    if (stagedRowsError) {
+      throw new Error(
+        `Could not find staged test row: ${stagedRowsError.message}`
+      );
+    }
+
+    if (!stagedRows || stagedRows.length !== 1) {
+      throw new Error(
+        `Expected exactly one row in batch ${batchId}; found ${stagedRows?.length ?? 0}.`
+      );
+    }
+
+    const rowId = Number(stagedRows[0].id);
+
+    console.log(`PASS: Located isolated staged row ${rowId}.`);
+
+    const { error: reviewError } = await supabase.rpc(
+      "review_sports_connect_import_row",
+      {
+        p_row_id: rowId,
+        p_decision: "approved_match",
+        p_matched_player_id: existingPlayerId,
+        p_reason: "Regression test: explicitly match existing synthetic player",
+      }
+    );
+
+    if (reviewError) {
+      throw new Error(
+        `Could not approve match for staged row ${rowId}: ${reviewError.message}`
+      );
+    }
+
+    console.log(
+      `PASS: Staged row explicitly approved_match for existing player ${existingPlayerId}.`
+    );
+
+    const { data: committedRegistrationIdData, error: commitError } =
+      await supabase.rpc("commit_sports_connect_import_row", {
+        p_row_id: rowId,
+        p_reason: "Regression test: commit approved match to existing player",
+      });
+
+    if (commitError) {
+      throw new Error(
+        `Commit RPC failed for row ${rowId}: ${commitError.message} (SQLSTATE ${commitError.code || "unknown"})`
+      );
+    }
+
+    const committedRegistrationId = Number(committedRegistrationIdData);
+
+    if (
+      !Number.isSafeInteger(committedRegistrationId) ||
+      committedRegistrationId <= 0
+    ) {
+      throw new Error(
+        `Unexpected commit result: ${JSON.stringify(committedRegistrationIdData)}`
+      );
+    }
+
+    console.log(
+      `PASS: Commit returned player-season registration ID ${committedRegistrationId}.`
+    );
+
+    const playerCountAfter = await exactCount(supabase, "players");
+    const registrationCountAfter = await exactCount(
+      supabase,
+      "player_seasons"
+    );
+
+    if (playerCountAfter !== playerCountBefore) {
+      throw new Error(
+        `Approved match changed player count: before=${playerCountBefore}, after=${playerCountAfter}.`
+      );
+    }
+
+    console.log("PASS: Approved match created no additional player.");
+
+    if (registrationCountAfter !== registrationCountBefore + 1) {
+      throw new Error(
+        `Expected exactly one new registration: before=${registrationCountBefore}, after=${registrationCountAfter}.`
+      );
+    }
+
+    console.log("PASS: Approved match created exactly one registration.");
+
+    const { data: committedRegistration, error: committedRegistrationError } =
+      await supabase
+        .from("player_seasons")
+        .select("id, player_id, season_id, external_player_id, external_registration_id")
+        .eq("id", committedRegistrationId)
+        .maybeSingle();
+
+    if (committedRegistrationError || !committedRegistration) {
+      throw new Error(
+        `Could not verify committed registration: ${committedRegistrationError?.message || "registration not found"}`
+      );
+    }
+
+    if (
+      Number(committedRegistration.player_id) !== existingPlayerId ||
+      Number(committedRegistration.season_id) !== SEASON_ID ||
+      committedRegistration.external_player_id !== externalPlayerId ||
+      committedRegistration.external_registration_id !== externalRegistrationId
+    ) {
+      throw new Error(
+        `Committed registration does not match the expected existing player and synthetic identifiers: ${JSON.stringify(committedRegistration)}`
+      );
+    }
+
+    console.log(
+      "PASS: New registration points to the selected existing player and has the expected identifiers."
+    );
+
+    const { data: finalPlayer, error: finalPlayerError } = await supabase
+      .from("players")
+      .select("id, first_name, last_name, date_of_birth")
+      .eq("id", existingPlayerId)
+      .maybeSingle();
+
+    if (finalPlayerError || !finalPlayer) {
+      throw new Error(
+        `Could not re-read existing player: ${finalPlayerError?.message || "player not found"}`
+      );
+    }
+
+    if (
+      finalPlayer.first_name !== originalPlayer.first_name ||
+      finalPlayer.last_name !== originalPlayer.last_name ||
+      finalPlayer.date_of_birth !== originalPlayer.date_of_birth
+    ) {
+      throw new Error(
+        `Approved match modified existing player identity fields. Before=${JSON.stringify(originalPlayer)} After=${JSON.stringify(finalPlayer)}`
+      );
+    }
+
+    console.log(
+      "PASS: Existing player's first name, last name, and birth date remain unchanged."
+    );
+
+    const auditCount = await exactCount(supabase, "audit_log", (query) =>
+      query
+        .eq("action", "sports_connect_import_row_committed")
+        .eq("target_table", "sports_connect_import_rows")
+        .eq("target_id", String(rowId))
+    );
+
+    if (auditCount !== 1) {
+      throw new Error(
+        `Expected exactly one commit audit event for row ${rowId}; found ${auditCount}.`
+      );
+    }
+
+    console.log("PASS: Exactly one commit-audit event was created.");
+
+    const { data: finalRow, error: finalRowError } = await supabase
+      .from("sports_connect_import_rows")
+      .select("review_state, matched_player_id, committed_player_season_id")
+      .eq("id", rowId)
+      .eq("import_batch_id", batchId)
+      .maybeSingle();
+
+    if (finalRowError || !finalRow) {
+      throw new Error(
+        `Could not verify final staged row: ${finalRowError?.message || "row not found"}`
+      );
+    }
+
+    if (
+      finalRow.review_state !== "committed" ||
+      Number(finalRow.matched_player_id) !== existingPlayerId ||
+      Number(finalRow.committed_player_season_id) !== committedRegistrationId
+    ) {
+      throw new Error(
+        `Final staged row does not reference the expected match and registration: ${JSON.stringify(finalRow)}`
+      );
+    }
+
+    console.log(
+      "PASS: Staged row is committed and retains the correct matched player and registration references."
+    );
+
+    console.log("\nALL APPROVED-MATCH REGRESSION CHECKS PASSED.");
+    console.log(`Existing player ID: ${existingPlayerId}`);
+    console.log(`Test batch ID: ${batchId}`);
+    console.log(`Test row ID: ${rowId}`);
+    console.log(`Player-season registration ID: ${committedRegistrationId}`);
+    console.log(
+      "The synthetic batch, row, registration, and audit event were intentionally retained for inspection."
+    );
+  } finally {
+    rl.close();
+    if (supabase) {
+      await supabase.auth.signOut().catch(() => {});
+    }
+  }
+}
+
+main().catch((error) => {
+  console.error("FAIL:", error.message);
+  process.exitCode = 1;
+});
