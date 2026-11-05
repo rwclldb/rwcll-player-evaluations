@@ -126,7 +126,21 @@ See `docs/DECISIONS.md` and `ROADMAP.md` for the fuller record. If a conflict ap
 
 **Remote test safety:** Remote regression tests require explicit opt-in via `ALLOW_REMOTE_IMPORT_TESTS=YES`, the expected project URL guard, and administrator authentication. Do not remove these safeguards or include remote-write tests in `test:all` by default.
 
+### Idempotent Import Commit Retry — Verified
 
+- Remote retry regression test passed all 15 checks.
+- Verified the expected hosted Supabase project and administrator authorization.
+- Test batch ID: 5.
+- Staged row ID: 11.
+- Player-season registration ID: 5.
+- First commit created exactly one player, one registration, and one
+  `sports_connect_import_row_committed` audit event.
+- Retrying the same committed row returned the original registration ID
+  without creating additional players, registrations, or commit audit events.
+- The staged row remained committed and referenced the original registration.
+- Synthetic test records were intentionally retained for inspection.
+- Full local test suite: 10 passed, 0 failed.
+- Remote write tests remain separate from the default `npm run test:all` suite.
 
 ## Safety and handling notes
 
