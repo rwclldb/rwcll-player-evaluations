@@ -1,0 +1,782 @@
+[
+  {
+    "birth_year": 2023,
+    "birth_month": 1,
+    "league_age": 4
+  },
+  {
+    "birth_year": 2023,
+    "birth_month": 2,
+    "league_age": 4
+  },
+  {
+    "birth_year": 2023,
+    "birth_month": 3,
+    "league_age": 4
+  },
+  {
+    "birth_year": 2023,
+    "birth_month": 4,
+    "league_age": 4
+  },
+  {
+    "birth_year": 2023,
+    "birth_month": 5,
+    "league_age": 4
+  },
+  {
+    "birth_year": 2023,
+    "birth_month": 6,
+    "league_age": 4
+  },
+  {
+    "birth_year": 2023,
+    "birth_month": 7,
+    "league_age": 4
+  },
+  {
+    "birth_year": 2023,
+    "birth_month": 8,
+    "league_age": 4
+  },
+  {
+    "birth_year": 2022,
+    "birth_month": 9,
+    "league_age": 4
+  },
+  {
+    "birth_year": 2022,
+    "birth_month": 10,
+    "league_age": 4
+  },
+  {
+    "birth_year": 2022,
+    "birth_month": 11,
+    "league_age": 4
+  },
+  {
+    "birth_year": 2022,
+    "birth_month": 12,
+    "league_age": 4
+  },
+  {
+    "birth_year": 2022,
+    "birth_month": 1,
+    "league_age": 5
+  },
+  {
+    "birth_year": 2022,
+    "birth_month": 2,
+    "league_age": 5
+  },
+  {
+    "birth_year": 2022,
+    "birth_month": 3,
+    "league_age": 5
+  },
+  {
+    "birth_year": 2022,
+    "birth_month": 4,
+    "league_age": 5
+  },
+  {
+    "birth_year": 2022,
+    "birth_month": 5,
+    "league_age": 5
+  },
+  {
+    "birth_year": 2022,
+    "birth_month": 6,
+    "league_age": 5
+  },
+  {
+    "birth_year": 2022,
+    "birth_month": 7,
+    "league_age": 5
+  },
+  {
+    "birth_year": 2022,
+    "birth_month": 8,
+    "league_age": 5
+  },
+  {
+    "birth_year": 2021,
+    "birth_month": 9,
+    "league_age": 5
+  },
+  {
+    "birth_year": 2021,
+    "birth_month": 10,
+    "league_age": 5
+  },
+  {
+    "birth_year": 2021,
+    "birth_month": 11,
+    "league_age": 5
+  },
+  {
+    "birth_year": 2021,
+    "birth_month": 12,
+    "league_age": 5
+  },
+  {
+    "birth_year": 2021,
+    "birth_month": 1,
+    "league_age": 6
+  },
+  {
+    "birth_year": 2021,
+    "birth_month": 2,
+    "league_age": 6
+  },
+  {
+    "birth_year": 2021,
+    "birth_month": 3,
+    "league_age": 6
+  },
+  {
+    "birth_year": 2021,
+    "birth_month": 4,
+    "league_age": 6
+  },
+  {
+    "birth_year": 2021,
+    "birth_month": 5,
+    "league_age": 6
+  },
+  {
+    "birth_year": 2021,
+    "birth_month": 6,
+    "league_age": 6
+  },
+  {
+    "birth_year": 2021,
+    "birth_month": 7,
+    "league_age": 6
+  },
+  {
+    "birth_year": 2021,
+    "birth_month": 8,
+    "league_age": 6
+  },
+  {
+    "birth_year": 2020,
+    "birth_month": 9,
+    "league_age": 6
+  },
+  {
+    "birth_year": 2020,
+    "birth_month": 10,
+    "league_age": 6
+  },
+  {
+    "birth_year": 2020,
+    "birth_month": 11,
+    "league_age": 6
+  },
+  {
+    "birth_year": 2020,
+    "birth_month": 12,
+    "league_age": 6
+  },
+  {
+    "birth_year": 2020,
+    "birth_month": 1,
+    "league_age": 7
+  },
+  {
+    "birth_year": 2020,
+    "birth_month": 2,
+    "league_age": 7
+  },
+  {
+    "birth_year": 2020,
+    "birth_month": 3,
+    "league_age": 7
+  },
+  {
+    "birth_year": 2020,
+    "birth_month": 4,
+    "league_age": 7
+  },
+  {
+    "birth_year": 2020,
+    "birth_month": 5,
+    "league_age": 7
+  },
+  {
+    "birth_year": 2020,
+    "birth_month": 6,
+    "league_age": 7
+  },
+  {
+    "birth_year": 2020,
+    "birth_month": 7,
+    "league_age": 7
+  },
+  {
+    "birth_year": 2020,
+    "birth_month": 8,
+    "league_age": 7
+  },
+  {
+    "birth_year": 2019,
+    "birth_month": 9,
+    "league_age": 7
+  },
+  {
+    "birth_year": 2019,
+    "birth_month": 10,
+    "league_age": 7
+  },
+  {
+    "birth_year": 2019,
+    "birth_month": 11,
+    "league_age": 7
+  },
+  {
+    "birth_year": 2019,
+    "birth_month": 12,
+    "league_age": 7
+  },
+  {
+    "birth_year": 2019,
+    "birth_month": 1,
+    "league_age": 8
+  },
+  {
+    "birth_year": 2019,
+    "birth_month": 2,
+    "league_age": 8
+  },
+  {
+    "birth_year": 2019,
+    "birth_month": 3,
+    "league_age": 8
+  },
+  {
+    "birth_year": 2019,
+    "birth_month": 4,
+    "league_age": 8
+  },
+  {
+    "birth_year": 2019,
+    "birth_month": 5,
+    "league_age": 8
+  },
+  {
+    "birth_year": 2019,
+    "birth_month": 6,
+    "league_age": 8
+  },
+  {
+    "birth_year": 2019,
+    "birth_month": 7,
+    "league_age": 8
+  },
+  {
+    "birth_year": 2019,
+    "birth_month": 8,
+    "league_age": 8
+  },
+  {
+    "birth_year": 2018,
+    "birth_month": 9,
+    "league_age": 8
+  },
+  {
+    "birth_year": 2018,
+    "birth_month": 10,
+    "league_age": 8
+  },
+  {
+    "birth_year": 2018,
+    "birth_month": 11,
+    "league_age": 8
+  },
+  {
+    "birth_year": 2018,
+    "birth_month": 12,
+    "league_age": 8
+  },
+  {
+    "birth_year": 2018,
+    "birth_month": 1,
+    "league_age": 9
+  },
+  {
+    "birth_year": 2018,
+    "birth_month": 2,
+    "league_age": 9
+  },
+  {
+    "birth_year": 2018,
+    "birth_month": 3,
+    "league_age": 9
+  },
+  {
+    "birth_year": 2018,
+    "birth_month": 4,
+    "league_age": 9
+  },
+  {
+    "birth_year": 2018,
+    "birth_month": 5,
+    "league_age": 9
+  },
+  {
+    "birth_year": 2018,
+    "birth_month": 6,
+    "league_age": 9
+  },
+  {
+    "birth_year": 2018,
+    "birth_month": 7,
+    "league_age": 9
+  },
+  {
+    "birth_year": 2018,
+    "birth_month": 8,
+    "league_age": 9
+  },
+  {
+    "birth_year": 2017,
+    "birth_month": 9,
+    "league_age": 9
+  },
+  {
+    "birth_year": 2017,
+    "birth_month": 10,
+    "league_age": 9
+  },
+  {
+    "birth_year": 2017,
+    "birth_month": 11,
+    "league_age": 9
+  },
+  {
+    "birth_year": 2017,
+    "birth_month": 12,
+    "league_age": 9
+  },
+  {
+    "birth_year": 2017,
+    "birth_month": 1,
+    "league_age": 10
+  },
+  {
+    "birth_year": 2017,
+    "birth_month": 2,
+    "league_age": 10
+  },
+  {
+    "birth_year": 2017,
+    "birth_month": 3,
+    "league_age": 10
+  },
+  {
+    "birth_year": 2017,
+    "birth_month": 4,
+    "league_age": 10
+  },
+  {
+    "birth_year": 2017,
+    "birth_month": 5,
+    "league_age": 10
+  },
+  {
+    "birth_year": 2017,
+    "birth_month": 6,
+    "league_age": 10
+  },
+  {
+    "birth_year": 2017,
+    "birth_month": 7,
+    "league_age": 10
+  },
+  {
+    "birth_year": 2017,
+    "birth_month": 8,
+    "league_age": 10
+  },
+  {
+    "birth_year": 2016,
+    "birth_month": 9,
+    "league_age": 10
+  },
+  {
+    "birth_year": 2016,
+    "birth_month": 10,
+    "league_age": 10
+  },
+  {
+    "birth_year": 2016,
+    "birth_month": 11,
+    "league_age": 10
+  },
+  {
+    "birth_year": 2016,
+    "birth_month": 12,
+    "league_age": 10
+  },
+  {
+    "birth_year": 2016,
+    "birth_month": 1,
+    "league_age": 11
+  },
+  {
+    "birth_year": 2016,
+    "birth_month": 2,
+    "league_age": 11
+  },
+  {
+    "birth_year": 2016,
+    "birth_month": 3,
+    "league_age": 11
+  },
+  {
+    "birth_year": 2016,
+    "birth_month": 4,
+    "league_age": 11
+  },
+  {
+    "birth_year": 2016,
+    "birth_month": 5,
+    "league_age": 11
+  },
+  {
+    "birth_year": 2016,
+    "birth_month": 6,
+    "league_age": 11
+  },
+  {
+    "birth_year": 2016,
+    "birth_month": 7,
+    "league_age": 11
+  },
+  {
+    "birth_year": 2016,
+    "birth_month": 8,
+    "league_age": 11
+  },
+  {
+    "birth_year": 2015,
+    "birth_month": 9,
+    "league_age": 11
+  },
+  {
+    "birth_year": 2015,
+    "birth_month": 10,
+    "league_age": 11
+  },
+  {
+    "birth_year": 2015,
+    "birth_month": 11,
+    "league_age": 11
+  },
+  {
+    "birth_year": 2015,
+    "birth_month": 12,
+    "league_age": 11
+  },
+  {
+    "birth_year": 2015,
+    "birth_month": 1,
+    "league_age": 12
+  },
+  {
+    "birth_year": 2015,
+    "birth_month": 2,
+    "league_age": 12
+  },
+  {
+    "birth_year": 2015,
+    "birth_month": 3,
+    "league_age": 12
+  },
+  {
+    "birth_year": 2015,
+    "birth_month": 4,
+    "league_age": 12
+  },
+  {
+    "birth_year": 2015,
+    "birth_month": 5,
+    "league_age": 12
+  },
+  {
+    "birth_year": 2015,
+    "birth_month": 6,
+    "league_age": 12
+  },
+  {
+    "birth_year": 2015,
+    "birth_month": 7,
+    "league_age": 12
+  },
+  {
+    "birth_year": 2015,
+    "birth_month": 8,
+    "league_age": 12
+  },
+  {
+    "birth_year": 2014,
+    "birth_month": 9,
+    "league_age": 12
+  },
+  {
+    "birth_year": 2014,
+    "birth_month": 10,
+    "league_age": 12
+  },
+  {
+    "birth_year": 2014,
+    "birth_month": 11,
+    "league_age": 12
+  },
+  {
+    "birth_year": 2014,
+    "birth_month": 12,
+    "league_age": 12
+  },
+  {
+    "birth_year": 2014,
+    "birth_month": 1,
+    "league_age": 13
+  },
+  {
+    "birth_year": 2014,
+    "birth_month": 2,
+    "league_age": 13
+  },
+  {
+    "birth_year": 2014,
+    "birth_month": 3,
+    "league_age": 13
+  },
+  {
+    "birth_year": 2014,
+    "birth_month": 4,
+    "league_age": 13
+  },
+  {
+    "birth_year": 2014,
+    "birth_month": 5,
+    "league_age": 13
+  },
+  {
+    "birth_year": 2014,
+    "birth_month": 6,
+    "league_age": 13
+  },
+  {
+    "birth_year": 2014,
+    "birth_month": 7,
+    "league_age": 13
+  },
+  {
+    "birth_year": 2014,
+    "birth_month": 8,
+    "league_age": 13
+  },
+  {
+    "birth_year": 2013,
+    "birth_month": 9,
+    "league_age": 13
+  },
+  {
+    "birth_year": 2013,
+    "birth_month": 10,
+    "league_age": 13
+  },
+  {
+    "birth_year": 2013,
+    "birth_month": 11,
+    "league_age": 13
+  },
+  {
+    "birth_year": 2013,
+    "birth_month": 12,
+    "league_age": 13
+  },
+  {
+    "birth_year": 2013,
+    "birth_month": 1,
+    "league_age": 14
+  },
+  {
+    "birth_year": 2013,
+    "birth_month": 2,
+    "league_age": 14
+  },
+  {
+    "birth_year": 2013,
+    "birth_month": 3,
+    "league_age": 14
+  },
+  {
+    "birth_year": 2013,
+    "birth_month": 4,
+    "league_age": 14
+  },
+  {
+    "birth_year": 2013,
+    "birth_month": 5,
+    "league_age": 14
+  },
+  {
+    "birth_year": 2013,
+    "birth_month": 6,
+    "league_age": 14
+  },
+  {
+    "birth_year": 2013,
+    "birth_month": 7,
+    "league_age": 14
+  },
+  {
+    "birth_year": 2013,
+    "birth_month": 8,
+    "league_age": 14
+  },
+  {
+    "birth_year": 2012,
+    "birth_month": 9,
+    "league_age": 14
+  },
+  {
+    "birth_year": 2012,
+    "birth_month": 10,
+    "league_age": 14
+  },
+  {
+    "birth_year": 2012,
+    "birth_month": 11,
+    "league_age": 14
+  },
+  {
+    "birth_year": 2012,
+    "birth_month": 12,
+    "league_age": 14
+  },
+  {
+    "birth_year": 2012,
+    "birth_month": 1,
+    "league_age": 15
+  },
+  {
+    "birth_year": 2012,
+    "birth_month": 2,
+    "league_age": 15
+  },
+  {
+    "birth_year": 2012,
+    "birth_month": 3,
+    "league_age": 15
+  },
+  {
+    "birth_year": 2012,
+    "birth_month": 4,
+    "league_age": 15
+  },
+  {
+    "birth_year": 2012,
+    "birth_month": 5,
+    "league_age": 15
+  },
+  {
+    "birth_year": 2012,
+    "birth_month": 6,
+    "league_age": 15
+  },
+  {
+    "birth_year": 2012,
+    "birth_month": 7,
+    "league_age": 15
+  },
+  {
+    "birth_year": 2012,
+    "birth_month": 8,
+    "league_age": 15
+  },
+  {
+    "birth_year": 2011,
+    "birth_month": 9,
+    "league_age": 15
+  },
+  {
+    "birth_year": 2011,
+    "birth_month": 10,
+    "league_age": 15
+  },
+  {
+    "birth_year": 2011,
+    "birth_month": 11,
+    "league_age": 15
+  },
+  {
+    "birth_year": 2011,
+    "birth_month": 12,
+    "league_age": 15
+  },
+  {
+    "birth_year": 2011,
+    "birth_month": 1,
+    "league_age": 16
+  },
+  {
+    "birth_year": 2011,
+    "birth_month": 2,
+    "league_age": 16
+  },
+  {
+    "birth_year": 2011,
+    "birth_month": 3,
+    "league_age": 16
+  },
+  {
+    "birth_year": 2011,
+    "birth_month": 4,
+    "league_age": 16
+  },
+  {
+    "birth_year": 2011,
+    "birth_month": 5,
+    "league_age": 16
+  },
+  {
+    "birth_year": 2011,
+    "birth_month": 6,
+    "league_age": 16
+  },
+  {
+    "birth_year": 2011,
+    "birth_month": 7,
+    "league_age": 16
+  },
+  {
+    "birth_year": 2011,
+    "birth_month": 8,
+    "league_age": 16
+  },
+  {
+    "birth_year": 2010,
+    "birth_month": 9,
+    "league_age": 16
+  },
+  {
+    "birth_year": 2010,
+    "birth_month": 10,
+    "league_age": 16
+  },
+  {
+    "birth_year": 2010,
+    "birth_month": 11,
+    "league_age": 16
+  },
+  {
+    "birth_year": 2010,
+    "birth_month": 12,
+    "league_age": 16
+  }
+]

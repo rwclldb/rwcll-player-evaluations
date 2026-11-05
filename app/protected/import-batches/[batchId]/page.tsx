@@ -127,7 +127,12 @@ async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2"><Link className="text-sm underline underline-offset-4" href="/protected/import-batches">← Back to staged batches</Link><h1 className="text-3xl font-bold">Import batch #{batch.id}</h1><p className="text-sm text-muted-foreground">{batch.source_file_name || "Unnamed source file"} · Created {new Date(batch.created_at).toLocaleString()}</p></div>
+      <div className="flex flex-col gap-2">
+        <Link className="text-sm underline underline-offset-4" href="/protected/import-batches">← Back to staged batches</Link>
+        <Link className="text-sm font-medium underline underline-offset-4" href={`/protected/import-batches/${batch.id}/review`}>Open administrator row review →</Link>
+        <h1 className="text-3xl font-bold">Import batch #{batch.id}</h1>
+        <p className="text-sm text-muted-foreground">{batch.source_file_name || "Unnamed source file"} · Created {new Date(batch.created_at).toLocaleString()}</p>
+      </div>
       <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-4 text-sm"><strong>Read-only review.</strong> Possible matches below are suggestions only. They never link or merge players, approve rows, or commit registrations.</div>
       {playersError ? <p role="alert" className="rounded-lg border p-3 text-sm">Existing-player suggestions are unavailable for this view. Confirm administrator read access to players. Staged rows remain unchanged.</p> : <p className="text-sm text-muted-foreground">Candidate matching compares names and birth dates against up to 10,000 existing player records. Sports Connect IDs are not treated as permanent player identities. Review every suggestion manually.</p>}
       <div className="grid gap-3 sm:grid-cols-3"><Metric label="Rows received" value={batch.rows_received} /><Metric label="Rows flagged" value={batch.rows_with_errors} /><Metric label="Batch status" value={batch.status} /></div>

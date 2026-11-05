@@ -4,7 +4,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:import-preview": "node scripts/test-import-preview.cjs",
+    "test:import-batch-review": "node scripts/test-import-batch-review.cjs",
+    "test:import-candidates": "node scripts/test-import-candidates.cjs",
+    "test:import-review-decisions": "node scripts/test-import-review-decisions.cjs",
+    "test:import-review-ui": "node scripts/test-import-review-ui.cjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.1",

@@ -79,6 +79,59 @@ npx supabase login
 
 Signing out of the CLI does not sign you out of the Dashboard browser, and switching the CLI account does not itself change this repository's existing project link. Verify both the account and project before remote operations. Do not share personal access tokens, database passwords, API keys, or connection strings.
 
+## Local Supabase migrations: staging and review features
+
+Use these steps when a local page reports that a Phase 5.0/5.3 migration is missing, or when a new migration needs to be applied. Run commands from the project root—the folder containing `package.json` and `supabase/`.
+
+1. Check which Supabase instance the CLI sees:
+   ```powershell
+   npx supabase status
+   ```
+   Confirm the local API is `http://127.0.0.1:54321`. If the local stack is stopped, run `npx supabase start`, then check status again.
+2. Check migration history:
+   ```powershell
+   npx supabase migration list --local
+   ```
+   Review the **Local** column and identify any migrations that are pending locally. The Phase 5.0 Sports Connect staging migration is `20261104210000_add_sports_connect_staging.sql`; Phase 5.3 review decisions is `20261104220000_add_import_row_review_decisions.sql`.
+3. If the relevant migration file is present in `supabase/migrations/` and is pending, apply pending local migrations:
+   ```powershell
+   npx supabase migration up --local
+   ```
+   This applies **all migrations pending locally**, not just one selected file. Review the list first and stop if any unexpected migration is pending.
+4. Verify the result:
+   ```powershell
+   npx supabase migration list --local
+   ```
+   Refresh the app page after the migration succeeds. If the page still reports a missing migration, verify that the app's `.env.local` uses the local Supabase URL and restart `npm run dev` after changing environment variables.
+
+### Safety rules
+
+- These instructions are for local Supabase only. Do not run `npx supabase db push`, link/sync commands, or other hosted-database operations as part of this procedure.
+- Do not run `npx supabase db reset --local` just to apply a migration; reset destroys local database contents and is not needed for an ordinary pending migration.
+- Never assume the app and CLI use the same database just because the page opens. Check the local API URL and `.env.local` (do not share secret values).
+- Keep the hosted Supabase database unchanged unless a separate, explicit approval is given for a specific hosted change.
+
+### Import batch screen says “Could not load staged batches”
+
+1. Confirm local Supabase is running and the local staging migration is applied using the steps above.
+2. Confirm the signed-in user has the administrator role in the **local** database. Authentication alone does not make a user an administrator.
+3. Check that `.env.local` points to the local Supabase API (`http://127.0.0.1:54321`) and restart the Next.js dev server after environment changes.
+4. If it still fails, capture the exact page message and relevant terminal error, removing secrets. Do not reset the database as a first troubleshooting step.
+
+### Import batch page says “Read-only review” and has no review buttons
+
+The presence of staged rows confirms that the batch can be read, but it does not confirm that the review controls are enabled. Before attempting decisions:
+
+1. Confirm the app is signed in as the local administrator account, not a different account or session.
+2. Verify that the administrator role exists for that account in the local database. The intended global administrator role uses `role_name = 'administrator'` and `season_id IS NULL` in `public.user_roles`.
+3. Confirm the Phase 5.4 administrator review UI files were copied into the project and that the app is running the updated source. Refresh the page; if source files changed while the dev server was running, restart `npm run dev`.
+4. If the page still says “Read-only review,” do not assume the browser test passed and do not try to bypass the UI. Record the signed-in account email (do not share passwords or tokens), the exact page URL, and whether the local administrator-role query returns that account. Then inspect the Phase 5.4 role-check/UI wiring.
+
+### What import review does—and does not do
+
+Review decisions are audit-recorded decisions about staged rows. They do not themselves create or update player or player-season registration records, merge identities, or commit an import. Continue using fake/test data until the complete import workflow is separately implemented and validated.
+
+
 ### Database snapshot and migration safety
 As of 2026-11-03, the initial tables, helper/trigger functions, triggers, and RLS policies have been created directly in the hosted RWCLL Supabase project. The four checked tables (`players`, `player_seasons`, `teams`, `evaluations`) currently contain zero records. A schema-only reference snapshot named `schema-baseline-review.sql` was exported from the `public` schema (60,543 bytes) to the local repository root. It is a review artifact, not yet an approved or replayable migration, and it has not been confirmed committed to Git.
 
