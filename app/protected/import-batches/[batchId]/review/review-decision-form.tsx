@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { saveImportRowReview, commitImportRow, resolveDuplicatePlayerIdWarning } from "../../review-actions";
+import { saveImportRowReview, commitImportRow, resolveDuplicatePlayerIdWarning, reopenIgnoredImportRow } from "../../review-actions";
 import { useRouter } from "next/navigation";
 
 
@@ -48,6 +48,9 @@ export function ReviewDecisionForm({
   const [duplicateResolutionReason, setDuplicateResolutionReason] = useState("");
   const [duplicateResolutionMessage, setDuplicateResolutionMessage] = useState("");
   const duplicatePlayerIdResolved = Boolean(duplicatePlayerIdResolvedAt);
+  const isIgnored = currentDecision === "ignored";
+  const [reopenReason, setReopenReason] = useState("");
+  const [reopenMessage, setReopenMessage] = useState("");
   function submit() {
     setMessage("");
     const data = new FormData();
@@ -82,6 +85,28 @@ function submitCommit() {
     );
 
     setCommitReason("");
+    router.refresh();
+  });
+}
+
+function submitReopen() {
+  setReopenMessage("");
+
+  const data = new FormData();
+  data.set("rowId", String(rowId));
+  data.set("batchId", String(batchId));
+  data.set("reason", reopenReason);
+
+  startTransition(async () => {
+    const result = await reopenIgnoredImportRow(data);
+
+    if (!result.ok) {
+      setReopenMessage(result.message);
+      return;
+    }
+
+    setReopenMessage("Row reopened. Audit entry recorded.");
+    setReopenReason("");
     router.refresh();
   });
 }
@@ -162,7 +187,7 @@ function submitDuplicateResolution() {
             required
             value={duplicateResolutionReason}
             onChange={(e) => setDuplicateResolutionReason(e.target.value)}
-            disabled={disabled || isPending || isCommitted}
+            disabled={disabled || isPending || isCommitted || isIgnored}
             placeholder="Explain how you checked the duplicate ID and why it is safe to proceed."
           />
         </label>
@@ -192,11 +217,60 @@ function submitDuplicateResolution() {
   </section>
 )}
 
+{isIgnored && (
+  <section
+    className="flex flex-col gap-3 rounded-lg border border-amber-500/50 p-4"
+    aria-label="Ignored row controls"
+  >
+    <h3 className="font-semibold">This row is ignored</h3>
+    <p className="text-sm">
+      Ignored rows cannot be changed through ordinary review. An administrator
+      must explicitly reopen this row and record a reason before reviewing it
+      again.
+    </p>
+
+    <label className="flex flex-col gap-1 text-sm">
+      Reopening reason (required, 5–1,000 characters)
+      <textarea
+        className="min-h-20 rounded-md border bg-background p-2"
+        minLength={5}
+        maxLength={1000}
+        required
+        value={reopenReason}
+        onChange={(e) => setReopenReason(e.target.value)}
+        disabled={disabled || isPending || isCommitted}
+        placeholder="Explain why this row needs to be reviewed again."
+      />
+    </label>
+
+    <div className="flex flex-wrap items-center gap-3">
+      <button
+        type="button"
+        className="rounded-md border border-amber-600 px-4 py-2 disabled:opacity-50"
+        onClick={submitReopen}
+        disabled={
+          disabled ||
+          isPending ||
+          isCommitted ||
+          reopenReason.trim().length < 5 ||
+          reopenReason.trim().length > 1000
+        }
+      >
+        {isPending ? "Processing…" : "Reopen ignored row"}
+      </button>
+
+      <span aria-live="polite" role="status" className="text-sm">
+        {reopenMessage}
+      </span>
+    </div>
+  </section>
+)}
+
     <h3 className="font-semibold">Review decision</h3>
-    <label className="flex flex-col gap-1 text-sm">Decision<select className="rounded-md border bg-background p-2" value={decision} onChange={(e) => setDecision(e.target.value)} disabled={disabled || isPending}>{Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-    {match && <label className="flex flex-col gap-1 text-sm">Existing player (required)<select className="rounded-md border bg-background p-2" value={matchedPlayerId} onChange={(e) => setMatchedPlayerId(e.target.value)} disabled={disabled || isPending}><option value="">Choose a candidate — verify identity</option>{candidates.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>{candidates.length === 0 && <span className="text-amber-700">No suggestions available. Do not approve a match without verifying the player.</span>}</label>}
-    <label className="flex flex-col gap-1 text-sm">Reason (required, 5–1,000 characters)<textarea className="min-h-20 rounded-md border bg-background p-2" minLength={5} maxLength={1000} required value={reason} onChange={(e) => setReason(e.target.value)} disabled={disabled || isPending} placeholder="Explain the evidence and why this decision is appropriate." /></label>
-    <div className="flex flex-wrap items-center gap-3"><button type="button" className="rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50" onClick={submit} disabled={disabled || isPending || reason.trim().length < 5 || reason.length > 1000 || (match && !matchedPlayerId)}>{isPending ? "Saving…" : "Save decision"}</button><span aria-live="polite" role="status" className="text-sm">{message}</span></div>
+    <label className="flex flex-col gap-1 text-sm">Decision<select className="rounded-md border bg-background p-2" value={decision} onChange={(e) => setDecision(e.target.value)} disabled={disabled || isPending || isCommitted || isIgnored}>{Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+    {match && <label className="flex flex-col gap-1 text-sm">Existing player (required)<select className="rounded-md border bg-background p-2" value={matchedPlayerId} onChange={(e) => setMatchedPlayerId(e.target.value)} disabled={disabled || isPending || isCommitted || isIgnored}><option value="">Choose a candidate — verify identity</option>{candidates.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>{candidates.length === 0 && <span className="text-amber-700">No suggestions available. Do not approve a match without verifying the player.</span>}</label>}
+    <label className="flex flex-col gap-1 text-sm">Reason (required, 5–1,000 characters)<textarea className="min-h-20 rounded-md border bg-background p-2" minLength={5} maxLength={1000} required value={reason} onChange={(e) => setReason(e.target.value)} disabled={disabled || isPending || isCommitted || isIgnored} placeholder="Explain the evidence and why this decision is appropriate." /></label>
+    <div className="flex flex-wrap items-center gap-3"><button type="button" className="rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50" onClick={submit} disabled={disabled || isPending || isCommitted || isIgnored || reason.trim().length < 5 || reason.length > 1000 || (match && !matchedPlayerId)}>{isPending ? "Saving…" : "Save decision"}</button><span aria-live="polite" role="status" className="text-sm">{message}</span></div>
     {(currentDecision === "approved_new" ||
   currentDecision === "approved_match") && (
   <section className="flex flex-col gap-3 rounded-lg border border-amber-500/50 p-4">

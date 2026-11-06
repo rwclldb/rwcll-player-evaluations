@@ -254,3 +254,94 @@ export async function resolveDuplicatePlayerIdWarning(
 
   return { ok: true };
 }
+
+
+export type ReopenIgnoredImportRowResult =
+  | { ok: true }
+  | { ok: false; message: string };
+
+export async function reopenIgnoredImportRow(
+  formData: FormData,
+): Promise<ReopenIgnoredImportRowResult> {
+  const rowId = Number(formData.get("rowId"));
+  const batchId = Number(formData.get("batchId"));
+  const reason = String(formData.get("reason") ?? "").trim();
+
+  if (
+    !Number.isSafeInteger(rowId) || rowId < 1 ||
+    !Number.isSafeInteger(batchId) || batchId < 1
+  ) {
+    return { ok: false, message: "Invalid import row or batch." };
+  }
+
+  if (reason.length < 5 || reason.length > 1000) {
+    return {
+      ok: false,
+      message: "Enter a reopening reason between 5 and 1,000 characters.",
+    };
+  }
+
+  const supabase = await createClient();
+
+  const { data: claims, error: claimsError } =
+    await supabase.auth.getClaims();
+
+  if (claimsError || !claims?.claims) {
+    return {
+      ok: false,
+      message: "Sign in before reopening an ignored row.",
+    };
+  }
+
+  const { data: isAdmin, error: roleError } =
+    await supabase.rpc("is_admin");
+
+  if (roleError || isAdmin !== true) {
+    return {
+      ok: false,
+      message: "Administrator access is required.",
+    };
+  }
+
+  const { data: row, error: rowError } = await supabase
+    .from("sports_connect_import_rows")
+    .select("id, import_batch_id, review_state")
+    .eq("id", rowId)
+    .maybeSingle();
+
+  if (rowError || !row || Number(row.import_batch_id) !== batchId) {
+    return {
+      ok: false,
+      message: "This row was not found in the selected batch.",
+    };
+  }
+
+  if (row.review_state !== "ignored") {
+    return {
+      ok: false,
+      message: "Only ignored rows can be reopened.",
+    };
+  }
+
+  const { error } = await supabase.rpc(
+    "reopen_ignored_sports_connect_import_row",
+    {
+      p_row_id: rowId,
+      p_reason: reason,
+    },
+  );
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message || "Could not reopen the ignored row.",
+    };
+  }
+
+  revalidatePath(`/protected/import-batches/${batchId}`);
+  revalidatePath(`/protected/import-batches/${batchId}/review`);
+  revalidatePath("/protected/import-batches");
+
+  return { ok: true };
+}
+
