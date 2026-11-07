@@ -215,6 +215,16 @@ These are agreed requirements, not implemented features. Keep implementation che
 
 
 
+## Sports Connect payment-status preservation
+
+- [x] Identify that the commit RPC omitted `registration_payment_status` from its registration insert.
+- [x] Add migration `20261107010000_preserve_payment_status_on_import_commit.sql` to preserve staged statuses on future commits and backfill linked committed registrations currently marked `UNKNOWN`.
+- [x] Add static regression checks for the insert mapping and narrowly scoped backfill.
+- [ ] Apply the migration to local Supabase only, after checking pending migrations; run `npm run test:all` and verify the registration query.
+- [ ] Confirm ages 9 and 10 appear in the dashboard based on corrected statuses and eligible rules.
+
+No hosted database changes have been made. Do not deploy this migration remotely without explicit approval.
+
 ## Phase 6 — Administrator evaluation review (in progress)
 
 - [x] Add a read-only administrator review page grouped by season and Little League age.
