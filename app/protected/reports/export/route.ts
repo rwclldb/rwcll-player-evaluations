@@ -105,7 +105,7 @@ export async function GET(request: Request) {
     const ownRatings = historyRatings.filter((rating) => rating.historical_evaluation_id === historicalEvaluation.id);
     const base = ["HISTORICAL_COACH", playerName, historicalEvaluation.player_id, seasonResult.data.name, registration.league_age, registration.evaluation_number, registration.registration_payment_status, "historical_coach", historicalEvaluation.source_coach_name ?? "", "historical",];
     if (ownRatings.length === 0) rows.push([...base, "", "", historicalEvaluation.source_season_label, historicalEvaluation.source_coach_name, historicalEvaluation.source_division_name, historicalEvaluation.source_team_label, historicalEvaluation.coverage_note]);
-    else for (const rating of ownRatings) rows.push([...base, categories.find((item) => item.id === rating.rating_category_id)?.name ?? rating.category_name, rating.score, historicalEvaluation.source_season_label, historicalEvaluation.source_coach_name, historicalEvaluation.source_division_name, historicalEvaluation.source_team_label, ""]);
+    else for (const rating of ownRatings) rows.push([...base, categories.find((item) => item.id === rating.rating_category_id)?.name ?? rating.category_name, rating.score, historicalEvaluation.source_season_label, historicalEvaluation.source_coach_name, historicalEvaluation.source_division_name, historicalEvaluation.source_team_label, historicalEvaluation.coverage_note]);
   }
 
   const csv = rows.map(csvRow).join("\r\n") + "\r\n";
