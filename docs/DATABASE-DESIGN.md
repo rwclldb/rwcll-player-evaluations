@@ -279,3 +279,15 @@ Final reports may show historical coach ratings next to current spring group res
 - [x] Run static migration regression checks locally; all 10 checks passed.
 - [ ] Apply migration and test constraints, RLS, and idempotency locally.
 - [ ] Implement the preview/review/commit UI and secure import RPCs in a later step.
+
+
+## Implemented historical coach report access — 2026-11-07
+
+Migration 20261107030000_scoped_coach_historical_reports.sql defines two narrow SECURITY DEFINER RPCs:
+
+- coach_historical_report_roster(p_season_id) returns player registrations only when their current-season team is assigned to auth.uid(); administrators can inspect the full selected season.
+- coach_historical_report(p_player_season_id) verifies the player's current-season team assignment before returning that player's identity and historical coach ratings. An unauthorized or unassigned player request raises a permission error.
+
+Both functions use a fixed search_path; execution is revoked from PUBLIC and anon and granted to authenticated. Historical table RLS policies remain administrator-only. The coach UI must call these RPCs and must not query historical_evaluations or historical_ratings directly. The player-facing coach report contains historical ratings only, not individual current-season evaluations.
+
+Status: migration and UI implementation are on feature/admin-evaluation-review; local database application and runtime authorization tests are still pending. No hosted migration has been applied.
