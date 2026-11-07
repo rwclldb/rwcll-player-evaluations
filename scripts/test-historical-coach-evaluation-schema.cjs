@@ -66,9 +66,9 @@ for (const [label, passed] of checks) {
   if (!passed) failures++;
 }
 if (failures) {
-  console.error(`\\n${failures} historical schema check(s) failed.`);
+  console.error(`\n${failures} historical schema check(s) failed.`);
   process.exitCode = 1;
 } else {
-  console.log("\\nPASS: all historical coach evaluation schema source checks.");
+  console.log("\nPASS: all historical coach evaluation schema source checks.");
 }
 console.log("LIMITATION: static source checks only; apply migration to local Supabase and test database behavior separately.");
