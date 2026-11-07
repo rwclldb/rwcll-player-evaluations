@@ -64,6 +64,14 @@ This status reflects the developer's reported local environment and test results
 
 **Next step:** Have the user fetch `feature/admin-evaluation-review`, run the full local validation suite, then test the dashboard against local Supabase as admin and verify non-admin access is redirected. Fix any build/runtime issues before merging. Preserve synthetic records.
 
+## Payment status omitted by Sports Connect commit RPC (2026-11-06)
+
+**Diagnosis confirmed from source:** the commit function in `20261105010000_handle_existing_registration_in_import_commit.sql` inserted player-season registrations without `registration_payment_status`. As a result, linked committed imports with source statuses such as `COMPLETED` and `Paid` ended up with the column default `UNKNOWN`, so the Phase 6 dashboard counted only the age-8 synthetic registration.
+
+**Fix pushed to `feature/admin-evaluation-review`:** migration `20261107010000_preserve_payment_status_on_import_commit.sql` updates the commit RPC to copy the trimmed staged `payment_status` into `registration_payment_status`, falling back to `UNKNOWN` only if the source is blank. It also backfills existing rows only when the current registration status is exactly `UNKNOWN` and a linked committed staging row contains a nonblank status. Unrelated registrations and non-UNKNOWN statuses are left unchanged.
+
+A static regression check was added to `scripts/test-import-commit-registration-conflict.cjs`. The user has not yet applied this migration locally or rerun tests after these changes. **Next step:** pull the feature branch, review `npx supabase migration list --local`, apply pending migrations to local Supabase only, run `npm run test:all`, then rerun the registration status query and inspect the evaluation-review dashboard. No hosted database changes have been made or authorized.
+
 ## Sports Connect import — duplicate Player ID resolution safeguard (2026-11-05)
 
 ### Local migration
