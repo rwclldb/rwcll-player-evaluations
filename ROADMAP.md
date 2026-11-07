@@ -248,10 +248,10 @@ No hosted database changes have been made. Do not deploy this migration remotely
 - [x] Decide matching precedence: permanent RWCLL Player ID first; name and available birthdate/season/team/division as candidate clues; manual admin confirmation required.
 - [x] Decide unresolved historical rows must not create player records and must remain out of final reports until matched.
 - [x] Draft `20261107020000_historical_coach_evaluation_schema.sql` with source metadata, match provenance, import staging, RLS, and idempotency constraints.
-- [ ] Apply migration to local Supabase only and verify migration history/schema.
+- [x] Apply migration to local Supabase and verify table structure, RLS enabled, constraints, indexes, and administrator policy expressions.
 - [x] Add static regression checks in `scripts/test-historical-coach-evaluation-schema.cjs` and wire them into `npm run test:all`.
 - [x] Run `npm run test:historical-coach-evaluation-schema` locally; all 10 static checks passed.
-- [ ] Test local RLS, unique/idempotency constraints, and existing historical data preservation.
+- [ ] Test actual non-admin access behavior, database constraint rejection paths, idempotent import behavior, and historical data preservation.
 - [ ] Implement admin import preview, candidate review, and commit workflow.
 - [ ] Implement narrowly scoped report access for authorized coaches and administrators.
 - [ ] Include clearly labeled historical ratings in final reports/export, separate from current group ratings.
