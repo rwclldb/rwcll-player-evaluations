@@ -10,6 +10,11 @@ import { RatingInputs } from "./rating-inputs";
 
 const OLDEST_TO_YOUNGEST = [16, 15, 14, 13, 12, 11, 10, 9, 8];
 
+function isEligibleRegistrationStatus(status: string | null) {
+  const normalized = status?.trim().toLowerCase();
+  return ["completed", "paid", "pending"].includes(normalized ?? "");
+}
+
 type SearchParams = Promise<{
   sessionId?: string;
   message?: string;
@@ -198,11 +203,11 @@ async function EvaluatorWorkspaceContent({
       const registrationResult = await supabase
         .from("player_seasons")
         .select(
-          "id, evaluation_number, players(first_name, last_name, date_of_birth)",
+          "id, evaluation_number, registration_payment_status, players(first_name, last_name, date_of_birth)",
         )
         .eq("season_id", selectedSession.season_id)
         .eq("league_age", selectedSession.league_age)
-        .in("registration_payment_status", ["COMPLETED", "Completed", "Paid", "Pending", "PENDING"])
+        .not("registration_payment_status", "is", null)
         .order("evaluation_number", { ascending: true, nullsFirst: false });
 
       if (registrationResult.error) {
@@ -210,7 +215,8 @@ async function EvaluatorWorkspaceContent({
           `Could not load eligible registrations: ${registrationResult.error.message}`;
       } else {
         registrations =
-          (registrationResult.data ?? []) as unknown as EligibleRegistration[];
+          ((registrationResult.data ?? []) as unknown as (EligibleRegistration & { registration_payment_status?: string | null })[])
+            .filter((registration) => isEligibleRegistrationStatus(registration.registration_payment_status));
 
         const playerSeasonIds = registrations.map((row) => row.id);
 
