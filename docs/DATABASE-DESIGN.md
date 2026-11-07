@@ -236,3 +236,42 @@ These requirements refine the proposed schema and policies. They remain design-o
 ### Historical integrity
 - Current evaluation averages exclude drafts and historical evaluation records. Do not alter existing ratings or overwrite historical data when generating team suggestions or processing late additions.
 - Any changes to submitted data, player-season data, absence status, coach-child designation, or generated-roster constraints should be authorized and audited appropriately.
+
+
+## Historical coach evaluations and import matching (design finalized 2026-11-07; migration drafted, local validation pending)
+
+Historical coach evaluations are records created by coaches at the end of a season. They use the same 1–5 category scales as spring evaluations but are a separate historical source. They are read-only context in later spring reports and never contribute to current-season evaluator completion, counts, or averages.
+
+### Existing tables and migration approach
+
+The initial schema already contains `historical_evaluations` and `historical_ratings`, but their original shape is minimal. Extend them rather than creating duplicate tables. The migration `20261107020000_historical_coach_evaluation_schema.sql` adds source season, coach/source identifiers, match method, import lineage and review metadata, and a staging table for unresolved source rows. This migration is drafted on the feature branch and must be applied to local Supabase and tested before it is considered complete. Do not apply it to hosted Supabase without explicit approval.
+
+### Finalized import/matching rules
+
+1. **Stage first; do not write final history directly from an uploaded file.** Preserve the original row as JSON and the source row number in a protected import batch.
+2. **Prefer an exact permanent RWCLL Player ID when supplied.** Treat it as a strong candidate, not permission to ignore conflicting name/date-of-birth information. A conflict must be flagged for administrator review.
+3. **If the internal ID is missing, suggest candidates using available identifying details:** normalized first/last name, date of birth when available, source season, team and division. Historical Sports Connect IDs are clues only and are not treated as permanent identity.
+4. **Never silently merge or link by name alone.** Zero or multiple plausible candidates remain pending administrator review. The administrator may confirm a player link or reject the row; historical imports must not create a new permanent player merely because a historical row could not be matched.
+5. **Record match provenance:** `player_id`, `name_and_details`, or `manual_review`; retain who reviewed, when, and the reason.
+6. **Keep each source row idempotent.** Enforce one staging row per import batch/source row and at most one imported historical evaluation per staging row. Track the final historical evaluation link.
+7. **Preserve historical source context:** source season label and optional linked season ID, source division/team labels, coach name and optional linked account, import batch/row, and original source data. A missing coach account must not prevent retaining the source coach's name.
+8. **Use the existing rating scale and categories.** Map historical rating categories to `rating_categories` when a reliable mapping exists; preserve the source category label/code for auditability. Scores remain 1–5. Missing categories remain absent, never zero.
+9. **Keep history separate from current evaluations.** Historical ratings do not satisfy current evaluation requirements, affect current progress, or enter current spring averages.
+10. **Access stays administrator-only at the raw table level initially.** Any coach-facing historical display must be through a specifically authorized server-side query/RPC that limits records to players the coach is allowed to see. Do not grant coaches broad read access to historical tables. Final-report presentation must clearly distinguish historical coach ratings from current spring group ratings.
+
+### New staging entity
+
+`historical_evaluation_import_rows` stores the raw row, supplied player identifier, available name/date-of-birth/source season/team/division/coach fields, candidate internal player IDs, selected player, match method, review state, reviewer/reason, and link to the imported historical evaluation. Allowed states are `pending_review`, `approved_match`, `rejected`, and `imported`. No row is imported until a player link is explicitly approved; rejected/unmatched rows remain traceable.
+
+### Report requirements
+
+Final reports may show historical coach ratings next to current spring group results, but in distinct labeled sections with the source season and coach/source context where available. Reports must not imply the historical rating was collected during the current spring evaluation. A missing historical record is “no historical rating available,” not zero. Partial historical coverage must be disclosed.
+
+### Implementation status
+
+- [x] Confirmed the existing `historical_evaluations` and `historical_ratings` tables should be extended, not duplicated.
+- [x] Finalized primary-ID matching, fallback candidate suggestions, manual review, provenance, and no-silent-match rules.
+- [x] Drafted a local-only migration extending the historical tables and adding protected staging.
+- [ ] Apply migration to local Supabase and inspect the resulting schema/policies.
+- [ ] Add migration regression checks and test constraints, RLS, and idempotency locally.
+- [ ] Implement the preview/review/commit UI and secure import RPCs in a later step.
