@@ -51,6 +51,11 @@ const CORE_CODES = [
 ] as const;
 const AGES = [16, 15, 14, 13, 12, 11, 10, 9, 8];
 
+function isEligibleRegistrationStatus(status: string | null) {
+  const normalized = status?.trim().toLowerCase();
+  return ["completed", "paid", "pending"].includes(normalized ?? "");
+}
+
 function ratingSummary(
   evaluationId: number,
   ratings: Rating[],
@@ -200,7 +205,7 @@ async function EvaluationReviewContent() {
                   const eligible = registrations.filter((registration) =>
                     registration.season_id === season.id &&
                     registration.league_age === age &&
-                    ["COMPLETED", "Completed", "Paid", "Pending", "PENDING"].includes(registration.registration_payment_status ?? ""),
+                    isEligibleRegistrationStatus(registration.registration_payment_status),
                   );
                   const sessionEvaluations = evaluations.filter((evaluation) => evaluation.evaluation_session_id === session.id);
                   const evaluatedPlayerIds = new Set(sessionEvaluations.map((evaluation) => evaluation.player_season_id));
