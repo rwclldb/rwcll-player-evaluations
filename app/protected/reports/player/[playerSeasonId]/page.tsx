@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 
 type Props = { params: Promise<{ playerSeasonId: string }> };
 type PlayerSeason = {
-  id: number; player_id: number; season_id: number; league_age: number | null; evaluation_number: number | null;
+  id: number; player_id: number; season_id: number; league_age: number | null; evaluation_number: number | null; registration_payment_status: string | null;
   players: { first_name: string; last_name: string; date_of_birth: string | null } | null;
 };
 type Session = { id: number; league_age: number | null; status: string };
@@ -33,7 +33,7 @@ async function PlayerReportContent({ params }: Props) {
   if (adminError || isAdmin !== true) redirect("/protected");
 
   const registrationResult = await supabase.from("player_seasons")
-    .select("id, player_id, season_id, league_age, evaluation_number, players(first_name, last_name, date_of_birth)")
+    .select("id, player_id, season_id, league_age, evaluation_number, registration_payment_status, players(first_name, last_name, date_of_birth)")
     .eq("id", playerSeasonId).maybeSingle();
   if (registrationResult.error) return <main className="w-full max-w-5xl p-4"><p role="alert">Could not load player report: {registrationResult.error.message}</p></main>;
   if (!registrationResult.data) notFound();
@@ -75,7 +75,7 @@ async function PlayerReportContent({ params }: Props) {
       <header className="space-y-2">
         <Link href={`/protected/reports?seasonId=${registration.season_id}`} className="text-sm text-muted-foreground hover:underline">← Back to {seasonName} reports</Link>
         <h1 className="text-3xl font-bold tracking-tight">{playerName}</h1>
-        <p className="text-sm text-muted-foreground">{seasonName} · Little League age {registration.league_age ?? "not set"} · Evaluation # {registration.evaluation_number ?? "—"}</p>
+        <p className="text-sm text-muted-foreground">{seasonName} · Little League age {registration.league_age ?? "not set"} · Evaluation # {registration.evaluation_number ?? "—"} · Registration status: {registration.registration_payment_status ?? "Unknown"}</p>
         <p className="text-sm text-muted-foreground">Administrator report. Current ratings and historical coach ratings are separate and are never combined into one average.</p>
       </header>
       {downstreamError && <p role="alert" className="rounded-md border p-4 text-sm">Could not load all ratings: {downstreamError}</p>}
