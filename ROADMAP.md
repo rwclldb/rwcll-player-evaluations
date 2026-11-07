@@ -223,6 +223,7 @@ These are agreed requirements, not implemented features. Keep implementation che
 - [x] Show per-player evaluation records and core-category totals/averages without treating missing ratings as zero.
 - [x] Keep pending registrations in the eligible evaluation pool; continue excluding unpaid/unknown statuses from the evaluator workspace.
 - [x] Add a static UI regression check for the administrator review page and pending-registration eligibility.
+- [x] Normalize payment-status casing and whitespace consistently in evaluator eligibility and administrator review counts.
 - [ ] Run `npm run test:all`, lint, TypeScript, and production build against the feature branch.
 - [ ] Verify the dashboard with local Supabase as admin and confirm non-admins are redirected.
 - [ ] Review completion counts against synthetic registrations and saved evaluations.
