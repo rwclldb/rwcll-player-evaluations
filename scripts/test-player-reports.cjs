@@ -14,6 +14,7 @@ assert.match(playerPage, /supabase\.rpc\("is_admin"\)/, "individual report must 
 assert.match(exportRoute, /supabase\.rpc\("is_admin"\)/, "CSV export must enforce administrator access server-side");
 assert.match(reportsPage, /Export season CSV/, "report index must provide CSV export");
 assert.match(playerPage, /Current-season evaluations/, "player report must have a current-season section");
+assert.match(playerPage, /Current age-group ratings/, "player report must show current age-group averages");
 assert.match(playerPage, /Historical coach evaluations/, "player report must have a separate historical section");
 assert.match(playerPage, /never combined into one average/, "report must make clear current and historical ratings are not combined");
 assert.match(playerPage, /historical_evaluations/, "player report must load matched historical evaluations");
