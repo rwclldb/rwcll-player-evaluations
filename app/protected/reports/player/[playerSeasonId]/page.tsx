@@ -11,11 +11,13 @@ type PlayerSeason = {
 };
 type Session = { id: number; league_age: number | null; status: string };
 type Evaluation = { id: number; evaluation_session_id: number; evaluator_user_id: string; evaluator_type: string; status: string; submitted_at: string | null };
+type GroupEvaluation = { id: number; evaluation_session_id: number; evaluator_type: string; status: string };
 type Category = { id: number; code: string; name: string; category_group: string; sort_order: number };
 type Rating = { evaluation_id: number; rating_category_id: number; score: number };
 type Profile = { user_id: string; display_name: string | null };
 type HistoricalEvaluation = { id: number; source_season_label: string; source_division_name: string; source_team_label: string | null; source_coach_name: string | null; coverage_note: string | null; source_season_id: number | null };
 type HistoricalRating = { historical_evaluation_id: number; category_name: string; score: number; rating_category_id: number | null };
+const CORE_CODES = ["hitting", "throwing", "grounders", "fly_balls", "running_awareness"] as const;
 
 export default function PlayerReportPage({ params }: Props) {
   return <Suspense fallback={<main className="w-full max-w-5xl p-4">Loading player report…</main>}><PlayerReportContent params={params} /></Suspense>;
@@ -66,7 +68,15 @@ async function PlayerReportContent({ params }: Props) {
   const historicalRatingResult = historicalIds.length ? await supabase.from("historical_ratings")
     .select("historical_evaluation_id, category_name, score, rating_category_id").in("historical_evaluation_id", historicalIds) : { data: [], error: null };
   const historicalRatings = (historicalRatingResult.data ?? []) as HistoricalRating[];
-  const downstreamError = evaluationResult.error?.message ?? ratingResult.error?.message ?? historicalRatingResult.error?.message;
+  const groupSessionIds = sessions.filter((session) => session.league_age === registration.league_age).map((session) => session.id);
+  const groupEvaluationResult = groupSessionIds.length ? await supabase.from("evaluations")
+    .select("id, evaluation_session_id, evaluator_type, status").in("evaluation_session_id", groupSessionIds).eq("status", "submitted") : { data: [], error: null };
+  const groupEvaluations = (groupEvaluationResult.data ?? []) as GroupEvaluation[];
+  const groupEvaluationIds = groupEvaluations.map((item) => item.id);
+  const groupRatingResult = groupEvaluationIds.length ? await supabase.from("ratings")
+    .select("evaluation_id, rating_category_id, score").in("evaluation_id", groupEvaluationIds) : { data: [], error: null };
+  const groupRatings = (groupRatingResult.data ?? []) as Rating[];
+  const downstreamError = evaluationResult.error?.message ?? ratingResult.error?.message ?? historicalRatingResult.error?.message ?? groupEvaluationResult.error?.message ?? groupRatingResult.error?.message;
   const seasonName = seasonResult.data?.name ?? `Season #${registration.season_id}`;
   const evaluatorName = (userId: string) => profiles.find((profile) => profile.user_id === userId)?.display_name?.trim() || "Evaluator";
 
@@ -93,6 +103,30 @@ async function PlayerReportContent({ params }: Props) {
             })}</div>}
           </article>;
         })}
+      </section>
+
+      <section className="space-y-4">
+        <div><h2 className="text-2xl font-semibold">Current age-group ratings</h2><p className="text-sm text-muted-foreground">Submitted evaluations from this player's current-season age group. Coach and independent-evaluator ratings remain separate; blank scores are excluded.</p></div>
+        {registration.league_age === null || groupSessionIds.length === 0 ? <p className="rounded-md border p-4 text-sm">No age-group session is available for this registration.</p> : (
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="w-full min-w-[38rem] text-left text-sm">
+              <thead><tr className="border-b"><th className="p-3">Core skill</th><th className="p-3">Coach average</th><th className="p-3">Ratings</th><th className="p-3">Independent average</th><th className="p-3">Ratings</th></tr></thead>
+              <tbody>
+                {categories.filter((category) => CORE_CODES.includes(category.code as (typeof CORE_CODES)[number]))
+                  .sort((a, b) => CORE_CODES.indexOf(a.code as (typeof CORE_CODES)[number]) - CORE_CODES.indexOf(b.code as (typeof CORE_CODES)[number]))
+                  .map((category) => {
+                    const stats = (type: string) => {
+                      const scores = groupRatings.filter((rating) => rating.rating_category_id === category.id && groupEvaluations.some((evaluation) => evaluation.id === rating.evaluation_id && evaluation.evaluator_type === type)).map((rating) => rating.score);
+                      return { average: scores.length ? (scores.reduce((sum, score) => sum + score, 0) / scores.length).toFixed(1) : "—", count: scores.length };
+                    };
+                    const coach = stats("coach");
+                    const independent = stats("independent_evaluator");
+                    return <tr key={category.id} className="border-b last:border-0"><td className="p-3">{category.name}</td><td className="p-3 tabular-nums">{coach.average}</td><td className="p-3 tabular-nums">{coach.count}</td><td className="p-3 tabular-nums">{independent.average}</td><td className="p-3 tabular-nums">{independent.count}</td></tr>;
+                  })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <section className="space-y-4">
