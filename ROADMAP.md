@@ -1,299 +1,231 @@
 # RWCLL Player Evaluations — Roadmap
 
-A task is checked only after it is implemented **and tested**. A confirmed requirement or design decision is not the same as an implemented feature.
+A task is checked only after it is implemented **and tested**. A confirmed requirement or design decision is not the same as an implemented feature. Test checkboxes refer to the scope stated; focused/static tests do not imply complete runtime authorization or production readiness.
 
 ## 1. Requirements agreed
+
 - [x] One league; approximately 30–50 users.
 - [x] Responsive web app/PWA direction for phones, tablets, and desktop.
 - [x] No parent or player accounts.
+- [x] Admin-managed invitations; no public registration in the intended product.
 - [x] Coach and independent-evaluator ratings/averages remain separate.
-- [x] Coaches see group averages only; independent evaluator identities hidden from coaches.
+- [x] Coaches see only authorized group aggregates; independent-evaluator identities are hidden from coaches.
 - [x] Administrators can inspect individual submissions.
-- [x] Not Evaluated is not zero and is excluded from averages.
-- [x] Five required core skills; optional pitching/catching for AAA and above.
+- [x] `Not Evaluated` is not zero and is excluded from averages.
 - [x] Historical ratings are read-only and excluded from current averages.
-- [x] Admin-managed invitations; no public registration in intended product.
 - [x] Preserve prior seasons.
-- [x] Seasons are closed by default after completion; an administrator may explicitly reopen a season for corrections, with the action recorded in an audit trail.
-- [x] When creating a new season, carry forward only the editable division setup; do not copy teams/team names, coach assignments, player evaluations, or historical results. Team names are assigned after evaluations.
-- [x] Generate a permanent internal player ID; use name/birthdate only to suggest import matches, with administrator confirmation and no silent merges.
+- [x] Seasons are closed by default after completion; administrator reopening for corrections is explicit and audited.
+- [x] New seasons carry forward only editable division setup; do not copy teams, team names, coach assignments, evaluations, or historical results.
+- [x] Stable internal player ID is independent of name/birthdate; import matches require administrator confirmation.
 - [x] Coaches may be assigned to multiple teams in a season.
-- [x] Coaches can view authorized group averages, but must not see a comparison of their assigned-team averages against division-wide averages.
-- [x] Confirm age-based evaluation groups that can include players later drafted to different divisions; this supersedes the prior division-based session assumption.
-- [x] Each player has one roster assignment per season (no multiple team rosters in the same season).
-- [x] Store a season-specific `evaluation_number` for identifying the player by the number they wear during evaluations; it does not carry over.
+- [x] Coaches must not see a comparison/juxtaposition of assigned-team averages against division-wide averages.
+- [x] Evaluation groups are based on official Little League age, not eventual division.
+- [x] Each player has at most one roster assignment per season.
+- [x] `evaluation_number` is season-specific, nullable, and does not carry forward.
+- [x] Sports Connect IDs are season-specific external identifiers/matching clues, not permanent child IDs.
+- [x] Import all registrations, including Pending and unpaid statuses; app does not process payments.
+- [x] Final division/team assignment is post-draft; requested Sports Connect division is not treated as final assignment.
+- [x] Historical coach ratings are separate from current spring evaluations and require explicit matching.
+- [x] Coach access to historical reports is restricted to players on teams assigned to that coach in the current season.
 
 ## 2. Development foundation
+
 - [x] Create private GitHub repository and clone locally.
-- [x] Scaffold Next.js app with Supabase starter.
-- [x] Configure `.env.local`.
-- [x] Verify `.env.local` is Git-ignored.
+- [x] Scaffold Next.js app with Supabase.
+- [x] Configure `.env.local` and verify it is Git-ignored.
 - [x] Load app at `http://localhost:3000`.
-- [x] Commit scaffold (`34f85d2`) and push to `main`.
-- [x] Create Supabase test user.
-- [x] Sign in and display protected-page user claims.
-- [x] Add the project documentation to the Git repository and commit/push updates as design decisions are confirmed.
+- [x] Create Supabase test user and verify sign-in/protected page.
+- [x] Add project documentation to Git.
 - [x] Establish version-controlled SQL migration workflow.
-- [x] Verify lint and production build.
+- [x] Verify lint and production build at initial foundation checkpoint.
 
-## 3. Database foundation
-- [x] Agree on conceptual entities and relationships; see `docs/DATABASE-DESIGN.md` (proposed only).
-- [x] Confirm season-scoped many-to-many coach/team assignments.
-- [x] Confirm coach-facing visibility rule: do not show a comparison between assigned-team averages and division-wide averages.
-- [x] Confirm age-based evaluation groups and primary/makeup events; schema implementation remains pending.
-- [x] Confirm one player roster record per season.
-- [x] Confirm season-specific evaluation number displayed to evaluators; does not carry over between seasons.
-- [x] Review and approve detailed database design before migration work.
-- [x] Confirm season lifecycle: closed by default; explicit administrator-only reopen for corrections, with audit logging.
-- [x] Confirm new-season setup: copy only editable division configuration; create coaches/assignments and teams/team names fresh later, after evaluations; never copy evaluations or historical results.
-- [x] Design seasons, divisions, teams, players, user profiles, and roles.
-- [x] Separate stable player identity from season-specific registration/team/division/league age and `evaluation_number`.
-- [x] Define season-specific Little League age calculation (official Aug. 31 rule).
-- [x] Confirm Sports Connect IDs are useful external registration identifiers but not universal child IDs: the same child can receive a different ID when a different parent registers them in a later season.
-- [x] Agree on import identity rules: permanent internal `player_id`; season-scoped Sports Connect ID as a matching clue only; name/birthdate as candidate suggestions; administrator-confirmed linking; and pending review for uncertain rows.
-- [x] Design and implement import preview, duplicate detection, audit of match decisions, and admin-confirmed matching; no silent name/DOB matching.
-- [ ] Implement and test the complete database migration chain and all RLS policies.
+## 3. Database foundation and security
+
+- [x] Agree on conceptual entities and relationships; see `docs/DATABASE-DESIGN.md`.
+- [x] Confirm season-scoped coach/team assignments.
+- [x] Confirm one player-season registration per player/season.
+- [x] Separate stable player identity from season-specific registration/team/division/age/number.
+- [x] Define season-specific Little League age calculation using the Aug. 31 rule; verify official source before production.
+- [x] Confirm Sports Connect identity/matching rules.
+- [x] Implement protected import staging, admin review, explicit match decisions, and commit workflow (see Section 6).
+- [x] Add age-based evaluation session/event and evaluator-roster schema migrations (local migration history reported; verify actual state).
+- [x] Add historical coach evaluation schema and source/match metadata (local).
+- [x] Add scoped coach historical-report RPCs (local).
+- [x] Seed active divisions and attach them to open/new seasons (local).
+- [ ] Verify the complete migration chain on a clean/disposable local database and reconcile migration history with checked-in files.
+- [ ] Complete database-level RLS and authorization tests for all roles and data paths.
 - [ ] Implement and test secure aggregate outputs for assigned-team and division views; no individual rating access for coaches.
+- [ ] Verify season close/reopen permissions and audit behavior.
+- [ ] Verify database backup/restore and retention procedures.
 
-## 4. Evaluations and permissions
-- [ ] Replace division-based evaluation session model with age-based groups, dated primary/makeup events, and evaluator assignments.
-- [ ] Implement coach and independent-evaluator submission flows.
+## 4. Evaluations, attendance, and permissions
+
+- [x] Implement age-based evaluation session/event schema groundwork.
+- [x] Implement evaluator roster/assignment schema groundwork.
+- [ ] Verify the complete age-based session workflow in the UI with multiple ages, primary/makeup events, and evaluator assignments.
+- [ ] Implement and test coach and independent-evaluator submission flows.
 - [ ] Support coaches assigned to multiple teams in a season.
 - [ ] Require five core ratings for submitted evaluations.
-- [ ] Implement optional pitching/catching ratings for AAA, Majors, Juniors, Seniors.
+- [ ] Implement pitching/catching availability consistently with the current direction: available across age groups, possibly unscored, not gated by eventual division. Reconcile any older division-based code/configuration.
 - [ ] Implement experience/interest Yes/No/Unknown questions.
-- [ ] Implement Not Evaluated and average/count calculations.
-- [ ] Keep evaluator-group averages separate.
-- [ ] Implement and test coach-facing aggregate views that do not compare or juxtapose assigned-team averages against division-wide averages.
+- [ ] Implement `Not Evaluated` and average/count calculations throughout all relevant views.
+- [ ] Keep coach and independent-evaluator averages separate.
+- [ ] Implement and test coach-facing aggregate views without team-versus-division comparison or juxtaposition.
 - [ ] Hide independent evaluator identities from coaches.
 - [ ] Restrict individual submissions to administrators and appropriate authors.
 - [ ] Implement private coach notes and separately controlled shared notes.
 - [ ] Implement draft/submitted/locked states, author/timestamp, and audit trail.
-- [ ] Test permissions with separate role accounts, including coaches assigned to multiple teams.
+- [ ] Implement per-player attendance for each primary/makeup event, independently of ratings.
+- [ ] Implement admin-approved exemptions with explicit scope, reason, approver, and timestamp.
+- [ ] Test permissions with separate admin, coach, and evaluator accounts, including coaches assigned to multiple teams.
 
-## 5. Imports and history
-- [ ] Build CSV/Excel import preview, mapping, duplicate detection, confirmation.
-- [ ] Import current Sports Connect data after matching rules are approved.
-- [ ] Obtain unredacted historical names or a reliable mapping file.
-- [ ] Match historical AA ratings with administrator confirmation.
-- [ ] Label historical coverage as partial (one team), keep read-only.
-- [ ] Verify historical data is excluded from current averages.
+## 5. Historical coach evaluations and reporting
 
+- [x] Confirm historical coach ratings are prior-season context, separate from current spring evaluator submissions.
+- [x] Extend existing `historical_evaluations` and `historical_ratings` rather than duplicating them.
+- [x] Add source season/coach/import metadata, match provenance, category mapping, protected staging, RLS, and idempotency constraints.
+- [x] Apply historical schema migration to local Supabase and verify structure, RLS enabled, constraints, indexes, and administrator policies.
+- [x] Add static schema regression checks; user reported all 10 focused checks passed.
+- [x] Add administrator player reports with a separate historical coach evaluation section.
+- [x] Add administrator CSV export with distinct current, current-group-summary, and historical-coach record types.
+- [x] Add scoped coach historical-report roster/report RPCs; historical tables remain direct-RLS admin-only.
+- [x] Add coach-facing roster and historical-only player report pages.
+- [x] Insert exactly three explicit local test-only historical crosswalks (3 evaluations, 15 ratings); source metadata and source names retained.
+- [x] Verify all three test historical records appear in administrator reports and remain excluded from current averages/completion.
+- [x] Runtime-check assigned Coach A can see Drew's historical report.
+- [x] Runtime-check unassigned Coach B receives 404 for the same report URL.
+- [ ] Test a coach assigned to a different team cannot access Drew's report by direct URL.
+- [ ] Verify the coach roster does not reveal players outside assigned teams.
+- [ ] Verify non-admin direct reads from `historical_evaluations` and `historical_ratings` are denied.
+- [ ] Re-test administrator report and CSV export after coach-RPC changes.
+- [ ] Implement admin historical import preview, candidate review, and commit workflow for the remaining historical source rows.
+- [ ] Obtain/confirm reliable source identity mapping before linking any additional historical rows.
+- [ ] Label source coverage accurately (the historical source reviewed so far covers AA team spreadsheets, not a complete league history).
 
-## 6. Sports Connect import implementation and validation
+**Test data boundary:** Only the three explicitly approved local test links are imported. Do not import or match other historical rows without explicit review and approval.
+
+## 6. Sports Connect import implementation and safety validation
+
+### Implemented workflow
 
 - [x] Stage Sports Connect CSV rows in a protected import batch without directly modifying player or registration records.
 - [x] Preview staged rows and identify validation flags, including out-of-scope registrations.
-- [x] Review candidate player matches without silently merging records.
+- [x] Review candidate player matches without silently merging.
 - [x] Save administrator review decisions and reasons.
 - [x] Require administrator authorization and approved review state before committing an import row.
 - [x] Support approved new-player and existing-player match commits.
-- [x] Create season registration records during approved commits without assigning a division, team, or evaluation number automatically.
+- [x] Create season registration records during approved commits without assigning a final division, team, or evaluation number automatically.
 - [x] Record commit outcomes and audit information.
 - [x] Prevent committed rows from being edited through the review UI.
-- [x] Add static checks for the import preview, review, and commit workflow.
-- [x] Add a consolidated `npm run test:all` runner that records output and PASS/FAIL results.
-- [x] Validate the current suite: 10 of 10 checks passed, including import tests, lint, TypeScript, and production build.
+- [x] Add duplicate Player ID warning resolution with an audit reason and a commit-time safeguard; resolution does not bypass uniqueness constraints.
+- [x] Protect against duplicate player-season registrations and preserve payment status on commit.
+- [x] Add static checks for import preview, review, and commit workflow.
+- [x] Add consolidated `npm run test:all` runner.
 
 ### Remaining import-safety validation
 
-- [ ] Test unauthorized commits and rejected review states against the local database.
+- [ ] Test unauthorized commits and rejected review states against local database using separate authenticated accounts.
 - [ ] Verify repeat commits are idempotent, including retries after an uncertain client response.
 - [ ] Test duplicate registration numbers and external IDs across rows, batches, seasons, and existing records.
+- [ ] Test approved-match behavior preserves existing player master data.
 - [ ] Test transaction rollback and partial-failure behavior.
-- [ ] Verify audit records and database state after both successful and failed operations.
-- [ ] Test relevant RLS and database-function protections using authenticated non-admin and admin accounts.
-- [ ] Verify the complete workflow using fresh synthetic data and document the results.
+- [ ] Verify audit records and database state after successful and failed operations.
+- [ ] Verify relevant RLS and database-function protections using authenticated non-admin and admin accounts.
+- [ ] Verify invalid/incomplete rows cannot be committed.
+- [ ] Test ignored-row terminal/reopen behavior against the agreed product rule.
+- [ ] Verify the complete workflow using fresh synthetic data and document results.
 
-**Scope boundary:** This import workflow stages and links registration data; it does not process payments, determine final divisions, perform the official draft, or replace Sports Connect as the official roster system.
+**Scope boundary:** Import stages and links registration data. It does not process payments, determine final divisions, conduct the official draft, or replace Sports Connect as the official roster system.
 
-## 7. User experience and launch
-- [ ] Build role-specific dashboards and evaluation screens.
-- [ ] Support age-group evaluation events with multiple evaluators, per-player attendance, and separate performance records.
-- [ ] Test phone, tablet, and desktop layouts.
-- [ ] Test backup/restore and retention procedures.
-- [ ] Confirm league policy for children’s names, birthdates, and retention.
-- [ ] Verify hosting, pricing, environment variables, and production security.
-- [ ] Run end-to-end pilot with test data and representative users.
-- [ ] Obtain board approval before live data or launch.
+### Retained synthetic import data
 
+- Local batch #8 contains 45 synthetic Spring 2027 rows. Exactly three were explicitly approved and committed: Morgan Pebble06, Avery Sandbox08, Drew Willow10.
+- The other 42 rows remain `needs_review` and uncommitted. Preserve them; do not commit without explicit approval.
+- Other historical synthetic batches/rows may also exist. Inspect before cleanup.
+- Earlier remote test artifacts are not authorization for new remote writes.
 
-## Current checkpoint — 2026-11-04
+## 7. Administrator evaluation review, player reports, and exports
 
-**Verified locally**
-- The application passes `npm run lint`, `npx tsc --noEmit`, and `npm run build`.
-- Sports Connect import staging, candidate review, administrator decisions, and commit actions have been implemented.
-- Synthetic tests have exercised approved new-player and existing-player commits.
-- The consolidated `npm run test:all` runner completed successfully: 10 checks passed, 0 failed.
-- The runner writes a detailed report to `test-results/`.
-- The working tree contains uncommitted import-workflow changes and test-runner files; review them before committing.
-
-**Not yet established by the current test suite**
-- Complete database-level authorization and RLS coverage.
-- All duplicate-identifier and cross-batch conflict scenarios.
-- Transaction rollback and failure recovery under real database errors.
-- Full role-based access and reporting security across admin, coach, and evaluator accounts.
-- Production readiness or approval to deploy migrations to hosted Supabase.
-
-**Next milestone:** complete end-to-end import-safety testing against local Supabase using synthetic data. Cover rejected operations, repeat commits, duplicate identifiers, rollback, audit outcomes, and authorization boundaries.
-
-**Safety boundary:** continue local-only validation. Do not apply migrations to hosted Supabase or modify hosted data without explicit approval.
-
-
-
-## 2. Confirmed workflow requirements (2026-11-02)
-
-These are agreed requirements, not implemented features. Keep implementation checkboxes unchecked until the feature is built and tested.
-
-- [ ] Evaluation numbers can be generated from an administrator-chosen starting number, manually overridden, and imported from CSV; a player may be evaluated without a number.
-- [ ] Evaluators can find and evaluate any player in their assigned division; coaches can evaluate players in any division.
-- [ ] Record absences and provide an administrator absence report. Players who miss required evaluations are flagged for administrator handling and are not eligible to play unless the issue is resolved.
-- [ ] Evaluators can save drafts, resume later, and edit submitted evaluations until session lock.
-- [ ] Administrators determine completion; flag missing player ratings and missing evaluator submissions without requiring all submissions to be present.
-- [ ] After lock, administrator corrections to submitted evaluations are permitted and audited.
-- [ ] Optional team-balancing tool generates proposed rosters only; it is not the official team-management system. Export proposed rosters to CSV and provide a print-friendly view.
-- [ ] For generated rosters, administrators set target team sizes; team sizes may differ by one player when the count does not divide evenly. Coaches are assigned first.
-- [ ] An administrator can flag a coach's child for automatic placement on that coach's team. All coaches may see which players are designated as a coach's child; the designation is not hidden from coaches.
-- [ ] Team suggestions may use available ratings, age, experience, and pitching/catching information. Missing ratings remain missing; use available information without inventing scores.
-- [ ] Players added after team formation may have no evaluations. Preserve existing and historical ratings; do not silently alter or overwrite them.
-
-## 4. Newly confirmed workflow requirements (2026-11-03)
-- [x] Spring 2027 season is 2027-01-01 through 2027-06-30; preserve the existing record.
-- [x] Active baseball divisions: AA, AAA, Majors, Juniors, Seniors.
-- [x] Import all registrations including Pending; pending means payment is outstanding, not evaluation-ineligible. The app does not process payments.
-- [x] Show registration status on player lists, player details, and reports; never show it on evaluation screens.
-- [x] Import out-of-scope programs but flag for admin review and exclude from active evaluation pool by default.
-- [x] Use supplied registration/evaluation number if present; otherwise leave blank until assigned.
-- [x] Group evaluations by official Little League age, not final division; one age group may span multiple eventual divisions.
-- [x] Track per-player attendance at each primary/makeup event separately from ratings; injured present players may have no or partial ratings.
-- [x] Admin exemptions can resolve attendance and/or evaluation requirements only with explicit scope, reason, approver, and timestamp.
-- [x] App records post-draft team/division assignments; it does not perform the official draft or replace official rostering.
-- [x] Draft order is Seniors → Juniors → Majors → AAA → AA; mandatory top-age placement rules and admin-approved exceptions must be explicit and based on verified league rules.
-- [x] Optional AA random team suggestions are advisory and require admin review.
-
-## 5. Next implementation sequence (not yet implemented)
-1. [ ] Reconcile the existing schema with the proposed age-based workflow; do not apply a migration yet.
-2. [ ] Finalize and review `docs/IMPORT-WORKFLOW-DESIGN.md` and `docs/PROPOSED-DATA-MODEL-REVIEW.md`.
-3. [ ] Implement CSV preview/validation, duplicate conflict handling, explicit identity matching, and admin-confirmed import transaction.
-4. [ ] Add season registration status and out-of-scope review flags.
-5. [ ] Add age-based evaluation groups, primary/makeup events, per-player attendance, performance records, and audited exemptions.
-6. [ ] Add post-draft division/team assignment and configurable age-placement rules.
-7. [ ] Validate the migration chain on a disposable local Supabase instance; reconcile RLS and regression tests.
-8. [ ] Run `npm run lint` and `npm run build`; record results.
-9. [ ] Test with separate admin, coach, and evaluator accounts and synthetic import edge cases.
-10. [ ] Only after local review and explicit approval, plan hosted migration deployment.
-
-
-### Phase 5.5 — Sports Connect commit safeguards
-
-**Verified:** the commit RPC and duplicate external-player-ID constraint were tested against the configured remote Supabase project.
-
-- [x] Reject a duplicate external player ID within the same season using the database unique constraint.
-- [x] Verify a rejected commit creates no player or player-season registration.
-- [x] Verify the original registration remains intact.
-- [x] Verify the failed row remains uncommitted and no commit audit event is written.
-- [x] Run the consolidated automated suite: 10 passed, 0 failed.
-- [X] Test duplicate external registration numbers.
-- [ ] Test duplicate identifiers across batches and seasons.
-- [ ] Test approved-match behavior for preservation of existing player master data.
-- [ ] Continue broader authorization, RLS, audit, and failure-recovery testing.
-- [ ] Verify non-administrator authorization and rejected commit paths.
-- [ ] Verify invalid or incomplete rows cannot be committed.
-- [ ] Verify idempotent retries do not create duplicate registrations or audit events.
-- [ ] Verify transaction rollback and partial-failure behavior.
-- [ ] Verify audit consistency and relevant RLS protections.
-- [ ] Re-run the full default test suite after code changes.
-
-**Retained remote test artifact:** batch 2, row 9. This is a disposable approved-but-uncommitted staging record, not a committed registration. Review it before deciding whether to clean it up.
-
-**Migration status:** all eight migrations are recorded as applied in both local and remote migration lists. No hosted migration or schema change is authorized by this status update.
-
-**Safety boundary:** Keep remote-write regression tests separate from npm run test:all. Preserve the remote URL guard, explicit ALLOW_REMOTE_IMPORT_TESTS=YES opt-in, and administrator authentication. Do not apply additional migrations or make unrelated schema changes as part of this testing work.
-
-
-**Status note:** the project ZIP contains five migrations, but their presence is not proof that this newly proposed workflow exists or is fully tested. Do not mark the new workflow complete until implementation and tests pass.
-
-
-
-## Sports Connect payment-status preservation
-
-- [x] Identify that the commit RPC omitted `registration_payment_status` from its registration insert.
-- [x] Add migration `20261107010000_preserve_payment_status_on_import_commit.sql` to preserve staged statuses on future commits and backfill linked committed registrations currently marked `UNKNOWN`.
-- [x] Add static regression checks for the insert mapping and narrowly scoped backfill.
-- [ ] Apply the migration to local Supabase only, after checking pending migrations; run `npm run test:all` and verify the registration query.
-- [ ] Confirm ages 9 and 10 appear in the dashboard based on corrected statuses and eligible rules.
-
-No hosted database changes have been made. Do not deploy this migration remotely without explicit approval.
-
-## Phase 6 — Administrator evaluation review (in progress)
+### Administrator evaluation review
 
 - [x] Add a read-only administrator review page grouped by season and Little League age.
-- [x] Show eligible registrations, players with at least one evaluation record, players with no evaluation record, and evaluation status counts.
+- [x] Show eligible registrations, players with evaluation records, players without evaluation records, and evaluation status counts.
 - [x] Show progress by evaluator and evaluator type.
 - [x] Show per-player evaluation records and core-category totals/averages without treating missing ratings as zero.
-- [x] Keep pending registrations in the eligible evaluation pool; continue excluding unpaid/unknown statuses from the evaluator workspace.
-- [x] Add a static UI regression check for the administrator review page and pending-registration eligibility.
-- [x] Normalize payment-status casing and whitespace consistently in evaluator eligibility and administrator review counts.
-- [ ] Run `npm run test:all`, lint, TypeScript, and production build against the feature branch.
-- [ ] Verify the dashboard with local Supabase as admin and confirm non-admins are redirected.
-- [ ] Review completion counts against synthetic registrations and saved evaluations.
+- [x] Include Pending registrations in the eligible evaluation pool.
+- [x] Normalize payment-status casing and whitespace in evaluator eligibility and administrator review.
+- [x] Add age-group core-skill averages split by coach versus independent evaluator, with contributing counts.
+- [x] Add static UI regression checks for the dashboard and summary.
+- [ ] Run focused tests and the full current suite after the latest changes.
+- [ ] Verify dashboard results against local synthetic data, including empty categories and mixed evaluator types.
+- [ ] Verify non-admin users are redirected/denied.
 
-**Current branch:** `feature/admin-evaluation-review`. The dashboard is implemented in `app/protected/evaluation-review/page.tsx` and linked from the administrator workspace. This is a development checkpoint; implementation checkboxes above are not a substitute for local validation.
+### Player reports and CSV export
 
+- [x] Add administrator-only season report index and per-registration report links.
+- [x] Add individual player reports with current evaluations and separate historical coach ratings.
+- [x] Display registration payment status on reports.
+- [x] Add administrator-checked CSV export with distinct `CURRENT`, `CURRENT_GROUP_SUMMARY`, and `HISTORICAL_COACH` row types.
+- [x] Preserve historical source season, coach, division, team, and coverage metadata where available.
+- [x] Add focused static regression test.
+- [ ] Re-run focused tests and full `npm run test:all`.
+- [ ] Test no-history, no-ratings, and multiple-evaluation cases against local data.
+- [ ] Verify non-admin users cannot view reports or download CSV.
 
-## Historical coach evaluation import — design and schema groundwork
+**Validation note:** User previously reported the age-group summary and report/export UI looked correct and focused tests passed. Do not infer that the current full suite or all role-based access tests pass until freshly run.
 
-- [x] Confirm historical coach evaluations are prior-season context, distinct from current spring evaluator submissions.
-- [x] Verify that `historical_evaluations` and `historical_ratings` already exist in the baseline schema; extend rather than duplicate them.
-- [x] Decide matching precedence: permanent RWCLL Player ID first; name and available birthdate/season/team/division as candidate clues; manual admin confirmation required.
-- [x] Decide unresolved historical rows must not create player records and must remain out of final reports until matched.
-- [x] Draft `20261107020000_historical_coach_evaluation_schema.sql` with source metadata, match provenance, import staging, RLS, and idempotency constraints.
-- [x] Apply migration to local Supabase and verify table structure, RLS enabled, constraints, indexes, and administrator policy expressions.
-- [x] Add static regression checks in `scripts/test-historical-coach-evaluation-schema.cjs` and wire them into `npm run test:all`.
-- [x] Run `npm run test:historical-coach-evaluation-schema` locally; all 10 static checks passed.
-- [ ] Test actual non-admin access behavior, database constraint rejection paths, idempotent import behavior, and historical data preservation.
-- [ ] Implement admin import preview, candidate review, and commit workflow.
-- [ ] Implement narrowly scoped report access for authorized coaches and administrators.
-- [ ] Include clearly labeled historical ratings in final reports/export, separate from current group ratings.
+## 8. User experience and launch
 
-**Safety:** Migration is only drafted on `feature/admin-evaluation-review`. No hosted database change has been made or authorized.
+- [ ] Build/finish role-specific dashboards and mobile-friendly evaluation screens.
+- [ ] Ensure ratings UI is touch-friendly; avoid dropdowns for rating selection.
+- [ ] Support age-group evaluation events with multiple evaluators, per-player attendance, and separate performance records.
+- [ ] Test phone, tablet, and desktop layouts.
+- [ ] Remove/disable public sign-up and implement admin-managed invitation lifecycle.
+- [ ] Implement user disable/removal process and audit as required.
+- [ ] Test backup/restore and retention procedures.
+- [ ] Confirm league policy for children's names, birthdates, and retention; minimize DOB retention where feasible.
+- [ ] Verify hosting, pricing, environment variables, and production security.
+- [ ] Run end-to-end pilot with synthetic data and representative users.
+- [ ] Obtain board approval before loading live data or launching.
 
+## 9. Latest verified checkpoints — 2026-11-07
 
-## Phase 6.1 — Age-group rating summary (implementation checkpoint, 2026-11-07)
+### Historical coach report runtime test
 
-- [x] Add an administrator-facing core-skill summary within each season/age review section.
-- [x] Calculate per-category averages from submitted evaluations only.
-- [x] Show coach and independent-evaluator averages separately, with the number of ratings contributing to each average.
-- [x] Exclude missing ratings rather than treating them as zero.
-- [x] Add static UI regression assertions for the summary and its calculation rules.
-- [ ] Run the focused test, full `npm run test:all`, lint, TypeScript, and production build locally.
-- [ ] Verify displayed results against synthetic local Supabase data, including empty categories and mixed evaluator types.
+- Assigned `coach-a-test@example.com` to test team `TEST - AAA Coach Report` in Spring 2027 AAA with Drew Willow10 (player-season 8).
+- User confirmed Coach A can see Drew's historical report.
+- User confirmed unassigned Coach B (`coach-b-test@example.com`) receives 404 for the same report link.
+- This is an initial positive authorization test; different-team access and direct table RLS checks remain open.
+- The AAA team assignment is a test-only simulated post-draft assignment. The original import did not assign a final division.
 
-The page remains administrator-only and read-only. Historical ratings are not queried or included in these current-season averages. No database migration or hosted change is required for this UI addition.
+### Division initialization
 
+- Local migration `20261107040000_seed_active_divisions_and_link_seasons.sql` reported applied.
+- Five active divisions are seeded and linked to existing open seasons.
+- An AFTER INSERT trigger attaches the five divisions to newly created open seasons.
+- Spring 2027 has five links; trigger test succeeded in a transaction that was rolled back.
+- No ratings/categories or player/import rows were changed by this migration.
 
-## Phase 6.2 — Player reports and CSV export (implementation checkpoint, 2026-11-07)
+### Historical report test data
 
-- [x] Add an administrator-only season report index with per-registration report links.
-- [x] Add individual player reports with current-season evaluation records, current age-group averages, and a separate historical coach evaluation section.
-- [x] Display registration payment status on report pages, consistent with the reporting requirement.
-- [x] Add administrator-checked season CSV export with separate `CURRENT`, `CURRENT_GROUP_SUMMARY`, and `HISTORICAL_COACH` record types, including rating counts.
-- [x] Preserve historical source season, coach, division, team, and coverage note in export where available.
-- [x] Add static regression assertions and register `npm run test:player-reports`.
-- [ ] Run focused tests, `npm run test:all`, lint, TypeScript, and production build locally.
-- [ ] Test report pages and CSV download against local synthetic data; verify no-history, no-ratings, and multiple-evaluation cases.
-- [ ] Verify non-admin users cannot view reports or download the CSV.
+- Three historical evaluations and 15 ratings inserted locally for the explicitly approved test crosswalks.
+- Administrator reports display the three historical records separately from current ratings.
+- No other historical source rows imported.
 
-The first version is deliberately administrator-only. Historical ratings remain behind admin-only RLS; no broad coach access or hosted database changes are introduced.
+### Current local-only boundary
 
+- No hosted migrations or hosted data changes were made/authorized in these checkpoints.
+- Confirm local and remote migration lists separately before any future migration work.
 
-## 2026-11-07 — Scoped coach access to historical ratings (implementation pending local validation)
+## 10. Immediate next milestone
 
-- [x] Add coach_historical_report_roster(season_id) RPC that returns only players assigned to the authenticated coach's teams in the selected season; administrators may access the full season roster.
-- [x] Add coach_historical_report(player_season_id) RPC that validates team assignment before returning historical coach ratings and player identity.
-- [x] Keep historical tables' direct RLS access administrator-only; grant authenticated users execution only on narrowly scoped RPCs.
-- [x] Add coach-facing roster and historical-only player report pages and link them from the evaluator workspace.
-- [x] Add npm run test:coach-historical-reports static authorization checks.
-- [ ] Apply migration 20261107030000_scoped_coach_historical_reports.sql to local Supabase and test with assigned and unassigned coach accounts.
-- [ ] Run npm run test:coach-historical-reports and npm run test:all; verify that coaches cannot read historical tables directly or access players on another coach's team.
-- No hosted database changes are authorized or made.
+Complete the coach authorization matrix locally, then run fresh focused and consolidated validation:
+
+1. Assign Coach B to a separate test team/player and verify Coach B still cannot access Drew's report by direct URL.
+2. Verify Coach B's roster contains only players assigned to Coach B's team(s).
+3. Verify non-admin direct reads of historical tables are denied.
+4. Verify admin reports and CSV export still work.
+5. Run focused report/coach tests, then `npm run test:all`, lint, TypeScript, and production build.
+6. Update this roadmap, `docs/DECISIONS.md`, `docs/FAQ.md`, and `CHATGPT_HANDOFF.md` with actual results.
+
+**Safety boundary:** Continue local-only validation. Do not apply migrations to hosted Supabase or modify hosted data without explicit approval.

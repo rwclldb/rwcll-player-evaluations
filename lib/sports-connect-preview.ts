@@ -20,7 +20,12 @@ export const REQUIRED_HEADERS = [
   "Player First Name", "Player Last Name", "Player Birth Date", "Order Payment Status",
 ];
 export const ACTIVE_DIVISIONS = new Set(["AA", "AAA", "MAJORS", "JUNIORS", "SENIORS"]);
-const ALLOWED_PAYMENT_STATUSES = new Set(["COMPLETED", "PENDING"]);
+const ALLOWED_PAYMENT_STATUSES = new Set([
+  "PAID",
+  "PENDING",
+  "UNPAID",
+  "COMPLETED",
+]);
 const chartByBirthMonth = new Map<string, number>(
   (ageChart2027 as AgeEntry[]).map((entry) => [`${entry.birth_year}-${entry.birth_month}`, entry.league_age]),
 );
