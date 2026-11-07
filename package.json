@@ -27,7 +27,8 @@
     "manual:import-commit-registration-conflict-remote": "node scripts/test-import-commit-registration-conflict-remote.cjs",
     "test:evaluation-review-ui": "node scripts/test-evaluation-review-ui.cjs",
     "test:player-reports": "node scripts/test-player-reports.cjs",
-    "test:historical-coach-evaluation-schema": "node scripts/test-historical-coach-evaluation-schema.cjs"
+    "test:historical-coach-evaluation-schema": "node scripts/test-historical-coach-evaluation-schema.cjs",
+    "test:coach-historical-reports": "node scripts/test-coach-historical-reports.cjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.1",
