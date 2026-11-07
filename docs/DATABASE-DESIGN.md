@@ -238,13 +238,13 @@ These requirements refine the proposed schema and policies. They remain design-o
 - Any changes to submitted data, player-season data, absence status, coach-child designation, or generated-roster constraints should be authorized and audited appropriately.
 
 
-## Historical coach evaluations and import matching (design finalized 2026-11-07; migration drafted, local validation pending)
+## Historical coach evaluations and import matching (design finalized 2026-11-07; migration applied locally, behavior validation in progress)
 
 Historical coach evaluations are records created by coaches at the end of a season. They use the same 1–5 category scales as spring evaluations but are a separate historical source. They are read-only context in later spring reports and never contribute to current-season evaluator completion, counts, or averages.
 
 ### Existing tables and migration approach
 
-The initial schema already contains `historical_evaluations` and `historical_ratings`, but their original shape is minimal. Extend them rather than creating duplicate tables. The migration `20261107020000_historical_coach_evaluation_schema.sql` adds source season, coach/source identifiers, match method, import lineage and review metadata, and a staging table for unresolved source rows. This migration is drafted on the feature branch and must be applied to local Supabase and tested before it is considered complete. Do not apply it to hosted Supabase without explicit approval.
+The initial schema already contains `historical_evaluations` and `historical_ratings`, but their original shape is minimal. Extend them rather than creating duplicate tables. The migration `20261107020000_historical_coach_evaluation_schema.sql` adds source season, coach/source identifiers, match method, import lineage and review metadata, and a staging table for unresolved source rows. This migration is committed on the feature branch and has been applied to local Supabase. Table presence, RLS enabled status, expected constraints/indexes, and administrator policy expressions have been verified with read-only local queries. Runtime non-admin access, constraint rejection behavior, and import transaction behavior remain to be tested. Do not apply it to hosted Supabase without explicit approval.
 
 ### Finalized import/matching rules
 
@@ -271,7 +271,9 @@ Final reports may show historical coach ratings next to current spring group res
 
 - [x] Confirmed the existing `historical_evaluations` and `historical_ratings` tables should be extended, not duplicated.
 - [x] Finalized primary-ID matching, fallback candidate suggestions, manual review, provenance, and no-silent-match rules.
-- [x] Drafted a local-only migration extending the historical tables and adding protected staging.
+- [x] Added migration `20261107020000_historical_coach_evaluation_schema.sql`, extending the historical tables and adding protected staging.
+- [x] Applied the migration to local Supabase and verified table presence, RLS enabled status, expected constraints/indexes, and administrator policy expressions.
+- [ ] Test non-admin runtime access, constraint rejection behavior, and import transaction behavior locally.
 - [ ] Apply migration to local Supabase and inspect the resulting schema/policies.
 - [x] Add static migration regression checks in `scripts/test-historical-coach-evaluation-schema.cjs`.
 - [x] Run static migration regression checks locally; all 10 checks passed.
