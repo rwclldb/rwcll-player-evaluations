@@ -23,6 +23,7 @@ assert.match(exportRoute, /"HISTORICAL_COACH"/, "CSV must label historical coach
 assert.match(exportRoute, /source_season_label/, "CSV must preserve historical source season");
 assert.match(exportRoute, /coverage_note/, "CSV must preserve historical coverage notes");
 assert.match(exportRoute, /text\.replace\(\/"/, "CSV must escape embedded quotation marks");
+assert.match(exportRoute, /Prevent spreadsheet formula execution/, "CSV must guard against spreadsheet formula injection");
 assert.match(exportRoute, /Cache-Control.*private, no-store/, "CSV must not be cached publicly");
 assert.match(workspace, /\/protected\/reports/, "administrator workspace must link to player reports");
 
