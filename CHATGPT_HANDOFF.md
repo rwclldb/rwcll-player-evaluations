@@ -54,12 +54,13 @@ This status reflects the developer's reported local environment and test results
 
 **Changes pushed to the feature branch**
 - Updated `app/protected/evaluations/page.tsx` so Pending registrations are included in the evaluator eligibility filter and clarified the empty-state explanation. The UI still excludes unpaid and `UNKNOWN` statuses.
+- Follow-up fix after local dashboard validation: normalize `registration_payment_status` by trimming whitespace and lowercasing in both the evaluator workspace and administrator review dashboard. The initial zero counts may have been caused by case/whitespace mismatch; this hypothesis still needs confirmation against the user's local data.
 - Added `app/protected/evaluation-review/page.tsx`, a read-only administrator review page grouped by season and Little League age. It reports eligible registrations, players with evaluation records, players with no evaluation record, draft/submitted/not-evaluated counts, evaluator progress, and per-player core-rating totals/averages.
 - Added a link to the review page on `app/protected/page.tsx`.
 - Added `scripts/test-evaluation-review-ui.cjs` and registered `npm run test:evaluation-review-ui` in `package.json`.
 - Added a Phase 6 checkpoint to `ROADMAP.md` and usage notes to `docs/FAQ.md`.
 
-**Validation status:** These changes were authored through GitHub and have not yet been run through the user's local `npm run test:all`, lint, TypeScript, or production build. Do not describe the feature as tested. No database migrations or hosted database changes were made.
+**Validation status:** The original feature branch passed the user's local checks and access tests. The follow-up status-normalization change has not yet been run through `npm run test:evaluation-review-ui`, `npm run test:all`, lint, TypeScript, or production build. Do not describe the feature as tested. No database migrations or hosted database changes were made.
 
 **Next step:** Have the user fetch `feature/admin-evaluation-review`, run the full local validation suite, then test the dashboard against local Supabase as admin and verify non-admin access is redirected. Fix any build/runtime issues before merging. Preserve synthetic records.
 
