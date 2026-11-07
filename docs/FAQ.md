@@ -248,6 +248,21 @@ The prior FAQ/schema notes describe division-based sessions. They are superseded
 - The revised schema and import process are not implemented yet. Do not import real data until migrations, RLS, and role tests pass.
 
 
+## Imported registrations show UNKNOWN payment status
+
+The Sports Connect staging rows retain the source payment status, but older versions of the commit RPC did not copy that value into `player_seasons.registration_payment_status`. The migration `20261107010000_preserve_payment_status_on_import_commit.sql` updates the commit RPC for future imports and backfills existing registrations only when their current status is `UNKNOWN` and a linked committed staging row contains a nonblank source status.
+
+For local development, pull the feature branch and apply pending migrations only after reviewing the local migration list:
+
+```powershell
+npx supabase status
+npx supabase migration list --local
+npx supabase migration up --local
+npx supabase migration list --local
+```
+
+This changes the local database only when the CLI is connected to the local stack. Do not run a hosted migration or `db push` without separate explicit approval. Then rerun `npm run test:all` and recheck registration statuses. The backfill does not alter non-`UNKNOWN` statuses or registrations that have no linked committed import row.
+
 ## Administrator evaluation review
 
 The administrator workspace links to **Review evaluations** at `/protected/evaluation-review`. The page is read-only and summarizes the age-based sessions for each season.
