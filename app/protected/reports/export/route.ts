@@ -13,7 +13,9 @@ type HistoricalEvaluation = { id: number; player_id: number; source_season_label
 type HistoricalRating = { historical_evaluation_id: number; category_name: string; score: number; rating_category_id: number | null };
 
 function csvCell(value: string | number | null | undefined) {
-  const text = value === null || value === undefined ? "" : String(value);
+  const raw = value === null || value === undefined ? "" : String(value);
+  // Prevent spreadsheet formula execution from imported names/notes.
+  const text = /^[\\t\\r\\n ]*[=+\\-@]/.test(raw) ? `'${raw}` : raw;
   return `"${text.replace(/"/g, '""')}"`;
 }
 
