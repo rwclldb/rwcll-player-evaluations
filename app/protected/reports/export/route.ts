@@ -15,7 +15,7 @@ type HistoricalRating = { historical_evaluation_id: number; category_name: strin
 function csvCell(value: string | number | null | undefined) {
   const raw = value === null || value === undefined ? "" : String(value);
   // Prevent spreadsheet formula execution from imported names/notes.
-  const text = /^[\\t\\r\\n ]*[=+\\-@]/.test(raw) ? `'${raw}` : raw;
+  const text = /^[\t\r\n ]*[=+\-@]/.test(raw) ? `'${raw}` : raw;
   return `"${text.replace(/"/g, '""')}"`;
 }
 
