@@ -254,6 +254,7 @@ The administrator workspace links to **Review evaluations** at `/protected/evalu
 
 - **Eligible registrations:** includes the supported completed/paid statuses and Pending registrations. Pending is a payment state, not an evaluation disqualification.
 - **Excluded registrations:** unpaid and `UNKNOWN` statuses are not included in the evaluator's eligible pool.
+- **Status normalization:** eligibility checks trim whitespace and compare status values without regard to capitalization, so `Paid`, `paid`, and `PAID` are treated consistently.
 - **Players with a record:** a player counts as having an evaluation record when at least one evaluation record exists for that player in the age session. This is not the same as having all five core ratings or a submitted evaluation.
 - **Missing:** eligible players with no evaluation record in that session.
 - **Core total/average:** computed from ratings actually entered for Hitting, Throwing, Grounders, Fly Balls, and Running / Awareness. Missing ratings are not zero. The total shows the rated count when fewer than five core ratings are present.
