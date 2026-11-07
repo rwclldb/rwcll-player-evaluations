@@ -307,6 +307,9 @@ async function EvaluatorWorkspaceContent({
           Your assigned sessions, ordered from oldest to youngest.
           Access is limited by your session assignments.
         </p>
+        <Link href="/protected/coach-reports" className="inline-flex rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent">
+          View my players’ historical ratings
+        </Link>
       </header>
 
       {params.message && (
