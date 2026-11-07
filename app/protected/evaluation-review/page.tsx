@@ -241,7 +241,56 @@ async function EvaluationReviewContent() {
                         <p className="text-sm">Players missing all evaluations: <strong>{missing.length}</strong></p>
                       </div>
 
-                      {evaluatorGroups.size > 0 && (
+                      <section className="space-y-3">
+                    <h4 className="font-semibold">Age-group rating summary</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Averages use submitted evaluations only. Coach and independent-evaluator ratings are shown separately; blank ratings are excluded, not counted as zero.
+                    </p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[42rem] text-left text-sm">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="py-2 pr-3">Core skill</th>
+                            <th className="py-2 pr-3">Coach average</th>
+                            <th className="py-2 pr-3">Coach ratings</th>
+                            <th className="py-2 pr-3">Independent average</th>
+                            <th className="py-2">Independent ratings</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {categories
+                            .filter((category) => CORE_CODES.includes(category.code as (typeof CORE_CODES)[number]))
+                            .sort((a, b) => CORE_CODES.indexOf(a.code as (typeof CORE_CODES)[number]) - CORE_CODES.indexOf(b.code as (typeof CORE_CODES)[number]))
+                            .map((category) => {
+                              const groupStats = (type: string) => {
+                                const values = sessionEvaluations
+                                  .filter((evaluation) => evaluation.status === "submitted" && evaluation.evaluator_type === type)
+                                  .flatMap((evaluation) => ratings
+                                    .filter((rating) => rating.evaluation_id === evaluation.id && rating.rating_category_id === category.id)
+                                    .map((rating) => rating.score));
+                                return {
+                                  average: values.length ? (values.reduce((sum, score) => sum + score, 0) / values.length).toFixed(1) : "—",
+                                  count: values.length,
+                                };
+                              };
+                              const coach = groupStats("coach");
+                              const independent = groupStats("independent_evaluator");
+                              return (
+                                <tr key={category.id} className="border-b last:border-0">
+                                  <td className="py-2 pr-3">{category.name}</td>
+                                  <td className="py-2 pr-3 tabular-nums">{coach.average}</td>
+                                  <td className="py-2 pr-3 tabular-nums">{coach.count}</td>
+                                  <td className="py-2 pr-3 tabular-nums">{independent.average}</td>
+                                  <td className="py-2 tabular-nums">{independent.count}</td>
+                                </tr>
+                              );
+                            })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+
+                  {evaluatorGroups.size > 0 && (
                         <section className="space-y-2">
                           <h4 className="font-semibold">Evaluator progress</h4>
                           <div className="overflow-x-auto">
