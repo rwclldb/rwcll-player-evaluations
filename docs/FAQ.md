@@ -303,3 +303,31 @@ Administrators can open **Player reports** from the workspace at `/protected/rep
 - Reports and exports are administrator-only in this first version because the historical tables are protected by administrator-only RLS. Do not expose historical ratings to coaches until scoped server-side authorization for their assigned players is implemented.
 - Missing ratings remain absent rather than being written as zero. Players with no evaluation record are still represented in the CSV.
 - Validate locally with `npm run test:player-reports`, `npm run test:all`, lint, TypeScript, and a production build. Then check a report with no current evaluations, a report with incomplete ratings, and a player with historical ratings.
+
+
+## Coach reports: historical ratings access
+
+Coaches can use “View my players’ historical ratings” from the evaluator workspace. The list is limited to players whose current-season teams have an assignment for that coach. Opening a player report returns prior-season coach ratings only; it does not expose individual current-season evaluations or combine historical scores with current averages.
+
+This access is enforced by Supabase RPCs that validate the signed-in user's team assignment. Historical tables remain administrator-only for direct table access. Do not weaken their RLS policies to make the coach UI work; use the scoped RPCs instead.
+
+### Local migration and validation
+
+The scoped coach report migration is 20261107030000_scoped_coach_historical_reports.sql. After pulling the feature branch, inspect local migration status and apply pending local migrations:
+
+```powershell
+npx supabase status
+npx supabase migration list --local
+npx supabase migration up --local
+npm run test:coach-historical-reports
+npm run test:all
+```
+
+migration up --local applies every pending local migration, so inspect the list first. Do not run db push or otherwise apply this migration to hosted Supabase without separate explicit approval.
+
+Runtime authorization test plan:
+1. Sign in as a coach assigned to a team and verify only that team's players appear.
+2. Sign in as a coach assigned to a different team and verify the first team's players are absent and direct navigation to their report does not reveal data.
+3. Sign in as a coach with no team assignment and verify no roster is returned.
+4. Verify direct reads of historical_evaluations and historical_ratings remain denied to non-admin accounts.
+5. Verify administrators retain the existing full player-report page and CSV export.
