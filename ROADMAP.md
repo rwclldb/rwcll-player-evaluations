@@ -250,7 +250,7 @@ No hosted database changes have been made. Do not deploy this migration remotely
 - [x] Draft `20261107020000_historical_coach_evaluation_schema.sql` with source metadata, match provenance, import staging, RLS, and idempotency constraints.
 - [ ] Apply migration to local Supabase only and verify migration history/schema.
 - [x] Add static regression checks in `scripts/test-historical-coach-evaluation-schema.cjs` and wire them into `npm run test:all`.
-- [ ] Run the new static checks locally and resolve any failures.
+- [x] Run `npm run test:historical-coach-evaluation-schema` locally; all 10 static checks passed.
 - [ ] Test local RLS, unique/idempotency constraints, and existing historical data preservation.
 - [ ] Implement admin import preview, candidate review, and commit workflow.
 - [ ] Implement narrowly scoped report access for authorized coaches and administrators.
