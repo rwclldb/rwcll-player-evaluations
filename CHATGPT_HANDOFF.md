@@ -253,3 +253,10 @@ Do not discard these changes or assume they have been pushed to GitHub.
 - Added `scripts/test-historical-coach-evaluation-schema.cjs`, registered as `test:historical-coach-evaluation-schema` so `npm run test:all` can discover it. Updated `docs/DATABASE-DESIGN.md`, `docs/DECISIONS.md`, `docs/FAQ.md`, and `ROADMAP.md` with the agreed matching workflow and implementation status.
 - **Not yet applied or tested locally. No hosted database changes made.** Before proceeding, review the migration, apply it to local Supabase only, inspect resulting policies/constraints, add regression tests, and run the test suite. Raw history remains admin-only until a scoped coach-facing report RPC is implemented.
 - Next after local schema validation: complete evaluation reports/export with historical ratings clearly separated from current spring group results.
+
+
+### Local historical schema validation update — 2026-11-07
+
+- User ran `npm run test:historical-coach-evaluation-schema`; all 10 static checks passed.
+- `npx supabase migration list --local` shows `20261107020000` exists in local migration files but is not applied to the local DB. All earlier migrations through `20261107010000` are applied.
+- Next step: apply the single pending migration to local Supabase, then verify table structure, RLS policies, constraints, and existing data. No hosted changes.
