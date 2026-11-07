@@ -216,7 +216,7 @@ async function EvaluatorWorkspaceContent({
       } else {
         registrations =
           ((registrationResult.data ?? []) as unknown as (EligibleRegistration & { registration_payment_status?: string | null })[])
-            .filter((registration) => isEligibleRegistrationStatus(registration.registration_payment_status));
+            .filter((registration) => isEligibleRegistrationStatus(registration.registration_payment_status ?? null));
 
         const playerSeasonIds = registrations.map((row) => row.id);
 
