@@ -285,3 +285,15 @@ The page remains administrator-only and read-only. Historical ratings are not qu
 - [ ] Verify non-admin users cannot view reports or download the CSV.
 
 The first version is deliberately administrator-only. Historical ratings remain behind admin-only RLS; no broad coach access or hosted database changes are introduced.
+
+
+## 2026-11-07 — Scoped coach access to historical ratings (implementation pending local validation)
+
+- [x] Add coach_historical_report_roster(season_id) RPC that returns only players assigned to the authenticated coach's teams in the selected season; administrators may access the full season roster.
+- [x] Add coach_historical_report(player_season_id) RPC that validates team assignment before returning historical coach ratings and player identity.
+- [x] Keep historical tables' direct RLS access administrator-only; grant authenticated users execution only on narrowly scoped RPCs.
+- [x] Add coach-facing roster and historical-only player report pages and link them from the evaluator workspace.
+- [x] Add npm run test:coach-historical-reports static authorization checks.
+- [ ] Apply migration 20261107030000_scoped_coach_historical_reports.sql to local Supabase and test with assigned and unassigned coach accounts.
+- [ ] Run npm run test:coach-historical-reports and npm run test:all; verify that coaches cannot read historical tables directly or access players on another coach's team.
+- No hosted database changes are authorized or made.
