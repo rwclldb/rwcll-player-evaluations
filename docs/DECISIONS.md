@@ -30,6 +30,13 @@ Record durable decisions and rationale. When a decision changes, add a new entry
 | 2026-11-02 | Season lifecycle | A completed season is closed by default and remains viewable. Only an explicit administrator action can reopen it for corrections; log the administrator, timestamp, and reason, and allow it to be closed again. | Preserve historical integrity while providing a controlled correction path. Season closure is separate from evaluation-session locking. | Confirmed; schema/workflow proposed, not implemented |
 | 2026-11-02 | New-season setup | When creating a new season, carry forward only the editable division setup. Do not copy team names, coach assignments, player evaluations, or historical results. Coaches are registered/assigned anew each season, and team names are added only after evaluations. | Keep each season's roster-building and team assignment process independent; team names are intentionally unavailable until evaluations are complete. | Confirmed; workflow/schema proposed, not implemented |
 
+
+## 2026-11-07 — Scoped coach access to historical ratings
+
+Coaches may view prior-season coach ratings only for players assigned to teams for which they have a current-season team_coach_assignments record. This is implemented through narrowly scoped Supabase RPCs, not by granting direct access to historical tables. The RPCs validate auth.uid() against the team assignment and season. Coaches do not receive individual current-season evaluations through this report feature; administrators retain full report and CSV access. Historical ratings remain separate from current averages.
+
+Status: implementation committed to the feature branch; local migration application and assigned/unassigned-coach runtime tests are pending. Hosted database unchanged.
+
 ## Open decisions
 - What are the final visibility rules for shared coach notes?
 - What league policy and retention period apply to children’s names and birthdates? Minimize DOB retention where feasible.
