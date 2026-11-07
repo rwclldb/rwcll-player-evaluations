@@ -9,7 +9,7 @@ type Evaluation = { id: number; evaluation_session_id: number; player_season_id:
 type Rating = { evaluation_id: number; rating_category_id: number; score: number };
 type Category = { id: number; code: string; name: string };
 type Profile = { user_id: string; display_name: string | null };
-type HistoricalEvaluation = { id: number; player_id: number; source_season_label: string; source_division_name: string; source_team_label: string | null; source_coach_name: string | null };
+type HistoricalEvaluation = { id: number; player_id: number; source_season_label: string; source_division_name: string; source_team_label: string | null; source_coach_name: string | null; coverage_note: string | null };
 type HistoricalRating = { historical_evaluation_id: number; category_name: string; score: number; rating_category_id: number | null };
 
 function csvCell(value: string | number | null | undefined) {
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
     supabase.from("evaluation_sessions").select("id, league_age").eq("season_id", seasonId).is("season_division_id", null),
     supabase.from("rating_categories").select("id, code, name"),
     supabase.from("user_profiles").select("user_id, display_name"),
-    playerIds.length ? supabase.from("historical_evaluations").select("id, player_id, source_season_label, source_division_name, source_team_label, source_coach_name").in("player_id", playerIds) : Promise.resolve({ data: [], error: null }),
+    playerIds.length ? supabase.from("historical_evaluations").select("id, player_id, source_season_label, source_division_name, source_team_label, source_coach_name, coverage_note").in("player_id", playerIds) : Promise.resolve({ data: [], error: null }),
   ]);
   const initialError = sessionResult.error ?? categoryResult.error ?? profileResult.error ?? historyResult.error;
   if (initialError) return new Response("Could not load report data.", { status: 500 });
@@ -90,7 +90,7 @@ export async function GET(request: Request) {
       for (const evaluation of playerEvals) {
         const ownRatings = ratings.filter((rating) => rating.evaluation_id === evaluation.id);
         const base = ["CURRENT", playerName, registration.player_id, seasonResult.data.name, registration.league_age, registration.evaluation_number, registration.registration_payment_status, evaluation.evaluator_type, evaluatorName(evaluation.evaluator_user_id), evaluation.status];
-        if (ownRatings.length === 0) rows.push([...base, "", "", "", "", "", ""]);
+        if (ownRatings.length === 0) rows.push([...base, "", "", "", "", "", "", ""]);
         else for (const rating of ownRatings) rows.push([...base, categories.find((item) => item.id === rating.rating_category_id)?.name ?? "Unmapped category", rating.score, "", "", "", "", ""]);
       }
     }
@@ -102,7 +102,7 @@ export async function GET(request: Request) {
     const playerName = registration.players ? `${registration.players.first_name} ${registration.players.last_name}` : `Player #${registration.player_id}`;
     const ownRatings = historyRatings.filter((rating) => rating.historical_evaluation_id === historicalEvaluation.id);
     const base = ["HISTORICAL_COACH", playerName, historicalEvaluation.player_id, seasonResult.data.name, registration.league_age, registration.evaluation_number, registration.registration_payment_status, "historical_coach", historicalEvaluation.source_coach_name ?? "", "historical",];
-    if (ownRatings.length === 0) rows.push([...base, "", "", historicalEvaluation.source_season_label, historicalEvaluation.source_coach_name, historicalEvaluation.source_division_name, historicalEvaluation.source_team_label, ""]);
+    if (ownRatings.length === 0) rows.push([...base, "", "", historicalEvaluation.source_season_label, historicalEvaluation.source_coach_name, historicalEvaluation.source_division_name, historicalEvaluation.source_team_label, historicalEvaluation.coverage_note]);
     else for (const rating of ownRatings) rows.push([...base, categories.find((item) => item.id === rating.rating_category_id)?.name ?? rating.category_name, rating.score, historicalEvaluation.source_season_label, historicalEvaluation.source_coach_name, historicalEvaluation.source_division_name, historicalEvaluation.source_team_label, ""]);
   }
 
