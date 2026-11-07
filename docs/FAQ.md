@@ -280,7 +280,7 @@ This dashboard is currently a development feature. Run `npm run test:evaluation-
 
 ## Historical end-of-season coach evaluations
 
-The database already has basic `historical_evaluations` and `historical_ratings` tables. They do not yet provide the full import/matching workflow. The feature branch now contains a local-only migration draft, `20261107020000_historical_coach_evaluation_schema.sql`, which extends those tables and adds `historical_evaluation_import_rows` for staging and administrator review. A static regression script, `scripts/test-historical-coach-evaluation-schema.cjs`, has been added and registered with npm; the script has **not yet been run locally**, and the migration has **not yet been applied or validated locally**.
+The database already has basic `historical_evaluations` and `historical_ratings` tables. They do not yet provide the full import/matching workflow. The feature branch now contains a local-only migration draft, `20261107020000_historical_coach_evaluation_schema.sql`, which extends those tables and adds `historical_evaluation_import_rows` for staging and administrator review. A static regression script, `scripts/test-historical-coach-evaluation-schema.cjs`, has been run locally; all 10 checks passed. The migration has **not yet been applied or validated against the local database**.
 
 Matching rules:
 - Prefer an exact permanent RWCLL Player ID when supplied, but flag conflicts with other identifying information.
