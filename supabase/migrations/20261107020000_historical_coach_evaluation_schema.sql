@@ -82,6 +82,13 @@ CREATE TABLE public.historical_evaluation_import_rows (
     )
 );
 
+CREATE UNIQUE INDEX historical_evaluations_source_import_row_uidx
+  ON public.historical_evaluations (source_import_batch_id, source_import_row_number)
+  WHERE source_import_batch_id IS NOT NULL AND source_import_row_number IS NOT NULL;
+CREATE UNIQUE INDEX historical_evaluation_import_rows_imported_evaluation_uidx
+  ON public.historical_evaluation_import_rows (imported_historical_evaluation_id)
+  WHERE imported_historical_evaluation_id IS NOT NULL;
+
 CREATE INDEX historical_evaluations_player_season_idx
   ON public.historical_evaluations (player_id, source_season_id);
 CREATE INDEX historical_evaluations_source_import_batch_idx
