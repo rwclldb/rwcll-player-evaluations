@@ -202,7 +202,7 @@ async function EvaluatorWorkspaceContent({
         )
         .eq("season_id", selectedSession.season_id)
         .eq("league_age", selectedSession.league_age)
-        .in("registration_payment_status", ["COMPLETED", "Paid"])
+        .in("registration_payment_status", ["COMPLETED", "Completed", "Paid", "Pending", "PENDING"])
         .order("evaluation_number", { ascending: true, nullsFirst: false });
 
       if (registrationResult.error) {
