@@ -110,6 +110,21 @@ async function ProtectedPageContent() {
           </section>
 
           <section className="space-y-4">
+            <div className="rounded-lg border p-5">
+              <h3 className="font-semibold">Administrator evaluation review</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Track evaluation completion by season, age group, and evaluator; review missing players and core ratings.
+              </p>
+              <Link
+                href="/protected/evaluation-review"
+                className="mt-4 inline-flex rounded-md border px-4 py-2 text-sm font-medium"
+              >
+                Review evaluations
+              </Link>
+            </div>
+          </section>
+
+          <section className="space-y-4">
             <div>
               <h2 className="text-xl font-semibold">
                 Registration administration
