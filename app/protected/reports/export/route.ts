@@ -87,13 +87,26 @@ export async function GET(request: Request) {
     const playerName = registration.players ? `${registration.players.first_name} ${registration.players.last_name}` : `Player #${registration.player_id}`;
     const playerEvals = evaluations.filter((item) => item.player_season_id === registration.id);
     if (playerEvals.length === 0) {
-      rows.push(["CURRENT", playerName, registration.player_id, seasonResult.data.name, registration.league_age, registration.evaluation_number, registration.registration_payment_status, "", "", "no_evaluation_record", "", "", "", "", "", "", ""]);
+      rows.push(["CURRENT", playerName, registration.player_id, seasonResult.data.name, registration.league_age, registration.evaluation_number, registration.registration_payment_status, "", "", "no_evaluation_record", "", "", "", "", "", "", "", ""]);
     } else {
       for (const evaluation of playerEvals) {
         const ownRatings = ratings.filter((rating) => rating.evaluation_id === evaluation.id);
         const base = ["CURRENT", playerName, registration.player_id, seasonResult.data.name, registration.league_age, registration.evaluation_number, registration.registration_payment_status, evaluation.evaluator_type, evaluatorName(evaluation.evaluator_user_id), evaluation.status];
         if (ownRatings.length === 0) rows.push([...base, "", "", "", "", "", "", "", ""]);
         else for (const rating of ownRatings) rows.push([...base, categories.find((item) => item.id === rating.rating_category_id)?.name ?? "Unmapped category", rating.score, 1, "", "", "", "", ""]);
+      }
+    }
+  }
+
+  // Export submitted age-group averages as separate summary records, not player scores.
+  for (const session of sessions) {
+    const sessionEvaluations = evaluations.filter((item) => item.evaluation_session_id === session.id && item.status === "submitted");
+    for (const category of categories) {
+      if (!["hitting", "throwing", "grounders", "fly_balls", "running_awareness"].includes(category.code)) continue;
+      for (const evaluatorType of ["coach", "independent_evaluator"]) {
+        const scores = ratings.filter((rating) => rating.rating_category_id === category.id && sessionEvaluations.some((evaluation) => evaluation.id === rating.evaluation_id && evaluation.evaluator_type === evaluatorType)).map((rating) => rating.score);
+        const average = scores.length ? (scores.reduce((sum, score) => sum + score, 0) / scores.length).toFixed(1) : "";
+        rows.push(["CURRENT_GROUP_SUMMARY", "Age " + (session.league_age ?? "not set") + " group average", "", seasonResult.data.name, session.league_age, "", "", evaluatorType, "", "submitted_group_average", category.name, average, scores.length, "", "", "", "", ""]);
       }
     }
   }
