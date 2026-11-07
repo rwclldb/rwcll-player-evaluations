@@ -259,4 +259,4 @@ The administrator workspace links to **Review evaluations** at `/protected/evalu
 - **Core total/average:** computed from ratings actually entered for Hitting, Throwing, Grounders, Fly Balls, and Running / Awareness. Missing ratings are not zero. The total shows the rated count when fewer than five core ratings are present.
 - **Evaluator progress:** counts records by evaluator and evaluator type. Administrators can see individual evaluator records; coach-facing aggregate permissions remain a separate requirement.
 
-This dashboard is currently a development feature. Validate it against local synthetic data and test both administrator and non-administrator access before relying on its counts.
+This dashboard is currently a development feature. Run `npm run test:evaluation-review-ui` for static UI regression checks, then validate it against local synthetic data and test both administrator and non-administrator access before relying on its counts.
