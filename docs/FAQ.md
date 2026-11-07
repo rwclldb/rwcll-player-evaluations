@@ -276,3 +276,18 @@ The administrator workspace links to **Review evaluations** at `/protected/evalu
 - **Evaluator progress:** counts records by evaluator and evaluator type. Administrators can see individual evaluator records; coach-facing aggregate permissions remain a separate requirement.
 
 This dashboard is currently a development feature. Run `npm run test:evaluation-review-ui` for static UI regression checks, then validate it against local synthetic data and test both administrator and non-administrator access before relying on its counts.
+
+
+## Historical end-of-season coach evaluations
+
+The database already has basic `historical_evaluations` and `historical_ratings` tables. They do not yet provide the full import/matching workflow. The feature branch now contains a local-only migration draft, `20261107020000_historical_coach_evaluation_schema.sql`, which extends those tables and adds `historical_evaluation_import_rows` for staging and administrator review. It has **not yet been applied or validated locally**.
+
+Matching rules:
+- Prefer an exact permanent RWCLL Player ID when supplied, but flag conflicts with other identifying information.
+- If the ID is absent, suggest possible matches using normalized names and available date of birth, source season, team, and division.
+- Never link automatically on name alone. Ambiguous/no-match rows remain in review.
+- Historical import rows never create a new player automatically. An administrator must confirm the player link or reject the row.
+- Preserve original row data, source season/team/division/coach, match method, reviewer, and import lineage.
+- Historical scores use the same 1–5 categories where mapped, but stay separate from current spring ratings and never affect current completion counts or averages.
+
+Apply only to local Supabase after reviewing the migration and current local migration status. Do not run hosted migrations or `db push` without explicit approval. Coach access to historical player ratings must later be implemented through scoped server-side report access, not broad table permissions.
