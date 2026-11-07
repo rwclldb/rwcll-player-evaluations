@@ -1,6 +1,6 @@
 # ChatGPT Project Handoff — RWCLL Player Evaluations
 
-**Last reviewed:** 2026-11-05  
+**Last reviewed:** 2026-11-06  
 **Purpose:** Restart/continue work in a new ChatGPT conversation without relying on prior chat history.
 
 ## Project at a glance
@@ -47,6 +47,20 @@ This status reflects the developer's reported local environment and test results
 - Verify RLS and authorization with separate administrator and non-administrator accounts.
 - Do not infer that all RLS policies, coach-safe reporting, or role-based access requirements are complete from the current test results.
 - Hosted migration state has not been freshly verified in this checkpoint.
+
+## Current checkpoint — administrator evaluation review (2026-11-06)
+
+**Repository access:** Connected GitHub repository `rwclldb/rwcll-player-evaluations`, default branch `main`. Development is on `feature/admin-evaluation-review`; changes have not been merged to `main`.
+
+**Changes pushed to the feature branch**
+- Updated `app/protected/evaluations/page.tsx` so Pending registrations are included in the evaluator eligibility filter and clarified the empty-state explanation. The UI still excludes unpaid and `UNKNOWN` statuses.
+- Added `app/protected/evaluation-review/page.tsx`, a read-only administrator review page grouped by season and Little League age. It reports eligible registrations, players with evaluation records, players with no evaluation record, draft/submitted/not-evaluated counts, evaluator progress, and per-player core-rating totals/averages.
+- Added a link to the review page on `app/protected/page.tsx`.
+- Added a Phase 6 checkpoint to `ROADMAP.md` and usage notes to `docs/FAQ.md`.
+
+**Validation status:** These changes were authored through GitHub and have not yet been run through the user's local `npm run test:all`, lint, TypeScript, or production build. Do not describe the feature as tested. No database migrations or hosted database changes were made.
+
+**Next step:** Have the user fetch `feature/admin-evaluation-review`, run the full local validation suite, then test the dashboard against local Supabase as admin and verify non-admin access is redirected. Fix any build/runtime issues before merging. Preserve synthetic records.
 
 ## Sports Connect import — duplicate Player ID resolution safeguard (2026-11-05)
 
