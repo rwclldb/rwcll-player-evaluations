@@ -274,5 +274,6 @@ Final reports may show historical coach ratings next to current spring group res
 - [x] Drafted a local-only migration extending the historical tables and adding protected staging.
 - [ ] Apply migration to local Supabase and inspect the resulting schema/policies.
 - [x] Add static migration regression checks in `scripts/test-historical-coach-evaluation-schema.cjs`.
-- [ ] Run static checks and test constraints, RLS, and idempotency locally.
+- [x] Run static migration regression checks locally; all 10 checks passed.
+- [ ] Apply migration and test constraints, RLS, and idempotency locally.
 - [ ] Implement the preview/review/commit UI and secure import RPCs in a later step.
