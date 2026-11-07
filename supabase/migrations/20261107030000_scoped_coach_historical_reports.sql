@@ -51,6 +51,8 @@ $function$;
 
 CREATE OR REPLACE FUNCTION public.coach_historical_report(p_player_season_id bigint)
 RETURNS TABLE (
+  player_first_name text,
+  player_last_name text,
   historical_evaluation_id bigint,
   source_season_label text,
   source_division_name text,
@@ -68,14 +70,17 @@ SET search_path = public, pg_temp
 AS $function$
 DECLARE
   v_player_id bigint;
+  v_first_name text;
+  v_last_name text;
 BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Authentication required' USING ERRCODE = '42501';
   END IF;
 
-  SELECT ps.player_id
-    INTO v_player_id
+  SELECT ps.player_id, p.first_name, p.last_name
+    INTO v_player_id, v_first_name, v_last_name
   FROM public.player_seasons AS ps
+  JOIN public.players AS p ON p.id = ps.player_id
   JOIN public.teams AS t
     ON t.id = ps.team_id
    AND t.season_id = ps.season_id
@@ -98,6 +103,8 @@ BEGIN
 
   RETURN QUERY
   SELECT
+    v_first_name,
+    v_last_name,
     he.id,
     he.source_season_label,
     he.source_division_name,
@@ -107,12 +114,13 @@ BEGIN
     COALESCE(rc.name, hr.category_name),
     hr.score,
     hr.rating_category_id
-  FROM public.historical_evaluations AS he
+  FROM (SELECT 1) AS seed
+  LEFT JOIN public.historical_evaluations AS he
+    ON he.player_id = v_player_id
   LEFT JOIN public.historical_ratings AS hr
     ON hr.historical_evaluation_id = he.id
   LEFT JOIN public.rating_categories AS rc
     ON rc.id = hr.rating_category_id
-  WHERE he.player_id = v_player_id
   ORDER BY he.source_season_id DESC NULLS LAST, he.id, hr.rating_category_id;
 END;
 $function$;
