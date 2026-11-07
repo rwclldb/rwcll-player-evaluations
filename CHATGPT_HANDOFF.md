@@ -270,7 +270,7 @@ Do not discard these changes or assume they have been pushed to GitHub.
 - Averages include submitted evaluations only and are split into coach versus independent-evaluator ratings. Each average shows its contributing rating count; missing scores are excluded, not treated as zero.
 - Updated `scripts/test-evaluation-review-ui.cjs` with static assertions for the summary and its rules.
 - Commits: `884439d25f029dcc892c84716025ea21b929c647` (UI), `e8958488931bfe183df7d1f93d8670b00fe90314` (test).
-- **Not yet locally tested.** Fetch/pull the branch, run the focused UI test and `npm run test:all`, lint, TypeScript, and build. Then compare results against synthetic local data. The current page still performs its existing administrator authorization check; non-admin redirect behavior must be verified at runtime.
+- **User validation reported 2026-11-07:** the age-group summary tests passed and the UI looked correct. This does not replace the separate coach authorization tests now being added.
 - No migration was added and no hosted Supabase change was made.
 
 
@@ -286,7 +286,7 @@ Added:
 - `scripts/test-player-reports.cjs`, registered as `npm run test:player-reports`.
 - `ROADMAP.md` and `docs/FAQ.md` updated.
 
-**Not yet locally tested.** Fetch/pull the branch, run `npm run test:player-reports`, then `npm run test:all`, lint, TypeScript, and build. Test reports with no evaluation, partial ratings, and historical ratings; verify CSV row/column alignment and confirm non-admin access is denied. No migration was added; no hosted database changes were made. Coach-facing historical report access remains out of scope until scoped authorization is implemented.
+**User validation reported 2026-11-07:** focused tests passed and the report/export UI worked. This feature remains administrator-only. No migration was added for the report/export feature and no hosted database change was made. Scoped coach-facing historical report access is now being implemented in the next checkpoint below.
 
 
 ## Scoped coach historical reports checkpoint — 2026-11-07
