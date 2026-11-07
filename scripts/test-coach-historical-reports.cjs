@@ -11,7 +11,7 @@ const evaluatorPage = read("app/protected/evaluations/page.tsx");
 
 assert.match(migration, /FUNCTION public\.coach_historical_report_roster\(p_season_id bigint\)/, "migration must define a scoped roster RPC");
 assert.match(migration, /FUNCTION public\.coach_historical_report\(p_player_season_id bigint\)/, "migration must define a scoped history RPC");
-assert.equal((migration.match(/SECURITY DEFINER/g) ?? []).length, 2, "both RPCs must use controlled SECURITY DEFINER access");
+assert.equal((migration.match(/^\s*SECURITY DEFINER\s*$/gm) ?? []).length, 2, "both RPCs must use controlled SECURITY DEFINER access");
 assert.match(migration, /tca\.coach_user_id = auth\.uid\(\)/, "coach access must be checked against the authenticated user");
 assert.match(migration, /tca\.team_id = t\.id/, "coach access must be limited to assigned teams");
 assert.match(migration, /tca\.season_id = ps\.season_id/, "coach assignment must match the player's season");
