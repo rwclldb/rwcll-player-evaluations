@@ -227,4 +227,14 @@ GRANT EXECUTE ON FUNCTION
   public.commit_sports_connect_import_row(bigint, text)
   TO authenticated;
 
+-- Repair previously committed registrations whose status was left at UNKNOWN by the
+-- earlier commit function. Only copy a nonblank status from the exact staged row linked
+-- to that registration; do not alter unrelated registrations or non-UNKNOWN values.
+UPDATE public.player_seasons AS ps
+SET registration_payment_status = BTRIM(r.payment_status)
+FROM public.sports_connect_import_rows AS r
+WHERE r.committed_player_season_id = ps.id
+  AND ps.registration_payment_status = 'UNKNOWN'
+  AND NULLIF(BTRIM(r.payment_status), '') IS NOT NULL;
+
 COMMIT;
