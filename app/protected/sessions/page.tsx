@@ -1,6 +1,8 @@
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { connection } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -8,18 +10,20 @@ import {
   createMissingAgeSessions,
 } from "./actions";
 
-const LEAGUE_AGES = [8, 9, 10, 11, 12, 13, 14, 15, 16];
+const LEAGUE_AGES = [16, 15, 14, 13, 12, 11, 10, 9, 8];
 
 type SearchParams = Promise<{
   message?: string;
   error?: string;
 }>;
 
-export default async function EvaluationSessionsPage({
+async function EvaluationSessionsPageContent({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
+  await connection();
+
   const params = await searchParams;
   const supabase = await createClient();
 
@@ -57,7 +61,7 @@ export default async function EvaluationSessionsPage({
     .select("id, season_id, league_age, season_division_id, status, created_at")
     .is("season_division_id", null)
     .order("season_id", { ascending: false })
-    .order("league_age", { ascending: true });
+    .order("league_age", { ascending: false });
 
   return (
     <main className="w-full max-w-4xl space-y-8">
@@ -84,13 +88,19 @@ export default async function EvaluationSessionsPage({
       )}
 
       {params.error && (
-        <p role="alert" className="rounded-md border border-destructive p-3 text-sm">
+        <p
+          role="alert"
+          className="rounded-md border border-destructive p-3 text-sm"
+        >
           {params.error}
         </p>
       )}
 
       {(seasonsError || sessionsError) && (
-        <p role="alert" className="rounded-md border border-destructive p-3 text-sm">
+        <p
+          role="alert"
+          className="rounded-md border border-destructive p-3 text-sm"
+        >
           Could not load session data:{" "}
           {seasonsError?.message ?? sessionsError?.message}
         </p>
@@ -125,7 +135,10 @@ export default async function EvaluationSessionsPage({
           ).length;
 
           return (
-            <section key={season.id} className="space-y-4 rounded-lg border p-5">
+            <section
+              key={season.id}
+              className="space-y-4 rounded-lg border p-5"
+            >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
                   <h2 className="text-xl font-semibold">{season.name}</h2>
@@ -235,5 +248,23 @@ export default async function EvaluationSessionsPage({
         evaluator access are ready.
       </p>
     </main>
+  );
+}
+
+export default function EvaluationSessionsPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <main className="w-full max-w-4xl p-4">
+          Loading evaluation sessions…
+        </main>
+      }
+    >
+      <EvaluationSessionsPageContent searchParams={searchParams} />
+    </Suspense>
   );
 }
