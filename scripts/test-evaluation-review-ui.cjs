@@ -17,7 +17,9 @@ assert.match(reviewPage, /Players with no evaluation record/, "review page must 
 assert.match(reviewPage, /Evaluator progress/, "review page must report evaluator progress");
 assert.match(reviewPage, /Core total:/, "review page must show core score summaries");
 assert.match(reviewPage, /CORE_CODES/, "core score summaries must use the five core categories");
-assert.match(evaluatorPage, /"Pending"/, "Pending registrations must be eligible for evaluation");
+assert.match(evaluatorPage, /status\?\.trim\(\)\.toLowerCase\(\)/, "evaluator eligibility must normalize status casing and whitespace");
+assert.match(reviewPage, /status\?\.trim\(\)\.toLowerCase\(\)/, "review counts must normalize status casing and whitespace");
+assert.match(evaluatorPage, /registration_payment_status, players\(/, "evaluator query must fetch the status used for eligibility");
 assert.match(evaluatorPage, /Pending registrations remain eligible/, "eligibility explanation must match the rule");
 assert.match(workspacePage, /\/protected\/evaluation-review/, "administrator workspace must link to review page");
 
