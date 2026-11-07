@@ -12,6 +12,11 @@ const originalMigrationPath = path.resolve(
   "../supabase/migrations/20261104230000_phase_5_5_sports_connect_commit.sql"
 );
 
+const paymentStatusMigrationPath = path.resolve(
+  __dirname,
+  "../supabase/migrations/20261107010000_preserve_payment_status_on_import_commit.sql"
+);
+
 assert.ok(fs.existsSync(migrationPath), "New migration must exist");
 assert.ok(
   fs.existsSync(originalMigrationPath),
@@ -20,6 +25,12 @@ assert.ok(
 
 const migration = fs.readFileSync(migrationPath, "utf8");
 const originalMigration = fs.readFileSync(originalMigrationPath, "utf8");
+const paymentStatusMigration = fs.readFileSync(paymentStatusMigrationPath, "utf8");
+
+assert.ok(
+  fs.existsSync(paymentStatusMigrationPath),
+  "Payment-status preservation migration must exist"
+);
 
 const functionStart = migration.indexOf(
   "CREATE OR REPLACE FUNCTION public.commit_sports_connect_import_row("
@@ -95,6 +106,15 @@ const checks = [
     /REVOKE ALL ON FUNCTION[\s\S]*?FROM PUBLIC[\s\S]*?REVOKE ALL ON FUNCTION[\s\S]*?FROM anon[\s\S]*?GRANT EXECUTE ON FUNCTION[\s\S]*?TO authenticated/.test(
       migration
     ),
+  ],
+  [
+    "new commit function stores the staged registration payment status",
+    /registration_payment_status/.test(paymentStatusMigration) &&
+      /COALESCE\(NULLIF\(BTRIM\(v_row\.payment_status\), ''\), 'UNKNOWN'\)/.test(paymentStatusMigration),
+  ],
+  [
+    "previously committed UNKNOWN statuses are backfilled only from linked nonblank import rows",
+    /UPDATE public\.player_seasons AS ps[\s\S]*?FROM public\.sports_connect_import_rows AS r[\s\S]*?r\.committed_player_season_id = ps\.id[\s\S]*?ps\.registration_payment_status = 'UNKNOWN'[\s\S]*?NULLIF\(BTRIM\(r\.payment_status\), ''\) IS NOT NULL/s.test(paymentStatusMigration),
   ],
   [
     "original migration still enforces unique season/player identifiers",
