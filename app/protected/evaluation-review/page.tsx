@@ -224,7 +224,7 @@ async function EvaluationReviewContent() {
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
                           <div className="rounded-md border p-2"><p className="text-muted-foreground">Eligible</p><p className="text-lg font-semibold">{eligible.length}</p></div>
-                          <div className="rounded-md border p-2"><p className="text-muted-foreground">Players evaluated</p><p className="text-lg font-semibold">{eligible.filter((registration) => evaluatedPlayerIds.has(registration.id)).length}</p></div>
+                          <div className="rounded-md border p-2"><p className="text-muted-foreground">Players with a record</p><p className="text-lg font-semibold">{eligible.filter((registration) => evaluatedPlayerIds.has(registration.id)).length}</p></div>
                           <div className="rounded-md border p-2"><p className="text-muted-foreground">Missing</p><p className="text-lg font-semibold">{missing.length}</p></div>
                           <div className="rounded-md border p-2"><p className="text-muted-foreground">Draft / Submitted</p><p className="text-lg font-semibold">{statusCounts.draft} / {statusCounts.submitted}</p></div>
                         </div>
