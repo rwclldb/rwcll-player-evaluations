@@ -12,7 +12,7 @@ const workspacePage = read("app/protected/page.tsx");
 
 assert.match(reviewPage, /supabase\.rpc\("is_admin"\)/, "review page must verify administrator access");
 assert.match(reviewPage, /redirect\("\/protected"\)/, "non-admin users must be redirected");
-assert.match(reviewPage, /Players evaluated/, "review page must report player evaluation completion");
+assert.match(reviewPage, /Players with a record/, "review page must report player evaluation completion");
 assert.match(reviewPage, /Players with no evaluation record/, "review page must identify missing player evaluations");
 assert.match(reviewPage, /Evaluator progress/, "review page must report evaluator progress");
 assert.match(reviewPage, /Core total:/, "review page must show core score summaries");
