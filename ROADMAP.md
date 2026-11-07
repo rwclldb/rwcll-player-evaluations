@@ -257,3 +257,16 @@ No hosted database changes have been made. Do not deploy this migration remotely
 - [ ] Include clearly labeled historical ratings in final reports/export, separate from current group ratings.
 
 **Safety:** Migration is only drafted on `feature/admin-evaluation-review`. No hosted database change has been made or authorized.
+
+
+## Phase 6.1 — Age-group rating summary (implementation checkpoint, 2026-11-07)
+
+- [x] Add an administrator-facing core-skill summary within each season/age review section.
+- [x] Calculate per-category averages from submitted evaluations only.
+- [x] Show coach and independent-evaluator averages separately, with the number of ratings contributing to each average.
+- [x] Exclude missing ratings rather than treating them as zero.
+- [x] Add static UI regression assertions for the summary and its calculation rules.
+- [ ] Run the focused test, full `npm run test:all`, lint, TypeScript, and production build locally.
+- [ ] Verify displayed results against synthetic local Supabase data, including empty categories and mixed evaluator types.
+
+The page remains administrator-only and read-only. Historical ratings are not queried or included in these current-season averages. No database migration or hosted change is required for this UI addition.
