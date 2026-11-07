@@ -260,3 +260,15 @@ Do not discard these changes or assume they have been pushed to GitHub.
 - User ran `npm run test:historical-coach-evaluation-schema`; all 10 static checks passed.
 - `npx supabase migration list --local` shows `20261107020000` exists in local migration files but is not applied to the local DB. All earlier migrations through `20261107010000` are applied.
 - Next step: apply the single pending migration to local Supabase, then verify table structure, RLS policies, constraints, and existing data. No hosted changes.
+
+
+## Age-group rating summary checkpoint — 2026-11-07
+
+**Branch:** `feature/admin-evaluation-review`
+
+- Updated `app/protected/evaluation-review/page.tsx` to display an age-group core-skill summary per season/age section.
+- Averages include submitted evaluations only and are split into coach versus independent-evaluator ratings. Each average shows its contributing rating count; missing scores are excluded, not treated as zero.
+- Updated `scripts/test-evaluation-review-ui.cjs` with static assertions for the summary and its rules.
+- Commits: `884439d25f029dcc892c84716025ea21b929c647` (UI), `e8958488931bfe183df7d1f93d8670b00fe90314` (test).
+- **Not yet locally tested.** Fetch/pull the branch, run the focused UI test and `npm run test:all`, lint, TypeScript, and build. Then compare results against synthetic local data. The current page still performs its existing administrator authorization check; non-admin redirect behavior must be verified at runtime.
+- No migration was added and no hosted Supabase change was made.
