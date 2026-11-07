@@ -17,6 +17,11 @@ assert.match(reviewPage, /Players with no evaluation record/, "review page must 
 assert.match(reviewPage, /Evaluator progress/, "review page must report evaluator progress");
 assert.match(reviewPage, /Core total:/, "review page must show core score summaries");
 assert.match(reviewPage, /CORE_CODES/, "core score summaries must use the five core categories");
+assert.match(reviewPage, /Age-group rating summary/, "review page must show an age-group rating summary");
+assert.match(reviewPage, /evaluation\.status === "submitted"/, "age-group averages must use submitted evaluations only");
+assert.match(reviewPage, /Coach average/, "coach averages must be shown separately");
+assert.match(reviewPage, /Independent average/, "independent-evaluator averages must be shown separately");
+assert.match(reviewPage, /values\.length \? \(values\.reduce/, "missing ratings must be excluded from averages rather than counted as zero");
 assert.match(evaluatorPage, /status\?\.trim\(\)\.toLowerCase\(\)/, "evaluator eligibility must normalize status casing and whitespace");
 assert.match(reviewPage, /status\?\.trim\(\)\.toLowerCase\(\)/, "review counts must normalize status casing and whitespace");
 assert.match(evaluatorPage, /registration_payment_status, players\(/, "evaluator query must fetch the status used for eligibility");
