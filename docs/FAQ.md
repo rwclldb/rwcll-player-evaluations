@@ -291,3 +291,15 @@ Matching rules:
 - Historical scores use the same 1–5 categories where mapped, but stay separate from current spring ratings and never affect current completion counts or averages.
 
 Apply only to local Supabase after reviewing the migration and current local migration status. Do not run hosted migrations or `db push` without explicit approval. Coach access to historical player ratings must later be implemented through scoped server-side report access, not broad table permissions.
+
+
+## Player reports and CSV export
+
+Administrators can open **Player reports** from the workspace at `/protected/reports`, choose a season, open an individual player report, or export a season CSV.
+
+- Current-season evaluations and historical coach evaluations are shown in separate sections. Historical scores are prior-season context only; they are never combined into current averages or completion counts.
+- Reports display registration payment status, including Pending/Unknown values; payment status is not displayed in the evaluator rating UI.
+- The season CSV labels records as `CURRENT` or `HISTORICAL_COACH` and includes historical source season, coach, division, team, and coverage note where available.
+- Reports and exports are administrator-only in this first version because the historical tables are protected by administrator-only RLS. Do not expose historical ratings to coaches until scoped server-side authorization for their assigned players is implemented.
+- Missing ratings remain absent rather than being written as zero. Players with no evaluation record are still represented in the CSV.
+- Validate locally with `npm run test:player-reports`, `npm run test:all`, lint, TypeScript, and a production build. Then check a report with no current evaluations, a report with incomplete ratings, and a player with historical ratings.
