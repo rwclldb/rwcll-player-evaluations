@@ -287,3 +287,20 @@ Added:
 - `ROADMAP.md` and `docs/FAQ.md` updated.
 
 **Not yet locally tested.** Fetch/pull the branch, run `npm run test:player-reports`, then `npm run test:all`, lint, TypeScript, and build. Test reports with no evaluation, partial ratings, and historical ratings; verify CSV row/column alignment and confirm non-admin access is denied. No migration was added; no hosted database changes were made. Coach-facing historical report access remains out of scope until scoped authorization is implemented.
+
+
+## Scoped coach historical reports checkpoint — 2026-11-07
+
+Branch: feature/admin-evaluation-review
+
+Implemented on the branch:
+- Migration 20261107030000_scoped_coach_historical_reports.sql adds coach_historical_report_roster(bigint) and coach_historical_report(bigint) RPCs. They check current-season team assignment and return only the assigned roster or historical data for an authorized player's registration. Historical tables remain administrator-only under RLS.
+- Added app/protected/coach-reports/page.tsx and app/protected/coach-reports/player/[playerSeasonId]/page.tsx. Coach pages use the scoped RPCs, and the individual report displays historical coach ratings only. The evaluator workspace links to the coach report list.
+- Added scripts/test-coach-historical-reports.cjs and npm run test:coach-historical-reports; the consolidated test runner auto-discovers it.
+- Updated the FAQ, roadmap, database design, and decision log.
+
+Not yet locally tested: The migration has not been applied to local Supabase, and the static test/full suite have not been run for this change. Pull the branch, review npx supabase migration list --local, apply pending migrations with npx supabase migration up --local, then run npm run test:coach-historical-reports and npm run test:all. Because migration up --local applies all pending local migrations, inspect the pending list first.
+
+Manual authorization tests still required: assigned coach sees only assigned-team players; coach assigned to another team cannot access those reports even by direct URL; unassigned coach gets no roster; direct historical-table reads remain denied for non-admins; administrator reports and CSV export remain functional.
+
+Hosted Supabase: No migration applied and no hosted database changes made.
