@@ -239,3 +239,20 @@ No hosted database changes have been made. Do not deploy this migration remotely
 - [ ] Review completion counts against synthetic registrations and saved evaluations.
 
 **Current branch:** `feature/admin-evaluation-review`. The dashboard is implemented in `app/protected/evaluation-review/page.tsx` and linked from the administrator workspace. This is a development checkpoint; implementation checkboxes above are not a substitute for local validation.
+
+
+## Historical coach evaluation import — design and schema groundwork
+
+- [x] Confirm historical coach evaluations are prior-season context, distinct from current spring evaluator submissions.
+- [x] Verify that `historical_evaluations` and `historical_ratings` already exist in the baseline schema; extend rather than duplicate them.
+- [x] Decide matching precedence: permanent RWCLL Player ID first; name and available birthdate/season/team/division as candidate clues; manual admin confirmation required.
+- [x] Decide unresolved historical rows must not create player records and must remain out of final reports until matched.
+- [x] Draft `20261107020000_historical_coach_evaluation_schema.sql` with source metadata, match provenance, import staging, RLS, and idempotency constraints.
+- [ ] Apply migration to local Supabase only and verify migration history/schema.
+- [ ] Add static regression tests for migration safeguards.
+- [ ] Test local RLS, unique/idempotency constraints, and existing historical data preservation.
+- [ ] Implement admin import preview, candidate review, and commit workflow.
+- [ ] Implement narrowly scoped report access for authorized coaches and administrators.
+- [ ] Include clearly labeled historical ratings in final reports/export, separate from current group ratings.
+
+**Safety:** Migration is only drafted on `feature/admin-evaluation-review`. No hosted database change has been made or authorized.
