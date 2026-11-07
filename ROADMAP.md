@@ -275,9 +275,9 @@ The page remains administrator-only and read-only. Historical ratings are not qu
 ## Phase 6.2 — Player reports and CSV export (implementation checkpoint, 2026-11-07)
 
 - [x] Add an administrator-only season report index with per-registration report links.
-- [x] Add individual player reports with current-season evaluation records and a separate historical coach evaluation section.
+- [x] Add individual player reports with current-season evaluation records, current age-group averages, and a separate historical coach evaluation section.
 - [x] Display registration payment status on report pages, consistent with the reporting requirement.
-- [x] Add administrator-checked season CSV export with separate `CURRENT` and `HISTORICAL_COACH` record types.
+- [x] Add administrator-checked season CSV export with separate `CURRENT`, `CURRENT_GROUP_SUMMARY`, and `HISTORICAL_COACH` record types, including rating counts.
 - [x] Preserve historical source season, coach, division, team, and coverage note in export where available.
 - [x] Add static regression assertions and register `npm run test:player-reports`.
 - [ ] Run focused tests, `npm run test:all`, lint, TypeScript, and production build locally.
