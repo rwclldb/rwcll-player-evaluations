@@ -213,3 +213,17 @@ These are agreed requirements, not implemented features. Keep implementation che
 
 **Status note:** the project ZIP contains five migrations, but their presence is not proof that this newly proposed workflow exists or is fully tested. Do not mark the new workflow complete until implementation and tests pass.
 
+
+
+## Phase 6 — Administrator evaluation review (in progress)
+
+- [x] Add a read-only administrator review page grouped by season and Little League age.
+- [x] Show eligible registrations, players with at least one evaluation record, players with no evaluation record, and evaluation status counts.
+- [x] Show progress by evaluator and evaluator type.
+- [x] Show per-player evaluation records and core-category totals/averages without treating missing ratings as zero.
+- [x] Keep pending registrations in the eligible evaluation pool; continue excluding unpaid/unknown statuses from the evaluator workspace.
+- [ ] Run `npm run test:all`, lint, TypeScript, and production build against the feature branch.
+- [ ] Verify the dashboard with local Supabase as admin and confirm non-admins are redirected.
+- [ ] Review completion counts against synthetic registrations and saved evaluations.
+
+**Current branch:** `feature/admin-evaluation-review`. The dashboard is implemented in `app/protected/evaluation-review/page.tsx` and linked from the administrator workspace. This is a development checkpoint; implementation checkboxes above are not a substitute for local validation.
