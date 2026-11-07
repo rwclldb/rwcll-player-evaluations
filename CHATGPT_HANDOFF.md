@@ -281,7 +281,7 @@ Do not discard these changes or assume they have been pushed to GitHub.
 Added:
 - `app/protected/reports/page.tsx`: administrator-only season selection and player report list.
 - `app/protected/reports/player/[playerSeasonId]/page.tsx`: individual report with current-season evaluations separated from historical coach ratings.
-- `app/protected/reports/export/route.ts`: administrator-checked CSV export. Current and historical rows have distinct record types; historical source metadata and coverage notes are preserved where available.
+- `app/protected/reports/export/route.ts`: administrator-checked CSV export. `CURRENT`, `CURRENT_GROUP_SUMMARY`, and `HISTORICAL_COACH` rows are distinct; rating counts and historical source metadata/coverage notes are preserved where available.
 - Workspace link added in `app/protected/page.tsx`.
 - `scripts/test-player-reports.cjs`, registered as `npm run test:player-reports`.
 - `ROADMAP.md` and `docs/FAQ.md` updated.
