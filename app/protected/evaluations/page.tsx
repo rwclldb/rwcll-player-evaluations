@@ -360,9 +360,9 @@ async function EvaluatorWorkspaceContent({
                 <div className="rounded-md border p-4">
                   <p className="font-medium">No eligible players yet</p>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    No registrations match this season and age with payment
-                    status COMPLETED or Paid. Pending, unpaid, and UNKNOWN
-                    registrations are excluded.
+                    No registrations match this season and age with an eligible
+                    registration status. Pending registrations remain eligible;
+                    unpaid and UNKNOWN registrations are excluded.
                   </p>
                 </div>
               ) : (
