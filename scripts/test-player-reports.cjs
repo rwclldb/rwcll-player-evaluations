@@ -20,6 +20,8 @@ assert.match(playerPage, /historical_evaluations/, "player report must load matc
 assert.match(playerPage, /historical_ratings/, "player report must load historical rating details");
 assert.match(exportRoute, /"CURRENT"/, "CSV must label current evaluation rows");
 assert.match(exportRoute, /"HISTORICAL_COACH"/, "CSV must label historical coach rows separately");
+assert.match(exportRoute, /CURRENT_GROUP_SUMMARY/, "CSV must include age-group summary rows separately");
+assert.match(exportRoute, /rating_count/, "CSV must include the number of ratings behind each score or average");
 assert.match(exportRoute, /source_season_label/, "CSV must preserve historical source season");
 assert.match(exportRoute, /coverage_note/, "CSV must preserve historical coverage notes");
 assert.match(exportRoute, /text\.replace\(\/"/, "CSV must escape embedded quotation marks");
