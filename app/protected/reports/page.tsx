@@ -87,7 +87,7 @@ async function PlayerReportsContent({ searchParams }: { searchParams: SearchPara
                     <li key={registration.id} className="flex flex-col gap-2 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="font-medium">{name}</p>
-                        <p className="text-sm text-muted-foreground">Age {registration.league_age ?? "not set"} · Eval # {registration.evaluation_number ?? "—"}</p>
+                        <p className="text-sm text-muted-foreground">Age {registration.league_age ?? "not set"} · Eval # {registration.evaluation_number ?? "—"} · Registration status: {registration.registration_payment_status ?? "Unknown"}</p>
                       </div>
                       <Link href={`/protected/reports/player/${registration.id}`} className="inline-flex w-fit rounded-md border px-3 py-2 text-sm">Open report</Link>
                     </li>
