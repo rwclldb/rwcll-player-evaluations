@@ -26,6 +26,7 @@
     "manual:import-commit-registration-conflict-local": "node scripts/test-import-commit-registration-conflict-local.cjs",
     "manual:import-commit-registration-conflict-remote": "node scripts/test-import-commit-registration-conflict-remote.cjs",
     "test:evaluation-review-ui": "node scripts/test-evaluation-review-ui.cjs",
+    "test:player-reports": "node scripts/test-player-reports.cjs",
     "test:historical-coach-evaluation-schema": "node scripts/test-historical-coach-evaluation-schema.cjs"
   },
   "dependencies": {
