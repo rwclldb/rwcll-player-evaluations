@@ -270,3 +270,18 @@ No hosted database changes have been made. Do not deploy this migration remotely
 - [ ] Verify displayed results against synthetic local Supabase data, including empty categories and mixed evaluator types.
 
 The page remains administrator-only and read-only. Historical ratings are not queried or included in these current-season averages. No database migration or hosted change is required for this UI addition.
+
+
+## Phase 6.2 — Player reports and CSV export (implementation checkpoint, 2026-11-07)
+
+- [x] Add an administrator-only season report index with per-registration report links.
+- [x] Add individual player reports with current-season evaluation records and a separate historical coach evaluation section.
+- [x] Display registration payment status on report pages, consistent with the reporting requirement.
+- [x] Add administrator-checked season CSV export with separate `CURRENT` and `HISTORICAL_COACH` record types.
+- [x] Preserve historical source season, coach, division, team, and coverage note in export where available.
+- [x] Add static regression assertions and register `npm run test:player-reports`.
+- [ ] Run focused tests, `npm run test:all`, lint, TypeScript, and production build locally.
+- [ ] Test report pages and CSV download against local synthetic data; verify no-history, no-ratings, and multiple-evaluation cases.
+- [ ] Verify non-admin users cannot view reports or download the CSV.
+
+The first version is deliberately administrator-only. Historical ratings remain behind admin-only RLS; no broad coach access or hosted database changes are introduced.
