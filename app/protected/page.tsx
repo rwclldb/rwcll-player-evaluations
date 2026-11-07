@@ -121,6 +121,13 @@ async function ProtectedPageContent() {
               >
                 Review evaluations
               </Link>
+
+              <Link
+                href="/protected/reports"
+                className="mt-3 inline-flex rounded-md border px-4 py-2 text-sm font-medium"
+              >
+                Player reports and CSV export
+              </Link>
             </div>
           </section>
 
