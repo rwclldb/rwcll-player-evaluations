@@ -56,6 +56,7 @@ This status reflects the developer's reported local environment and test results
 - Updated `app/protected/evaluations/page.tsx` so Pending registrations are included in the evaluator eligibility filter and clarified the empty-state explanation. The UI still excludes unpaid and `UNKNOWN` statuses.
 - Added `app/protected/evaluation-review/page.tsx`, a read-only administrator review page grouped by season and Little League age. It reports eligible registrations, players with evaluation records, players with no evaluation record, draft/submitted/not-evaluated counts, evaluator progress, and per-player core-rating totals/averages.
 - Added a link to the review page on `app/protected/page.tsx`.
+- Added `scripts/test-evaluation-review-ui.cjs` and registered `npm run test:evaluation-review-ui` in `package.json`.
 - Added a Phase 6 checkpoint to `ROADMAP.md` and usage notes to `docs/FAQ.md`.
 
 **Validation status:** These changes were authored through GitHub and have not yet been run through the user's local `npm run test:all`, lint, TypeScript, or production build. Do not describe the feature as tested. No database migrations or hosted database changes were made.
