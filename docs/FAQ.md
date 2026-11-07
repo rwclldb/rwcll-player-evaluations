@@ -299,7 +299,7 @@ Administrators can open **Player reports** from the workspace at `/protected/rep
 
 - Current-season evaluations and historical coach evaluations are shown in separate sections. Historical scores are prior-season context only; they are never combined into current averages or completion counts.
 - Reports display registration payment status, including Pending/Unknown values; payment status is not displayed in the evaluator rating UI.
-- The season CSV labels records as `CURRENT` or `HISTORICAL_COACH` and includes historical source season, coach, division, team, and coverage note where available.
+- The individual report also shows current age-group averages for the five core skills, split between coach and independent-evaluator ratings. The season CSV labels rows as `CURRENT`, `CURRENT_GROUP_SUMMARY`, or `HISTORICAL_COACH`, includes the number of ratings behind scores/averages, and preserves historical source season, coach, division, team, and coverage note where available.
 - Reports and exports are administrator-only in this first version because the historical tables are protected by administrator-only RLS. Do not expose historical ratings to coaches until scoped server-side authorization for their assigned players is implemented.
 - Missing ratings remain absent rather than being written as zero. Players with no evaluation record are still represented in the CSV.
 - Validate locally with `npm run test:player-reports`, `npm run test:all`, lint, TypeScript, and a production build. Then check a report with no current evaluations, a report with incomplete ratings, and a player with historical ratings.
