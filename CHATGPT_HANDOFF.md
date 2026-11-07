@@ -251,14 +251,14 @@ Do not discard these changes or assume they have been pushed to GitHub.
 - Inspection of `supabase/migrations/20261103170921_initial_schema_baseline.sql` confirmed existing `historical_evaluations` and `historical_ratings` tables. They are minimal and should be extended, not duplicated.
 - Added migration draft `supabase/migrations/20261107020000_historical_coach_evaluation_schema.sql` on `feature/admin-evaluation-review`. It adds source season/coach/import metadata, match provenance, category mapping fields, and protected `historical_evaluation_import_rows` staging with review states and idempotency constraints.
 - Added `scripts/test-historical-coach-evaluation-schema.cjs`, registered as `test:historical-coach-evaluation-schema` so `npm run test:all` can discover it. Updated `docs/DATABASE-DESIGN.md`, `docs/DECISIONS.md`, `docs/FAQ.md`, and `ROADMAP.md` with the agreed matching workflow and implementation status.
-- **Not yet applied or tested locally. No hosted database changes made.** Before proceeding, review the migration, apply it to local Supabase only, inspect resulting policies/constraints, add regression tests, and run the test suite. Raw history remains admin-only until a scoped coach-facing report RPC is implemented.
+- **Applied to local Supabase only; no hosted database changes made.** Static schema tests passed. The user verified all three tables exist with RLS enabled, the expected constraints/indexes exist, and policies require `is_admin()`. Actual non-admin runtime access, database constraint rejection behavior, and import transaction behavior remain to be tested. Raw history remains admin-only until scoped coach-facing report access is implemented.
 - Next after local schema validation: complete evaluation reports/export with historical ratings clearly separated from current spring group results.
 
 
 ### Local historical schema validation update — 2026-11-07
 
 - User ran `npm run test:historical-coach-evaluation-schema`; all 10 static checks passed.
-- `npx supabase migration list --local` shows `20261107020000` exists in local migration files but is not applied to the local DB. All earlier migrations through `20261107010000` are applied.
+- The user subsequently confirmed migration `20261107020000` applied locally and supplied read-only query results verifying all three tables, RLS enabled, constraints, indexes, and administrator policy expressions.
 - Next step: apply the single pending migration to local Supabase, then verify table structure, RLS policies, constraints, and existing data. No hosted changes.
 
 
