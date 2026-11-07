@@ -182,6 +182,22 @@ The starter includes sign-up UI. The intended RWCLL app uses administrator-manag
 ## Documentation upkeep
 Update the FAQ with verified procedures, the roadmap with implementation-and-test status, and the decision log with durable decisions. Update the database design when structural decisions change. After substantive project updates, update all relevant docs. The current updated documentation has not yet been confirmed copied into the Git repository.
 
+## Running the full test suite
+
+Run the test suite from the repository root in PowerShell. The
+duplicate-player-ID resolution test requires explicit authorization
+for local import tests.
+
+1. Confirm that `.env.local` points to the local Supabase instance:
+
+   `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321`
+
+2. Set the local-test authorization variable and run the full suite:
+
+   ```powershell
+   $env:ALLOW_LOCAL_IMPORT_TESTS = "YES"
+   npm run test:all
+
 
 ## Evaluation workflow rules (confirmed 2026-11-02)
 
