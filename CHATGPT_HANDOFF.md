@@ -242,3 +242,14 @@ An earlier checkpoint reported these working-tree changes; they may have changed
 - New `test-results/` output.
 
 Do not discard these changes or assume they have been pushed to GitHub.
+
+
+## Historical coach evaluation design checkpoint — 2026-11-07
+
+- User confirmed that coaches will rate their own players at the end of each year using the same rating scales as spring evaluations. These ratings should be imported before the next spring evaluation so coaches can see prior-year coach ratings. Initially, historical ratings need only appear in final reports alongside current group ratings.
+- Matching must support both a permanent RWCLL Player ID when available and a fallback candidate workflow using names and other available details. Do not silently match on name alone or create a player automatically from a historical row.
+- Inspection of `supabase/migrations/20261103170921_initial_schema_baseline.sql` confirmed existing `historical_evaluations` and `historical_ratings` tables. They are minimal and should be extended, not duplicated.
+- Added migration draft `supabase/migrations/20261107020000_historical_coach_evaluation_schema.sql` on `feature/admin-evaluation-review`. It adds source season/coach/import metadata, match provenance, category mapping fields, and protected `historical_evaluation_import_rows` staging with review states and idempotency constraints.
+- Updated `docs/DATABASE-DESIGN.md`, `docs/DECISIONS.md`, `docs/FAQ.md`, and `ROADMAP.md` with the agreed matching workflow and implementation status.
+- **Not yet applied or tested locally. No hosted database changes made.** Before proceeding, review the migration, apply it to local Supabase only, inspect resulting policies/constraints, add regression tests, and run the test suite. Raw history remains admin-only until a scoped coach-facing report RPC is implemented.
+- Next after local schema validation: complete evaluation reports/export with historical ratings clearly separated from current spring group results.
