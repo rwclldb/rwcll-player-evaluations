@@ -12,7 +12,7 @@
 - **Purpose:** Internal league player evaluation workflow for approximately 30–50 users; no parent/player accounts.
 - **Source of truth:** Checked-in repository files, especially `ROADMAP.md`, `docs/DECISIONS.md`, `docs/DATABASE-DESIGN.md`, SQL migrations, and tests. Update documentation when durable decisions or implementation status changes.
 
-## Current observed state — 2026-11-05
+## Current observed state — 2026-11-06
 
 This status reflects the developer's reported local environment and test results. It is not a live inspection of GitHub or hosted Supabase.
 
