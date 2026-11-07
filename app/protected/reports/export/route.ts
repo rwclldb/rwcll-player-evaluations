@@ -79,7 +79,7 @@ export async function GET(request: Request) {
   const evaluatorName = (userId: string) => profiles.find((item) => item.user_id === userId)?.display_name ?? "Evaluator";
   const rows: Array<Array<string | number | null | undefined>> = [[
     "record_type", "player_name", "player_id", "season", "league_age", "evaluation_number", "registration_payment_status",
-    "evaluator_type", "evaluator_name", "evaluation_status", "rating_category", "score_1_to_5",
+    "evaluator_type", "evaluator_name", "evaluation_status", "rating_category", "score_1_to_5", "rating_count",
     "historical_source_season", "historical_coach", "historical_division", "historical_team", "coverage_note",
   ]];
 
@@ -92,8 +92,8 @@ export async function GET(request: Request) {
       for (const evaluation of playerEvals) {
         const ownRatings = ratings.filter((rating) => rating.evaluation_id === evaluation.id);
         const base = ["CURRENT", playerName, registration.player_id, seasonResult.data.name, registration.league_age, registration.evaluation_number, registration.registration_payment_status, evaluation.evaluator_type, evaluatorName(evaluation.evaluator_user_id), evaluation.status];
-        if (ownRatings.length === 0) rows.push([...base, "", "", "", "", "", "", ""]);
-        else for (const rating of ownRatings) rows.push([...base, categories.find((item) => item.id === rating.rating_category_id)?.name ?? "Unmapped category", rating.score, "", "", "", "", ""]);
+        if (ownRatings.length === 0) rows.push([...base, "", "", "", "", "", "", "", ""]);
+        else for (const rating of ownRatings) rows.push([...base, categories.find((item) => item.id === rating.rating_category_id)?.name ?? "Unmapped category", rating.score, 1, "", "", "", "", ""]);
       }
     }
   }
@@ -104,8 +104,8 @@ export async function GET(request: Request) {
     const playerName = registration.players ? `${registration.players.first_name} ${registration.players.last_name}` : `Player #${registration.player_id}`;
     const ownRatings = historyRatings.filter((rating) => rating.historical_evaluation_id === historicalEvaluation.id);
     const base = ["HISTORICAL_COACH", playerName, historicalEvaluation.player_id, seasonResult.data.name, registration.league_age, registration.evaluation_number, registration.registration_payment_status, "historical_coach", historicalEvaluation.source_coach_name ?? "", "historical",];
-    if (ownRatings.length === 0) rows.push([...base, "", "", historicalEvaluation.source_season_label, historicalEvaluation.source_coach_name, historicalEvaluation.source_division_name, historicalEvaluation.source_team_label, historicalEvaluation.coverage_note]);
-    else for (const rating of ownRatings) rows.push([...base, categories.find((item) => item.id === rating.rating_category_id)?.name ?? rating.category_name, rating.score, historicalEvaluation.source_season_label, historicalEvaluation.source_coach_name, historicalEvaluation.source_division_name, historicalEvaluation.source_team_label, historicalEvaluation.coverage_note]);
+    if (ownRatings.length === 0) rows.push([...base, "", "", "", historicalEvaluation.source_season_label, historicalEvaluation.source_coach_name, historicalEvaluation.source_division_name, historicalEvaluation.source_team_label, historicalEvaluation.coverage_note]);
+    else for (const rating of ownRatings) rows.push([...base, categories.find((item) => item.id === rating.rating_category_id)?.name ?? rating.category_name, rating.score, 1, historicalEvaluation.source_season_label, historicalEvaluation.source_coach_name, historicalEvaluation.source_division_name, historicalEvaluation.source_team_label, historicalEvaluation.coverage_note]);
   }
 
   const csv = rows.map(csvRow).join("\r\n") + "\r\n";
