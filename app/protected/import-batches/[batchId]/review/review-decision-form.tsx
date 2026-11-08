@@ -1,14 +1,35 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { saveImportRowReview, commitImportRow, resolveDuplicatePlayerIdWarning, reopenIgnoredImportRow } from "../../review-actions";
+import { 
+  saveImportRowReview, 
+  commitImportRow, 
+  resolveDuplicatePlayerIdWarning, 
+  reopenIgnoredImportRow 
+} from "../../review-actions";
 import { useRouter } from "next/navigation";
-
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  AlertTriangle, 
+  CheckCircle2, 
+  Loader2, 
+  Lock, 
+  RotateCcw, 
+  UserCheck, 
+  Save 
+} from "lucide-react";
 
 type Candidate = { id: number; label: string };
+
 const labels: Record<string, string> = {
-  needs_review: "Needs review", ready_for_match_review: "Ready for match review", approved_new: "Approve as new player (decision only)", approved_match: "Approve match to existing player", ignored: "Ignore this row",
-committed: "Committed (cannot change)",};
+  needs_review: "Needs review",
+  ready_for_match_review: "Ready for match review",
+  approved_new: "Approve as new player (decision only)",
+  approved_match: "Approve match to existing player",
+  ignored: "Ignore this row",
+  committed: "Committed (cannot change)",
+};
 
 export function ReviewDecisionForm({
   rowId,
@@ -21,7 +42,7 @@ export function ReviewDecisionForm({
   disabled,
   hasDuplicatePlayerIdFlag,
   duplicatePlayerIdResolvedAt,
-  duplicatePlayerIdResolutionReason
+  duplicatePlayerIdResolutionReason,
 }: {
   rowId: number;
   batchId: number;
@@ -37,12 +58,15 @@ export function ReviewDecisionForm({
 }) {
   const isCommitted = currentDecision === "committed";
   const [decision, setDecision] = useState(currentDecision);
-  const [matchedPlayerId, setMatchedPlayerId] = useState(currentMatchedPlayerId ? String(currentMatchedPlayerId) : "");
+  const [matchedPlayerId, setMatchedPlayerId] = useState(
+    currentMatchedPlayerId ? String(currentMatchedPlayerId) : ""
+  );
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
   const match = decision === "approved_match";
   const router = useRouter();
+
   const [commitReason, setCommitReason] = useState("");
   const [commitMessage, setCommitMessage] = useState("");
   const [duplicateResolutionReason, setDuplicateResolutionReason] = useState("");
@@ -51,269 +75,357 @@ export function ReviewDecisionForm({
   const isIgnored = currentDecision === "ignored";
   const [reopenReason, setReopenReason] = useState("");
   const [reopenMessage, setReopenMessage] = useState("");
+
   function submit() {
     setMessage("");
     const data = new FormData();
-    data.set("rowId", String(rowId)); data.set("batchId", String(batchId)); data.set("decision", decision);
-    data.set("matchedPlayerId", match ? matchedPlayerId : ""); data.set("reason", reason);
+    data.set("rowId", String(rowId));
+    data.set("batchId", String(batchId));
+    data.set("decision", decision);
+    data.set("matchedPlayerId", match ? matchedPlayerId : "");
+    data.set("reason", reason);
+
     startTransition(async () => {
       const result = await saveImportRowReview(data);
       setMessage(result.ok ? "Decision saved and audit entry recorded." : result.message);
       if (result.ok) setReason("");
     });
   }
-function submitCommit() {
-  setCommitMessage("");
 
-  const data = new FormData();
-  data.set("rowId", String(rowId));
-  data.set("batchId", String(batchId));
-  data.set("reason", commitReason);
+  function submitCommit() {
+    setCommitMessage("");
+    const data = new FormData();
+    data.set("rowId", String(rowId));
+    data.set("batchId", String(batchId));
+    data.set("reason", commitReason);
 
-  startTransition(async () => {
-    const result = await commitImportRow(data);
+    startTransition(async () => {
+      const result = await commitImportRow(data);
+      if (!result.ok) {
+        setCommitMessage(result.message);
+        return;
+      }
+      setCommitMessage(
+        result.alreadyCommitted
+          ? `Already committed. Existing player registration #${result.playerSeasonId} was returned; no duplicate was created.`
+          : `Committed successfully. Player registration #${result.playerSeasonId} was created.`
+      );
+      setCommitReason("");
+      router.refresh();
+    });
+  }
 
-    if (!result.ok) {
-      setCommitMessage(result.message);
-      return;
-    }
+  function submitReopen() {
+    setReopenMessage("");
+    const data = new FormData();
+    data.set("rowId", String(rowId));
+    data.set("batchId", String(batchId));
+    data.set("reason", reopenReason);
 
-    setCommitMessage(
-      result.alreadyCommitted
-        ? `Already committed. Existing player registration #${result.playerSeasonId} was returned; no duplicate was created.`
-        : `Committed successfully. Player registration #${result.playerSeasonId} was created.`
-    );
+    startTransition(async () => {
+      const result = await reopenIgnoredImportRow(data);
+      if (!result.ok) {
+        setReopenMessage(result.message);
+        return;
+      }
+      setReopenMessage("Row reopened. Audit entry recorded.");
+      setReopenReason("");
+      router.refresh();
+    });
+  }
 
-    setCommitReason("");
-    router.refresh();
-  });
-}
+  function submitDuplicateResolution() {
+    setDuplicateResolutionMessage("");
+    const data = new FormData();
+    data.set("rowId", String(rowId));
+    data.set("batchId", String(batchId));
+    data.set("reason", duplicateResolutionReason);
 
-function submitReopen() {
-  setReopenMessage("");
+    startTransition(async () => {
+      const result = await resolveDuplicatePlayerIdWarning(data);
+      if (!result.ok) {
+        setDuplicateResolutionMessage(result.message);
+        return;
+      }
+      setDuplicateResolutionMessage("Duplicate Player ID warning resolved and audit entry recorded.");
+      setDuplicateResolutionReason("");
+      router.refresh();
+    });
+  }
 
-  const data = new FormData();
-  data.set("rowId", String(rowId));
-  data.set("batchId", String(batchId));
-  data.set("reason", reopenReason);
+  return (
+    <div className="space-y-4 border-t border-border pt-4">
+      {/* Committed Registration Card */}
+      {isCommitted && (
+        <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4 text-xs space-y-1">
+          <h3 className="font-semibold text-emerald-400 flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 shrink-0" /> Commit Details
+          </h3>
+          <p className="text-slate-300">
+            <span className="font-medium text-foreground">Player:</span>{" "}
+            {committedPlayerLabel ?? "Could not load the linked player name"}
+          </p>
+          <p className="text-slate-300 font-mono">
+            <span className="font-medium text-foreground">Season Registration ID:</span>{" "}
+            {committedPlayerSeasonId ?? "—"}
+          </p>
+        </div>
+      )}
 
-  startTransition(async () => {
-    const result = await reopenIgnoredImportRow(data);
+      {/* Duplicate Player ID Warning Controls */}
+      {hasDuplicatePlayerIdFlag && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs space-y-3">
+          <h3 className="font-semibold text-amber-400 flex items-center gap-1.5">
+            <AlertTriangle className="h-4 w-4 shrink-0" /> Duplicate Player ID Warning
+          </h3>
 
-    if (!result.ok) {
-      setReopenMessage(result.message);
-      return;
-    }
+          {duplicatePlayerIdResolved ? (
+            <div className="space-y-1 text-slate-300">
+              <p className="font-semibold text-emerald-400">Explicitly Resolved</p>
+              <p>Resolution reason: {duplicatePlayerIdResolutionReason || "Not available"}</p>
+              <p className="text-[11px] text-muted-foreground italic">
+                The original import warning is preserved. The resolution and audit entry are recorded separately.
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="text-slate-300 leading-relaxed">
+                This row has a duplicate Player ID warning from the uploaded file. Verify source rows and player identity before resolving it.
+              </p>
 
-    setReopenMessage("Row reopened. Audit entry recorded.");
-    setReopenReason("");
-    router.refresh();
-  });
-}
+              <div className="space-y-1">
+                <label className="text-slate-300 font-semibold block">
+                  Resolution Reason <span className="text-muted-foreground font-normal">(5–1,000 characters)</span>
+                </label>
+                <textarea
+                  className="w-full min-h-20 rounded-md border border-border bg-background p-2.5 text-xs text-foreground placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                  minLength={5}
+                  maxLength={1000}
+                  required
+                  value={duplicateResolutionReason}
+                  onChange={(e) => setDuplicateResolutionReason(e.target.value)}
+                  disabled={disabled || isPending || isCommitted || isIgnored}
+                  placeholder="Explain how you checked the duplicate ID and why it is safe to proceed."
+                />
+              </div>
 
-function submitDuplicateResolution() {
-  setDuplicateResolutionMessage("");
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={submitDuplicateResolution}
+                  disabled={
+                    disabled ||
+                    isPending ||
+                    isCommitted ||
+                    duplicateResolutionReason.trim().length < 5 ||
+                    duplicateResolutionReason.trim().length > 1000
+                  }
+                  className="border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-xs"
+                >
+                  {isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : null}
+                  Resolve Duplicate Player ID Warning
+                </Button>
 
-  const data = new FormData();
-  data.set("rowId", String(rowId));
-  data.set("batchId", String(batchId));
-  data.set("reason", duplicateResolutionReason);
+                {duplicateResolutionMessage && (
+                  <span className="text-xs font-mono text-emerald-400">{duplicateResolutionMessage}</span>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
-  startTransition(async () => {
-    const result = await resolveDuplicatePlayerIdWarning(data);
+      {/* Ignored Row Controls */}
+      {isIgnored && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs space-y-3">
+          <h3 className="font-semibold text-amber-400 flex items-center gap-1.5">
+            <Lock className="h-4 w-4 shrink-0" /> Row Is Ignored
+          </h3>
+          <p className="text-slate-300 leading-relaxed">
+            Ignored rows cannot be changed through ordinary review. An administrator must explicitly reopen this row and record a reason.
+          </p>
 
-    if (!result.ok) {
-      setDuplicateResolutionMessage(result.message);
-      return;
-    }
+          <div className="space-y-1">
+            <label className="text-slate-300 font-semibold block">
+              Reopening Reason <span className="text-muted-foreground font-normal">(5–1,000 characters)</span>
+            </label>
+            <textarea
+              className="w-full min-h-20 rounded-md border border-border bg-background p-2.5 text-xs text-foreground placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+              minLength={5}
+              maxLength={1000}
+              required
+              value={reopenReason}
+              onChange={(e) => setReopenReason(e.target.value)}
+              disabled={disabled || isPending || isCommitted}
+              placeholder="Explain why this row needs to be reviewed again."
+            />
+          </div>
 
-    setDuplicateResolutionMessage(
-      "Duplicate Player ID warning resolved and audit entry recorded.",
-    );
-    setDuplicateResolutionReason("");
-    router.refresh();
-  });
-}
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={submitReopen}
+              disabled={
+                disabled ||
+                isPending ||
+                isCommitted ||
+                reopenReason.trim().length < 5 ||
+                reopenReason.trim().length > 1000
+              }
+              className="border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-xs"
+            >
+              {isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
+              Reopen Ignored Row
+            </Button>
 
-  return <div className="flex flex-col gap-3 border-t pt-4">
-        {isCommitted && (
-      <section
-        className="rounded-lg border bg-muted/30 p-4 text-sm"
-        aria-label="Committed registration details"
-      >
-        <h3 className="font-semibold">Commit details</h3>
+            {reopenMessage && <span className="text-xs font-mono text-emerald-400">{reopenMessage}</span>}
+          </div>
+        </div>
+      )}
 
-        <p className="mt-2">
-          <span className="font-medium">Player:</span>{" "}
-          {committedPlayerLabel ?? "Could not load the linked player name"}
-        </p>
+      {/* Review Decision Standard Form */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+          <UserCheck className="h-4 w-4 text-emerald-400" /> Review Decision
+        </h3>
 
-        <p>
-          <span className="font-medium">Season registration ID:</span>{" "}
-          {committedPlayerSeasonId ?? "—"}
-        </p>
-      </section>
-    )}
-    
-{hasDuplicatePlayerIdFlag && (
-  <section className="flex flex-col gap-3 rounded-lg border border-amber-500/50 p-4">
-    <h3 className="font-semibold">Duplicate Player ID warning</h3>
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-slate-300 block">Decision</label>
+          <select
+            className="w-full rounded-md border border-border bg-background p-2 text-xs text-foreground focus:outline-none focus:border-emerald-500"
+            value={decision}
+            onChange={(e) => setDecision(e.target.value)}
+            disabled={disabled || isPending || isCommitted || isIgnored}
+          >
+            {Object.entries(labels).map(([val, label]) => (
+              <option key={val} value={val}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-    {duplicatePlayerIdResolved ? (
-      <div className="text-sm">
-        <p className="font-medium">Explicitly resolved</p>
-        <p className="mt-1">
-          Resolution reason: {duplicatePlayerIdResolutionReason || "Not available"}
-        </p>
-        <p className="mt-1 text-muted-foreground">
-          The original import warning is preserved. The resolution and its
-          audit entry are recorded separately.
-        </p>
-      </div>
-    ) : (
-      <>
-        <p className="text-sm">
-          This row has a duplicate Player ID warning from the uploaded file.
-          Verify the source rows and intended player identity before resolving
-          it. Saving a review decision alone does not resolve this warning.
-        </p>
+        {match && (
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-300 block">
+              Existing Player <span className="text-rose-400">*</span>
+            </label>
+            <select
+              className="w-full rounded-md border border-border bg-background p-2 text-xs text-foreground focus:outline-none focus:border-emerald-500"
+              value={matchedPlayerId}
+              onChange={(e) => setMatchedPlayerId(e.target.value)}
+              disabled={disabled || isPending || isCommitted || isIgnored}
+            >
+              <option value="">Choose a candidate — verify identity</option>
+              {candidates.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            {candidates.length === 0 && (
+              <p className="text-xs text-amber-400 font-mono italic mt-1">
+                No suggestions available. Do not approve a match without verifying the player.
+              </p>
+            )}
+          </div>
+        )}
 
-        <label className="flex flex-col gap-1 text-sm">
-          Resolution reason (required, 5–1,000 characters)
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-slate-300 block">
+            Reason <span className="text-muted-foreground font-normal">(5–1,000 characters)</span>
+          </label>
           <textarea
-            className="min-h-20 rounded-md border bg-background p-2"
+            className="w-full min-h-20 rounded-md border border-border bg-background p-2.5 text-xs text-foreground placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
             minLength={5}
             maxLength={1000}
             required
-            value={duplicateResolutionReason}
-            onChange={(e) => setDuplicateResolutionReason(e.target.value)}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
             disabled={disabled || isPending || isCommitted || isIgnored}
-            placeholder="Explain how you checked the duplicate ID and why it is safe to proceed."
+            placeholder="Explain the evidence and why this decision is appropriate."
           />
-        </label>
+        </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <button
+          <Button
             type="button"
-            className="rounded-md border border-amber-600 px-4 py-2 disabled:opacity-50"
-            onClick={submitDuplicateResolution}
+            size="sm"
+            onClick={submit}
             disabled={
               disabled ||
               isPending ||
               isCommitted ||
-              duplicateResolutionReason.trim().length < 5 ||
-              duplicateResolutionReason.trim().length > 1000
+              isIgnored ||
+              reason.trim().length < 5 ||
+              reason.length > 1000 ||
+              (match && !matchedPlayerId)
             }
+            className="bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs"
           >
-            {isPending ? "Processing…" : "Resolve duplicate Player ID warning"}
-          </button>
+            {isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
+            Save Decision
+          </Button>
 
-          <span aria-live="polite" role="status" className="text-sm">
-            {duplicateResolutionMessage}
-          </span>
+          {message && <span className="text-xs font-mono text-emerald-400">{message}</span>}
         </div>
-      </>
-    )}
-  </section>
-)}
+      </div>
 
-{isIgnored && (
-  <section
-    className="flex flex-col gap-3 rounded-lg border border-amber-500/50 p-4"
-    aria-label="Ignored row controls"
-  >
-    <h3 className="font-semibold">This row is ignored</h3>
-    <p className="text-sm">
-      Ignored rows cannot be changed through ordinary review. An administrator
-      must explicitly reopen this row and record a reason before reviewing it
-      again.
-    </p>
+      {/* Commit Approved Row Section */}
+      {(currentDecision === "approved_new" || currentDecision === "approved_match") && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs space-y-3">
+          <h3 className="font-semibold text-amber-400 flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 shrink-0" /> Commit Approved Row
+          </h3>
+          <p className="text-slate-300 leading-relaxed">
+            This creates the season registration and, for an approved new player, creates the player record. Confirm review decision and source data before continuing.
+          </p>
 
-    <label className="flex flex-col gap-1 text-sm">
-      Reopening reason (required, 5–1,000 characters)
-      <textarea
-        className="min-h-20 rounded-md border bg-background p-2"
-        minLength={5}
-        maxLength={1000}
-        required
-        value={reopenReason}
-        onChange={(e) => setReopenReason(e.target.value)}
-        disabled={disabled || isPending || isCommitted}
-        placeholder="Explain why this row needs to be reviewed again."
-      />
-    </label>
+          <div className="space-y-1">
+            <label className="text-slate-300 font-semibold block">
+              Commit Reason <span className="text-muted-foreground font-normal">(5–1,000 characters)</span>
+            </label>
+            <textarea
+              className="w-full min-h-20 rounded-md border border-border bg-background p-2.5 text-xs text-foreground placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+              minLength={5}
+              maxLength={1000}
+              required
+              value={commitReason}
+              onChange={(e) => setCommitReason(e.target.value)}
+              disabled={disabled || isCommitted || isPending}
+              placeholder="Explain why this approved row is ready to be committed."
+            />
+          </div>
 
-    <div className="flex flex-wrap items-center gap-3">
-      <button
-        type="button"
-        className="rounded-md border border-amber-600 px-4 py-2 disabled:opacity-50"
-        onClick={submitReopen}
-        disabled={
-          disabled ||
-          isPending ||
-          isCommitted ||
-          reopenReason.trim().length < 5 ||
-          reopenReason.trim().length > 1000
-        }
-      >
-        {isPending ? "Processing…" : "Reopen ignored row"}
-      </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={submitCommit}
+              disabled={
+                disabled ||
+                isPending ||
+                commitReason.trim().length < 5 ||
+                commitReason.trim().length > 1000
+              }
+              className="border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-xs"
+            >
+              {isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : null}
+              Commit Approved Row
+            </Button>
+            {commitMessage && <span className="text-xs font-mono text-emerald-400">{commitMessage}</span>}
+          </div>
+        </div>
+      )}
 
-      <span aria-live="polite" role="status" className="text-sm">
-        {reopenMessage}
-      </span>
+      <p className="text-xs font-mono text-slate-500">
+        Every successful save records a reason and audit entry. This does not create a player or registration. Verify name and birth date manually; IDs alone are not proof of identity.
+      </p>
     </div>
-  </section>
-)}
-
-    <h3 className="font-semibold">Review decision</h3>
-    <label className="flex flex-col gap-1 text-sm">Decision<select className="rounded-md border bg-background p-2" value={decision} onChange={(e) => setDecision(e.target.value)} disabled={disabled || isPending || isCommitted || isIgnored}>{Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-    {match && <label className="flex flex-col gap-1 text-sm">Existing player (required)<select className="rounded-md border bg-background p-2" value={matchedPlayerId} onChange={(e) => setMatchedPlayerId(e.target.value)} disabled={disabled || isPending || isCommitted || isIgnored}><option value="">Choose a candidate — verify identity</option>{candidates.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>{candidates.length === 0 && <span className="text-amber-700">No suggestions available. Do not approve a match without verifying the player.</span>}</label>}
-    <label className="flex flex-col gap-1 text-sm">Reason (required, 5–1,000 characters)<textarea className="min-h-20 rounded-md border bg-background p-2" minLength={5} maxLength={1000} required value={reason} onChange={(e) => setReason(e.target.value)} disabled={disabled || isPending || isCommitted || isIgnored} placeholder="Explain the evidence and why this decision is appropriate." /></label>
-    <div className="flex flex-wrap items-center gap-3"><button type="button" className="rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50" onClick={submit} disabled={disabled || isPending || isCommitted || isIgnored || reason.trim().length < 5 || reason.length > 1000 || (match && !matchedPlayerId)}>{isPending ? "Saving…" : "Save decision"}</button><span aria-live="polite" role="status" className="text-sm">{message}</span></div>
-    {(currentDecision === "approved_new" ||
-  currentDecision === "approved_match") && (
-  <section className="flex flex-col gap-3 rounded-lg border border-amber-500/50 p-4">
-    <h3 className="font-semibold">Commit approved row</h3>
-    <p className="text-sm">
-      This is a separate, write operation. It creates the season registration
-      and, for an approved new player, creates the player record. Confirm that
-      the review decision and source data are correct before continuing.
-    </p>
-
-    <label className="flex flex-col gap-1 text-sm">
-      Commit reason (required, 5–1,000 characters)
-      <textarea
-        className="min-h-20 rounded-md border bg-background p-2"
-        minLength={5}
-        maxLength={1000}
-        required
-        value={commitReason}
-        onChange={(e) => setCommitReason(e.target.value)}
-        disabled={disabled || isCommitted || isPending}
-        placeholder="Explain why this approved row is ready to be committed."
-      />
-    </label>
-
-    <div className="flex flex-wrap items-center gap-3">
-      <button
-        type="button"
-        className="rounded-md border border-amber-600 px-4 py-2 disabled:opacity-50"
-        onClick={submitCommit}
-        disabled={
-          disabled ||
-          isPending ||
-          commitReason.trim().length < 5 ||
-          commitReason.trim().length > 1000
-        }
-      >
-        {isPending ? "Processing…" : "Commit approved row"}
-      </button>
-      <span aria-live="polite" role="status" className="text-sm">
-        {commitMessage}
-      </span>
-    </div>
-  </section>
-)}<p className="text-xs text-muted-foreground">Every successful save records a reason and audit entry. This does not create a player or registration. Verify name and birth date manually; IDs alone are not proof of identity.</p>
-  </div>;
+  );
 }

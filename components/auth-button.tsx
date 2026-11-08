@@ -1,28 +1,32 @@
-import Link from "next/link";
-import { Button } from "./ui/button";
 import { createClient } from "@/lib/supabase/server";
-import { LogoutButton } from "./logout-button";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { signOutAction } from "@/app/actions";
 
 export async function AuthButton() {
   const supabase = await createClient();
-
-  // You can also use getUser() which will be slower.
-  const { data } = await supabase.auth.getClaims();
-
-  const user = data?.claims;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   return user ? (
     <div className="flex items-center gap-4">
-      Hey, {user.email}!
-      <LogoutButton />
+      <span className="text-xs font-mono text-muted-foreground bg-background px-2.5 py-1 rounded border border-border">
+        {user.email}
+      </span>
+      <form action={signOutAction}>
+        <Button variant="outline" size="sm" type="submit">
+          Sign Out
+        </Button>
+      </form>
     </div>
   ) : (
-    <div className="flex gap-2">
-      <Button asChild size="sm" variant={"outline"}>
-        <Link href="/auth/login">Sign in</Link>
+    <div className="flex items-center gap-2">
+      <Button asChild variant="ghost" size="sm">
+        <Link href="/auth/login">Sign In</Link>
       </Button>
-      <Button asChild size="sm" variant={"default"}>
-        <Link href="/auth/sign-up">Sign up</Link>
+      <Button asChild size="sm">
+        <Link href="/auth/sign-up">Sign Up</Link>
       </Button>
     </div>
   );

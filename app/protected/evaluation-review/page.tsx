@@ -1,9 +1,20 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { connection } from "next/server";
 import { redirect } from "next/navigation";
-
 import { createClient } from "@/lib/supabase/server";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { 
+  ClipboardCheck, 
+  ArrowLeft, 
+  ShieldAlert, 
+  Users, 
+  UserCheck, 
+  Layers, 
+  CheckCircle2,
+  Calendar
+} from "lucide-react";
 
 type Season = { id: number; name: string };
 type Session = {
@@ -59,12 +70,12 @@ function isEligibleRegistrationStatus(status: string | null) {
 function ratingSummary(
   evaluationId: number,
   ratings: Rating[],
-  categories: Category[],
+  categories: Category[]
 ) {
   const coreIds = new Map(
     categories
       .filter((category) => CORE_CODES.includes(category.code as (typeof CORE_CODES)[number]))
-      .map((category) => [category.id, category.code]),
+      .map((category) => [category.id, category.code])
   );
   const byCode = new Map<string, number>();
   for (const rating of ratings) {
@@ -73,7 +84,7 @@ function ratingSummary(
     if (code) byCode.set(code, rating.score);
   }
   const scores = CORE_CODES.flatMap((code) =>
-    byCode.has(code) ? [byCode.get(code)!] : [],
+    byCode.has(code) ? [byCode.get(code)!] : []
   );
   const total = scores.reduce((sum, score) => sum + score, 0);
   const average = scores.length ? (total / scores.length).toFixed(1) : "—";
@@ -84,31 +95,23 @@ function ratingSummary(
   };
 }
 
-function EvaluationReviewFallback() {
-  return (
-    <main className="w-full max-w-6xl space-y-4">
-      <h1 className="text-3xl font-bold">Evaluation review</h1>
-      <p className="text-sm text-muted-foreground">Loading evaluation summaries…</p>
-    </main>
-  );
-}
-
-export default function EvaluationReviewPage() {
-  return (
-    <Suspense fallback={<EvaluationReviewFallback />}>
-      <EvaluationReviewContent />
-    </Suspense>
-  );
-}
-
 async function EvaluationReviewContent() {
-  await connection();
   const supabase = await createClient();
-  const { data: claims, error: claimsError } = await supabase.auth.getClaims();
-  if (claimsError || !claims?.claims) redirect("/auth/login");
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return redirect("/auth/login");
+  }
+
+  // Verify administrator privileges
   const { data: isAdmin, error: adminError } = await supabase.rpc("is_admin");
-  if (adminError || isAdmin !== true) redirect("/protected");
+
+  if (adminError || isAdmin !== true) {
+    return redirect("/protected");
+  }
 
   const [
     seasonsResult,
@@ -161,203 +164,356 @@ async function EvaluationReviewContent() {
     : { data: [] as Rating[], error: null };
   const ratings = (ratingResult.data ?? []) as Rating[];
 
-  const seasonName = (seasonId: number) =>
-    seasons.find((season) => season.id === seasonId)?.name ?? `Season #${seasonId}`;
   const evaluatorName = (userId: string) =>
     profiles.find((profile) => profile.user_id === userId)?.display_name?.trim() || userId;
 
   return (
-    <main className="w-full max-w-6xl space-y-8">
-      <header className="space-y-2">
-        <Link href="/protected" className="text-sm text-muted-foreground hover:underline">
-          ← Back to workspace
-        </Link>
-        <h1 className="text-3xl font-bold tracking-tight">Administrator evaluation review</h1>
-        <p className="text-sm text-muted-foreground">
-          Read-only completion tracking by season, age, and evaluator. Missing ratings remain missing; they are not treated as zero.
-        </p>
-      </header>
+    <div className="space-y-8">
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-6">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
+              <Link href="/protected">
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to workspace
+              </Link>
+            </Button>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <ClipboardCheck className="h-7 w-7 text-emerald-400" />
+            Administrator Evaluation Review
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Read-only completion tracking by season, age, and evaluator. Missing ratings are not treated as zero.
+          </p>
+        </div>
+      </div>
 
       {loadError || ratingResult.error ? (
-        <p role="alert" className="rounded-md border p-4 text-sm">
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300 font-mono">
           Could not load evaluation review data: {loadError ?? ratingResult.error?.message}
-        </p>
-      ) : sessions.length === 0 ? (
-        <div className="rounded-lg border p-5">
-          <p className="font-medium">No age-based evaluation sessions found.</p>
-          <Link href="/protected/sessions" className="mt-3 inline-flex rounded-md border px-3 py-2 text-sm">
-            Manage sessions
-          </Link>
         </div>
+      ) : sessions.length === 0 ? (
+        <Card className="border-border bg-card p-8 text-center space-y-3">
+          <ShieldAlert className="h-8 w-8 text-amber-400 mx-auto" />
+          <p className="text-sm font-semibold text-foreground">No Age-Based Evaluation Sessions Found</p>
+          <Button asChild variant="outline" size="sm" className="border-border bg-background text-xs text-slate-300 hover:bg-accent">
+            <Link href="/protected/sessions">Manage Sessions</Link>
+          </Button>
+        </Card>
       ) : (
         <div className="space-y-8">
           {seasons.map((season) => {
             const seasonSessions = sessions.filter((session) => session.season_id === season.id);
             if (!seasonSessions.length) return null;
+
             return (
-              <section key={season.id} className="space-y-4">
-                <div>
-                  <h2 className="text-2xl font-semibold">{season.name}</h2>
-                  <p className="text-sm text-muted-foreground">Evaluation completion and saved ratings</p>
+              <div key={season.id} className="space-y-6">
+                <div className="border-b border-border pb-3">
+                  <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                    <Layers className="h-5 w-5 text-emerald-400" />
+                    {season.name}
+                  </h2>
+                  <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                    Evaluation completion log & saved category ratings
+                  </p>
                 </div>
+
                 {AGES.filter((age) => seasonSessions.some((session) => session.league_age === age)).map((age) => {
                   const session = seasonSessions.find((item) => item.league_age === age)!;
-                  const eligible = registrations.filter((registration) =>
-                    registration.season_id === season.id &&
-                    registration.league_age === age &&
-                    isEligibleRegistrationStatus(registration.registration_payment_status),
+                  const eligible = registrations.filter(
+                    (registration) =>
+                      registration.season_id === season.id &&
+                      registration.league_age === age &&
+                      isEligibleRegistrationStatus(registration.registration_payment_status)
                   );
-                  const sessionEvaluations = evaluations.filter((evaluation) => evaluation.evaluation_session_id === session.id);
+                  const sessionEvaluations = evaluations.filter(
+                    (evaluation) => evaluation.evaluation_session_id === session.id
+                  );
                   const evaluatedPlayerIds = new Set(sessionEvaluations.map((evaluation) => evaluation.player_season_id));
                   const missing = eligible.filter((registration) => !evaluatedPlayerIds.has(registration.id));
                   const evaluatorGroups = new Map<string, Evaluation[]>();
+
                   for (const evaluation of sessionEvaluations) {
                     const key = `${evaluation.evaluator_type}:${evaluation.evaluator_user_id}`;
                     evaluatorGroups.set(key, [...(evaluatorGroups.get(key) ?? []), evaluation]);
                   }
+
                   const statusCounts = {
                     draft: sessionEvaluations.filter((evaluation) => evaluation.status === "draft").length,
                     submitted: sessionEvaluations.filter((evaluation) => evaluation.status === "submitted").length,
                     notEvaluated: sessionEvaluations.filter((evaluation) => evaluation.status === "not_evaluated").length,
                   };
+
                   return (
-                    <article key={session.id} className="space-y-4 rounded-lg border p-4 sm:p-5">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="space-y-1">
-                          <h3 className="text-xl font-semibold">Age {age}</h3>
-                          <p className="text-sm text-muted-foreground">Session #{session.id} · Status: <strong>{session.status}</strong></p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
-                          <div className="rounded-md border p-2"><p className="text-muted-foreground">Eligible</p><p className="text-lg font-semibold">{eligible.length}</p></div>
-                          <div className="rounded-md border p-2"><p className="text-muted-foreground">Players with a record</p><p className="text-lg font-semibold">{eligible.filter((registration) => evaluatedPlayerIds.has(registration.id)).length}</p></div>
-                          <div className="rounded-md border p-2"><p className="text-muted-foreground">Missing</p><p className="text-lg font-semibold">{missing.length}</p></div>
-                          <div className="rounded-md border p-2"><p className="text-muted-foreground">Draft / Submitted</p><p className="text-lg font-semibold">{statusCounts.draft} / {statusCounts.submitted}</p></div>
-                        </div>
-                      </div>
+                    <Card key={session.id} className="border-border bg-card">
+                      <CardHeader className="py-4 border-b border-border/50">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div>
+                            <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-emerald-400" />
+                              Age {age} &bull; Session #{session.id}
+                            </CardTitle>
+                            <CardDescription className="text-xs text-muted-foreground font-mono mt-1">
+                              Status: <span className="text-emerald-400 font-semibold">{session.status}</span>
+                            </CardDescription>
+                          </div>
 
-                      <div className="grid gap-2 sm:grid-cols-3">
-                        <p className="text-sm">Not evaluated records: <strong>{statusCounts.notEvaluated}</strong></p>
-                        <p className="text-sm">Evaluator submissions: <strong>{sessionEvaluations.length}</strong></p>
-                        <p className="text-sm">Players missing all evaluations: <strong>{missing.length}</strong></p>
-                      </div>
+                          {/* Quick Summary Metrics Pills */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                            <div className="rounded border border-border bg-background p-2">
+                              <p className="text-[10px] font-mono text-muted-foreground">Eligible</p>
+                              <p className="text-sm font-bold text-foreground font-mono">{eligible.length}</p>
+                            </div>
+                            <div className="rounded border border-border bg-background p-2">
+                              <p className="text-[10px] font-mono text-muted-foreground">Evaluated</p>
+                              <p className="text-sm font-bold text-emerald-400 font-mono">
+                                {eligible.filter((r) => evaluatedPlayerIds.has(r.id)).length}
+                              </p>
+                            </div>
+                            <div className="rounded border border-border bg-background p-2">
+                              <p className="text-[10px] font-mono text-muted-foreground">Missing</p>
+                              <p className="text-sm font-bold text-amber-400 font-mono">{missing.length}</p>
+                            </div>
+                            <div className="rounded border border-border bg-background p-2">
+                              <p className="text-[10px] font-mono text-muted-foreground">Draft/Submitted</p>
+                              <p className="text-sm font-bold text-foreground font-mono">
+                                {statusCounts.draft} / {statusCounts.submitted}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </CardHeader>
 
-                      <section className="space-y-3">
-                    <h4 className="font-semibold">Age-group rating summary</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Averages use submitted evaluations only. Coach and independent-evaluator ratings are shown separately; blank ratings are excluded, not counted as zero.
-                    </p>
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[42rem] text-left text-sm">
-                        <thead>
-                          <tr className="border-b">
-                            <th className="py-2 pr-3">Core skill</th>
-                            <th className="py-2 pr-3">Coach average</th>
-                            <th className="py-2 pr-3">Coach ratings</th>
-                            <th className="py-2 pr-3">Independent average</th>
-                            <th className="py-2">Independent ratings</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {categories
-                            .filter((category) => CORE_CODES.includes(category.code as (typeof CORE_CODES)[number]))
-                            .sort((a, b) => CORE_CODES.indexOf(a.code as (typeof CORE_CODES)[number]) - CORE_CODES.indexOf(b.code as (typeof CORE_CODES)[number]))
-                            .map((category) => {
-                              const groupStats = (type: string) => {
-                                const values = sessionEvaluations
-                                  .filter((evaluation) => evaluation.status === "submitted" && evaluation.evaluator_type === type)
-                                  .flatMap((evaluation) => ratings
-                                    .filter((rating) => rating.evaluation_id === evaluation.id && rating.rating_category_id === category.id)
-                                    .map((rating) => rating.score));
-                                return {
-                                  average: values.length ? (values.reduce((sum, score) => sum + score, 0) / values.length).toFixed(1) : "—",
-                                  count: values.length,
-                                };
-                              };
-                              const coach = groupStats("coach");
-                              const independent = groupStats("independent_evaluator");
-                              return (
-                                <tr key={category.id} className="border-b last:border-0">
-                                  <td className="py-2 pr-3">{category.name}</td>
-                                  <td className="py-2 pr-3 tabular-nums">{coach.average}</td>
-                                  <td className="py-2 pr-3 tabular-nums">{coach.count}</td>
-                                  <td className="py-2 pr-3 tabular-nums">{independent.average}</td>
-                                  <td className="py-2 tabular-nums">{independent.count}</td>
+                      <CardContent className="p-6 space-y-6">
+                        {/* Age Group Rating Summary Table */}
+                        <div className="space-y-3">
+                          <h4 className="text-xs font-bold text-foreground font-mono uppercase tracking-wider">
+                            Age-Group Rating Summary
+                          </h4>
+                          <p className="text-[11px] text-muted-foreground font-mono">
+                            Averages use submitted evaluations only. Coach and independent ratings are shown separately.
+                          </p>
+
+                          <div className="overflow-x-auto rounded-md border border-border">
+                            <table className="w-full text-left text-sm">
+                              <thead className="bg-background text-xs font-mono uppercase tracking-wider text-muted-foreground border-b border-border">
+                                <tr>
+                                  <th className="px-4 py-2.5">Core Skill</th>
+                                  <th className="px-4 py-2.5 text-center">Coach Avg</th>
+                                  <th className="px-4 py-2.5 text-center">Coach Ratings</th>
+                                  <th className="px-4 py-2.5 text-center">Independent Avg</th>
+                                  <th className="px-4 py-2.5 text-center">Independent Ratings</th>
                                 </tr>
-                              );
-                            })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </section>
+                              </thead>
+                              <tbody className="divide-y divide-border">
+                                {categories
+                                  .filter((category) => CORE_CODES.includes(category.code as (typeof CORE_CODES)[number]))
+                                  .sort((a, b) => CORE_CODES.indexOf(a.code as (typeof CORE_CODES)[number]) - CORE_CODES.indexOf(b.code as (typeof CORE_CODES)[number]))
+                                  .map((category) => {
+                                    const groupStats = (type: string) => {
+                                      const values = sessionEvaluations
+                                        .filter((evaluation) => evaluation.status === "submitted" && evaluation.evaluator_type === type)
+                                        .flatMap((evaluation) =>
+                                          ratings
+                                            .filter((rating) => rating.evaluation_id === evaluation.id && rating.rating_category_id === category.id)
+                                            .map((rating) => rating.score)
+                                        );
+                                      return {
+                                        average: values.length ? (values.reduce((sum, score) => sum + score, 0) / values.length).toFixed(1) : "—",
+                                        count: values.length,
+                                      };
+                                    };
 
-                  {evaluatorGroups.size > 0 && (
-                        <section className="space-y-2">
-                          <h4 className="font-semibold">Evaluator progress</h4>
-                          <div className="overflow-x-auto">
-                            <table className="w-full min-w-[34rem] text-left text-sm">
-                              <thead><tr className="border-b"><th className="py-2 pr-3">Evaluator</th><th className="py-2 pr-3">Type</th><th className="py-2 pr-3">Records</th><th className="py-2 pr-3">Draft</th><th className="py-2">Submitted</th></tr></thead>
-                              <tbody>
-                                {[...evaluatorGroups.entries()].map(([key, rows]) => {
-                                  const [type, userId] = key.split(":");
-                                  return <tr key={key} className="border-b last:border-0"><td className="py-2 pr-3">{evaluatorName(userId)}</td><td className="py-2 pr-3">{type === "independent_evaluator" ? "Independent evaluator" : "Coach"}</td><td className="py-2 pr-3">{rows.length}</td><td className="py-2 pr-3">{rows.filter((row) => row.status === "draft").length}</td><td className="py-2">{rows.filter((row) => row.status === "submitted").length}</td></tr>;
+                                    const coach = groupStats("coach");
+                                    const independent = groupStats("independent_evaluator");
+
+                                    return (
+                                      <tr key={category.id} className="hover:bg-accent/50 transition-colors">
+                                        <td className="px-4 py-2.5 font-medium text-foreground text-xs">
+                                          {category.name}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-slate-300">
+                                          {coach.average}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-muted-foreground">
+                                          {coach.count}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-emerald-400 font-bold">
+                                          {independent.average}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-muted-foreground">
+                                          {independent.count}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Evaluator Progress Table */}
+                        {evaluatorGroups.size > 0 && (
+                          <div className="space-y-3 pt-3 border-t border-border">
+                            <h4 className="text-xs font-bold text-foreground font-mono uppercase tracking-wider">
+                              Evaluator Submission Progress
+                            </h4>
+                            <div className="overflow-x-auto rounded-md border border-border">
+                              <table className="w-full text-left text-sm">
+                                <thead className="bg-background text-xs font-mono uppercase tracking-wider text-muted-foreground border-b border-border">
+                                  <tr>
+                                    <th className="px-4 py-2.5">Evaluator</th>
+                                    <th className="px-4 py-2.5">Type</th>
+                                    <th className="px-4 py-2.5 text-center">Records</th>
+                                    <th className="px-4 py-2.5 text-center">Draft</th>
+                                    <th className="px-4 py-2.5 text-center">Submitted</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                  {[...evaluatorGroups.entries()].map(([key, rows]) => {
+                                    const [type, userId] = key.split(":");
+                                    return (
+                                      <tr key={key} className="hover:bg-accent/50 transition-colors">
+                                        <td className="px-4 py-2.5 font-medium text-foreground text-xs">
+                                          {evaluatorName(userId)}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-xs font-mono text-muted-foreground">
+                                          {type === "independent_evaluator" ? "Independent evaluator" : "Coach"}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-slate-300">
+                                          {rows.length}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-amber-400">
+                                          {rows.filter((row) => row.status === "draft").length}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-emerald-400 font-bold">
+                                          {rows.filter((row) => row.status === "submitted").length}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Collapsible Player Level Details */}
+                        <details className="group pt-2 border-t border-border">
+                          <summary className="cursor-pointer font-bold text-xs font-mono text-emerald-400 hover:text-emerald-300 py-2">
+                            + View Player-Level Review ({eligible.length} Eligible Players)
+                          </summary>
+                          <div className="mt-3 overflow-x-auto rounded-md border border-border">
+                            <table className="w-full text-left text-sm">
+                              <thead className="bg-background text-xs font-mono uppercase tracking-wider text-muted-foreground border-b border-border">
+                                <tr>
+                                  <th className="px-4 py-2.5">Player</th>
+                                  <th className="px-4 py-2.5 text-center">Eval #</th>
+                                  <th className="px-4 py-2.5">Payment</th>
+                                  <th className="px-4 py-2.5">Evaluation Records</th>
+                                  <th className="px-4 py-2.5 text-center">Missing Core</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-border">
+                                {eligible.map((registration) => {
+                                  const playerEvaluations = sessionEvaluations.filter(
+                                    (evaluation) => evaluation.player_season_id === registration.id
+                                  );
+                                  const player = registration.players;
+                                  const name = player
+                                    ? `${player.last_name}, ${player.first_name}`
+                                    : `Registration #${registration.id}`;
+                                  const missingCore = playerEvaluations.filter(
+                                    (evaluation) => ratingSummary(evaluation.id, ratings, categories).count < 5
+                                  ).length;
+
+                                  return (
+                                    <tr key={registration.id} className="hover:bg-accent/50 transition-colors align-top">
+                                      <td className="px-4 py-3 font-medium text-foreground text-xs">
+                                        {name}
+                                      </td>
+                                      <td className="px-4 py-3 text-center font-mono text-xs text-emerald-400 font-bold">
+                                        {registration.evaluation_number ?? "—"}
+                                      </td>
+                                      <td className="px-4 py-3 text-xs font-mono text-muted-foreground">
+                                        {registration.registration_payment_status ?? "Unknown"}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        {playerEvaluations.length ? (
+                                          <div className="space-y-2">
+                                            {playerEvaluations.map((evaluation) => {
+                                              const summary = ratingSummary(evaluation.id, ratings, categories);
+                                              return (
+                                                <div key={evaluation.id} className="rounded border border-border bg-background p-2 text-xs">
+                                                  <p className="font-semibold text-foreground">
+                                                    {evaluation.status} &bull;{" "}
+                                                    <span className="text-emerald-400">
+                                                      {evaluation.evaluator_type === "independent_evaluator" ? "Independent" : "Coach"}
+                                                    </span>
+                                                  </p>
+                                                  <p className="text-[11px] font-mono text-muted-foreground">
+                                                    {evaluatorName(evaluation.evaluator_user_id)}
+                                                  </p>
+                                                  <p className="text-[11px] font-mono text-slate-300 mt-1">
+                                                    Total: {summary.total} &bull; Avg: {summary.average} &bull; Rated: {summary.count}/5
+                                                  </p>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        ) : (
+                                          <span className="text-xs text-slate-500 italic">No record</span>
+                                        )}
+                                      </td>
+                                      <td className="px-4 py-3 text-center font-mono text-xs font-bold text-amber-400">
+                                        {missingCore}
+                                      </td>
+                                    </tr>
+                                  );
                                 })}
                               </tbody>
                             </table>
                           </div>
-                        </section>
-                      )}
-
-                      <details>
-                        <summary className="cursor-pointer font-medium">Player-level review ({eligible.length} eligible)</summary>
-                        <div className="mt-3 overflow-x-auto">
-                          <table className="w-full min-w-[44rem] text-left text-sm">
-                            <thead><tr className="border-b"><th className="py-2 pr-3">Player</th><th className="py-2 pr-3">Eval #</th><th className="py-2 pr-3">Registration</th><th className="py-2 pr-3">Evaluation records</th><th className="py-2">Missing core ratings</th></tr></thead>
-                            <tbody>
-                              {eligible.map((registration) => {
-                                const playerEvaluations = sessionEvaluations.filter((evaluation) => evaluation.player_season_id === registration.id);
-                                const player = registration.players;
-                                const name = player ? `${player.last_name}, ${player.first_name}` : `Registration #${registration.id}`;
-                                const missingCore = playerEvaluations.filter((evaluation) => ratingSummary(evaluation.id, ratings, categories).count < 5).length;
-                                return (
-                                  <tr key={registration.id} className="border-b last:border-0 align-top">
-                                    <td className="py-2 pr-3">{name}</td>
-                                    <td className="py-2 pr-3">{registration.evaluation_number ?? "—"}</td>
-                                    <td className="py-2 pr-3">{registration.registration_payment_status ?? "Unknown"}</td>
-                                    <td className="py-2 pr-3">
-                                      {playerEvaluations.length ? (
-                                        <ul className="space-y-2">
-                                          {playerEvaluations.map((evaluation) => {
-                                            const summary = ratingSummary(evaluation.id, ratings, categories);
-                                            return <li key={evaluation.id} className="rounded-md border p-2"><p className="font-medium">{evaluation.status} · {evaluation.evaluator_type === "independent_evaluator" ? "Independent evaluator" : "Coach"}</p><p className="text-xs text-muted-foreground">{evaluatorName(evaluation.evaluator_user_id)}</p><p>Core total: {summary.total} · Average: {summary.average} · Rated: {summary.count}/5</p></li>;
-                                          })}
-                                        </ul>
-                                      ) : <span className="text-muted-foreground">No evaluation record</span>}
-                                    </td>
-                                    <td className="py-2">{missingCore}</td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      </details>
-
-                      {missing.length > 0 && (
-                        <details>
-                          <summary className="cursor-pointer font-medium">Players with no evaluation record ({missing.length})</summary>
-                          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
-                            {missing.map((registration) => <li key={registration.id}>{registration.players ? `${registration.players.last_name}, ${registration.players.first_name}` : `Registration #${registration.id}`}</li>)}
-                          </ul>
                         </details>
-                      )}
-                    </article>
+
+                        {missing.length > 0 && (
+                          <details className="group pt-2 border-t border-border">
+                            <summary className="cursor-pointer font-bold text-xs font-mono text-rose-400 hover:text-rose-300 py-1">
+                              + View Players With No Evaluation Record ({missing.length})
+                            </summary>
+                            <ul className="mt-2 list-disc space-y-1 pl-5 text-xs font-mono text-muted-foreground">
+                              {missing.map((registration) => (
+                                <li key={registration.id}>
+                                  {registration.players
+                                    ? `${registration.players.last_name}, ${registration.players.first_name}`
+                                    : `Registration #${registration.id}`}
+                                </li>
+                              ))}
+                            </ul>
+                          </details>
+                        )}
+                      </CardContent>
+                    </Card>
                   );
                 })}
-              </section>
+              </div>
             );
           })}
         </div>
       )}
-    </main>
+    </div>
+  );
+}
+
+export default function EvaluationReviewPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-96 w-full rounded-lg border border-border bg-card animate-pulse" />
+      }
+    >
+      <EvaluationReviewContent />
+    </Suspense>
   );
 }

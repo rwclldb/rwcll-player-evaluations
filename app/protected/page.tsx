@@ -1,255 +1,412 @@
-
-import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { connection } from "next/server";
-
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { createSeason } from "@/app/actions";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { 
+  ClipboardList, 
+  Users, 
+  Calendar, 
+  FileBarChart, 
+  Award,
+  ArrowRight,
+  PlusCircle,
+  Sparkles,
+  ShieldCheck,
+  UploadCloud,
+  FileSpreadsheet,
+  ClipboardCheck
+} from "lucide-react";
 
-const OLDEST_TO_YOUNGEST = [16, 15, 14, 13, 12, 11, 10, 9, 8];
-
-type AssignedSession = {
-  id: number;
-  season_id: number;
-  league_age: number | null;
-  status: string;
-};
-
-type Season = {
-  id: number;
-  name: string;
-};
-
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
-
-async function ProtectedPageContent() {
-  await connection();
-
+async function ProtectedDashboardContent() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const { data: claims, error: claimsError } =
-    await supabase.auth.getClaims();
-
-  if (claimsError || !claims?.claims) {
-    redirect("/auth/login");
+  if (!user) {
+    return redirect("/auth/login");
   }
 
-  const { data: isAdmin, error: roleError } =
-    await supabase.rpc("is_admin");
-
+  // Check admin privileges via Supabase RPC function
+  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
   const administrator = !roleError && isAdmin === true;
 
-  const [sessionResult, seasonResult] = await Promise.all([
-    supabase
-      .from("evaluation_sessions")
-      .select("id, season_id, league_age, status")
-      .is("season_division_id", null)
-      .order("season_id", { ascending: false })
-      .order("league_age", { ascending: false }),
-    supabase.from("seasons").select("id, name"),
-  ]);
+  // Fetch all seasons ordered by start_date descending
+  const { data: seasons, error: seasonsError } = await supabase
+    .from("seasons")
+    .select("id, name, start_date, end_date, is_closed")
+    .order("start_date", { ascending: false, nullsFirst: false });
 
-  const assignedSessions =
-    (sessionResult.data ?? []) as AssignedSession[];
-  const seasons = (seasonResult.data ?? []) as Season[];
+  if (seasonsError) {
+    console.error("Error fetching seasons:", seasonsError);
+  }
 
-  const seasonName = (seasonId: number) =>
-    seasons.find((season) => season.id === seasonId)?.name ??
-    `Season #${seasonId}`;
+  // Resolve active season
+  const seasonList = seasons || [];
+  const activeSeason = seasonList.find((s) => !s.is_closed) || seasonList[0];
+  const activeSeasonName = activeSeason ? activeSeason.name : "Spring 2027";
 
   return (
-    <div className="flex w-full flex-1 flex-col gap-8">
-      <header className="space-y-2">
-        <p className="text-sm font-medium text-muted-foreground">
-          RWCLL · Player Evaluations
-        </p>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Player Evaluations
-        </h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Manage player evaluations, review registration imports, and
-          prepare for the draft. Evaluation access is limited to assigned
-          evaluators and authorized administrators.
-        </p>
-      </header>
+    <div className="space-y-8">
+      {/* Welcome & Active Season Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            Evaluations Dashboard
+          </h1>
+          <div className="mt-1 text-sm text-muted-foreground flex items-center gap-2">
+            <span>Welcome back, <span className="text-emerald-400 font-mono">{user.email}</span></span>
+            {administrator && (
+              <Badge variant="outline" className="text-[10px] font-mono border-amber-500/40 bg-amber-500/10 text-amber-400 gap-1">
+                <ShieldCheck className="h-3 w-3" /> Admin Mode
+              </Badge>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Badge variant="outline" className="py-1 px-3 border-emerald-500/40 bg-emerald-500/10 text-emerald-400 font-mono text-xs">
+            Active Season: {activeSeasonName}
+          </Badge>
+          {!administrator && (
+            <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-foreground">
+              <Link href="/protected/evaluations">
+                Start Scoring <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          )}
+        </div>
+      </div>
 
-      {administrator ? (
-        <>
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold">
-              Evaluation workspace
+      {/* Admin Registration Section */}
+      {administrator && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-mono uppercase tracking-wider text-amber-400 font-semibold flex items-center gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5" /> Registration Administration
             </h2>
-
-            <div className="rounded-lg border p-5">
-              <h3 className="font-semibold">Evaluation sessions</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Manage the nine age-based sessions, ordered from oldest
-                to youngest: ages 16 through 8.
-              </p>
-              <Link
-                href="/protected/sessions"
-                className="mt-4 inline-flex rounded-md border px-4 py-2 text-sm font-medium"
-              >
-                Manage evaluation sessions
-              </Link>
-            </div>
-
-            <div className="rounded-lg border p-5">
-              <h3 className="font-semibold">Evaluator assignments</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Grant season-specific evaluator roles and assign
-                evaluators to age sessions.
-              </p>
-              <Link
-                href="/protected/assignments"
-                className="mt-4 inline-flex rounded-md border px-4 py-2 text-sm font-medium"
-              >
-                Manage evaluator assignments
-              </Link>
-            </div>
-          </section>
-
-          <section className="space-y-4">
-            <div className="rounded-lg border p-5">
-              <h3 className="font-semibold">Administrator evaluation review</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Track evaluation completion by season, age group, and evaluator; review missing players and core ratings.
-              </p>
-              <Link
-                href="/protected/evaluation-review"
-                className="mt-4 inline-flex rounded-md border px-4 py-2 text-sm font-medium"
-              >
-                Review evaluations
-              </Link>
-
-              <Link
-                href="/protected/reports"
-                className="mt-3 inline-flex rounded-md border px-4 py-2 text-sm font-medium"
-              >
-                Player reports and CSV export
-              </Link>
-            </div>
-          </section>
-
-          <section className="space-y-4">
-            <div>
-              <h2 className="text-xl font-semibold">
-                Registration administration
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Preview and review registration imports before data
-                enters the player and season-registration records.
-              </p>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-lg border p-5">
-                <h3 className="font-semibold">Sports Connect import</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Preview a registration CSV, check league-age
-                  calculations, and stage rows for review.
-                </p>
-                <Link
-                  href="/protected/import-preview"
-                  className="mt-4 inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-                >
-                  Open import preview
-                </Link>
-              </div>
-
-              <div className="rounded-lg border p-5">
-                <h3 className="font-semibold">Staged import review</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Inspect staged batches and review row-level flags
-                  and administrator decisions.
-                </p>
-                <Link
-                  href="/protected/import-batches"
-                  className="mt-4 inline-flex rounded-md border px-4 py-2 text-sm font-medium"
-                >
-                  Review staged batches
-                </Link>
-              </div>
-            </div>
-          </section>
-        </>
-      ) : (
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-xl font-semibold">
-              My evaluation sessions
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Only sessions assigned to your account should appear here.
-              Sessions are listed from oldest to youngest.
-            </p>
           </div>
 
-          {sessionResult.error ? (
-            <p role="alert" className="rounded-lg border p-4 text-sm">
-              Could not load your assigned sessions:{" "}
-              {sessionResult.error.message}
-            </p>
-          ) : assignedSessions.length === 0 ? (
-            <div className="rounded-lg border p-5">
-              <p className="font-medium">
-                No evaluation sessions assigned
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Ask your administrator to grant your season role and
-                assign you to an evaluation session.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {OLDEST_TO_YOUNGEST.map((age) =>
-                assignedSessions
-                  .filter((session) => session.league_age === age)
-                  .map((session) => (
-                    <div
-                      key={session.id}
-                      className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div>
-                        <h3 className="font-semibold">
-                          Age {session.league_age}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {seasonName(session.season_id)} · Session #
-                          {session.id}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="rounded-md border px-2 py-1 text-xs">
-                          {session.status}
-                        </span>
-                        <Link
-                          href={`/protected/evaluations?sessionId=${session.id}`}
-                          className="inline-flex rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent"
-                        >
-                          View session
-                        </Link>
-                      </div>
-                    </div>
-                  )),
-              )}
-            </div>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Sports Connect Import Card */}
+            <Card className="border-border bg-card hover:border-amber-500/40 transition-colors group">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-semibold text-foreground">
+                  Sports Connect Import
+                </CardTitle>
+                <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 group-hover:bg-amber-500 group-hover:text-foreground transition-colors">
+                  <UploadCloud className="h-5 w-5" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-2">
+                <CardDescription className="text-xs text-muted-foreground">
+                  Upload and stage new CSV player rosters exported from Sports Connect.
+                </CardDescription>
+                <Button asChild variant="outline" className="w-full border-border bg-background hover:bg-accent text-amber-300 text-xs">
+                  <Link href="/protected/import-preview">Sports Connect Import</Link>
+                </Button>
+              </CardContent>
+            </Card>
 
-          <Link
-            href="/protected/evaluations"
-            className="inline-flex rounded-md border px-4 py-2 text-sm font-medium"
-          >
-            Open evaluator workspace
-          </Link>
-        </section>
+            {/* Staged Import Review Card */}
+            <Card className="border-border bg-card hover:border-amber-500/40 transition-colors group">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-semibold text-foreground">
+                  Staged Import Review
+                </CardTitle>
+                <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 group-hover:bg-amber-500 group-hover:text-foreground transition-colors">
+                  <FileSpreadsheet className="h-5 w-5" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-2">
+                <CardDescription className="text-xs text-muted-foreground">
+                  Review historical player batch imports and check mapping errors.
+                </CardDescription>
+                <Button asChild variant="outline" className="w-full border-border bg-background hover:bg-accent text-amber-300 text-xs">
+                  <Link href="/protected/import-batches">Review Staged Batches</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       )}
 
-      <footer className="border-t pt-4 text-xs text-muted-foreground">
-        Development workspace · Registration payment status and
-        evaluation eligibility must be verified before players can
-        be evaluated.
-      </footer>
+      {/* Season Management Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Create Season Form — Rendered ONLY for Admins */}
+        {administrator && (
+          <Card className="border-border bg-card lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+                <PlusCircle className="h-4 w-4 text-emerald-400" />
+                Create New Season
+              </CardTitle>
+              <CardDescription className="text-xs text-muted-foreground">
+                Set up a new evaluation workspace for your league.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form action={createSeason} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="name" className="text-xs text-slate-300">
+                    Season Name
+                  </Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    required
+                    placeholder="Spring 2027"
+                    className="bg-background border-border text-foreground text-xs placeholder:text-slate-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="start_date" className="text-xs text-slate-300">
+                      Start Date
+                    </Label>
+                    <Input
+                      id="start_date"
+                      name="start_date"
+                      type="date"
+                      className="bg-background border-border text-foreground text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="end_date" className="text-xs text-slate-300">
+                      End Date
+                    </Label>
+                    <Input
+                      id="end_date"
+                      name="end_date"
+                      type="date"
+                      className="bg-background border-border text-foreground text-xs"
+                    />
+                  </div>
+                </div>
+
+                <Button type="submit" size="sm" className="w-full bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs">
+                  Create Season
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Existing Seasons Directory */}
+        <Card className={`border-border bg-card ${administrator ? "lg:col-span-2" : "lg:col-span-3"}`}>
+          <CardHeader>
+            <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-emerald-400" />
+              League Seasons Directory
+            </CardTitle>
+            <CardDescription className="text-xs text-muted-foreground">
+              Active evaluation workspace and archived historical seasons.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {seasonsError ? (
+              <p className="text-xs text-rose-400">Could not load seasons: {seasonsError.message}</p>
+            ) : seasonList.length === 0 ? (
+              <div className="py-4 text-center">
+                <p className="text-xs text-muted-foreground">Default Active Season: <span className="font-mono text-emerald-400 font-semibold">Spring 2027</span></p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {seasonList.map((season: any) => (
+                  <div key={season.id} className="flex items-center justify-between py-3">
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground">{season.name}</h4>
+                      <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                        {season.start_date || "No start date"} – {season.end_date || "No end date"}
+                      </p>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs font-mono ${
+                        season.is_closed
+                          ? "border-slate-700 bg-slate-800/50 text-muted-foreground"
+                          : "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                      }`}
+                    >
+                      {season.is_closed ? "Closed" : "Active / Open"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Navigation Feature Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Render Player Evaluations ONLY for Non-Admin Evaluators */}
+        {!administrator ? (
+          <>
+            <Card className="hover:border-emerald-500/50 transition-colors group border-border bg-card">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-semibold text-foreground">
+                  Player Evaluations
+                </CardTitle>
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                  <ClipboardList className="h-5 w-5" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-2">
+                <CardDescription className="text-muted-foreground">
+                  Input and manage station scores for hitting, fielding, throwing, and running.
+                </CardDescription>
+                <Button asChild variant="outline" className="w-full border-border bg-card text-foreground hover:bg-accent hover:text-accent-foreground">
+                  <Link href="/protected/evaluations">Enter Scores</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:border-emerald-500/50 transition-colors group border-border bg-card">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-semibold text-foreground">
+                  Evaluator Assignments
+                </CardTitle>
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                  <Users className="h-5 w-5" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-2">
+                <CardDescription className="text-muted-foreground">
+                  Check station assignments, evaluator responsibilities, and age division rotations.
+                </CardDescription>
+                <Button asChild variant="outline" className="w-full border-border bg-card text-foreground hover:bg-accent hover:text-accent-foreground">
+                  <Link href="/protected/assignments">View Assignments</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:border-emerald-500/50 transition-colors group border-border bg-card">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-semibold text-foreground">
+                  Evaluation Sessions
+                </CardTitle>
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                  <Calendar className="h-5 w-5" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-2">
+                <CardDescription className="text-muted-foreground">
+                  Manage check-in times, age group schedules, and batch player registration uploads.
+                </CardDescription>
+                <Button asChild variant="outline" className="w-full border-border bg-card text-foreground hover:bg-accent hover:text-accent-foreground">
+                  <Link href="/protected/sessions">Manage Sessions</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:border-emerald-500/50 transition-colors group border-border bg-card">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-semibold text-foreground">
+                  Coach Draft Packets
+                </CardTitle>
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                  <Award className="h-5 w-5" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-2">
+                <CardDescription className="text-muted-foreground">
+                  Generate manager draft sheets with standardized ratings sorted by division rank.
+                </CardDescription>
+                <Button asChild variant="outline" className="w-full border-border bg-card text-foreground hover:bg-accent hover:text-accent-foreground">
+                  <Link href="/protected/coach-reports">Open Draft Packets</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          /* Render Admin-Only Modules */
+          <>
+            <Card className="hover:border-emerald-500/50 transition-colors group border-border bg-card">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-semibold text-foreground">
+                  Data Review
+                </CardTitle>
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                  <ClipboardCheck className="h-5 w-5" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-2">
+                <CardDescription className="text-muted-foreground">
+                  Audit live evaluation progress, evaluator completion logs, and missing ratings.
+                </CardDescription>
+                <Button asChild variant="outline" className="w-full border-border bg-card text-foreground hover:bg-accent hover:text-accent-foreground">
+                  <Link href="/protected/evaluation-review">Review Evaluations</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:border-emerald-500/50 transition-colors group border-border bg-card">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-semibold text-foreground">
+                  Evaluator Assignments
+                </CardTitle>
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                  <Users className="h-5 w-5" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-2">
+                <CardDescription className="text-muted-foreground">
+                  Check station assignments, evaluator responsibilities, and age division rotations.
+                </CardDescription>
+                <Button asChild variant="outline" className="w-full border-border bg-card text-foreground hover:bg-accent hover:text-accent-foreground">
+                  <Link href="/protected/assignments">View Assignments</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:border-emerald-500/50 transition-colors group border-border bg-card">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-semibold text-foreground">
+                  Evaluation Sessions
+                </CardTitle>
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                  <Calendar className="h-5 w-5" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-2">
+                <CardDescription className="text-muted-foreground">
+                  Manage check-in times, age group schedules, and batch player registration uploads.
+                </CardDescription>
+                <Button asChild variant="outline" className="w-full border-border bg-card text-foreground hover:bg-accent hover:text-accent-foreground">
+                  <Link href="/protected/sessions">Manage Sessions</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:border-emerald-500/50 transition-colors group border-border bg-card">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-semibold text-foreground">
+                  Reports & Exports
+                </CardTitle>
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                  <FileBarChart className="h-5 w-5" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-2">
+                <CardDescription className="text-muted-foreground">
+                  Export raw rating CSVs, view overall division score breakdowns, and track completion.
+                </CardDescription>
+                <Button asChild variant="outline" className="w-full border-border bg-card text-foreground hover:bg-accent hover:text-accent-foreground">
+                  <Link href="/protected/reports">View Reports</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -258,12 +415,10 @@ export default function ProtectedPage() {
   return (
     <Suspense
       fallback={
-        <main className="w-full flex-1 p-4">
-          Loading player evaluations…
-        </main>
+        <div className="h-96 w-full rounded-lg border border-border bg-card animate-pulse" />
       }
     >
-      <ProtectedPageContent />
+      <ProtectedDashboardContent />
     </Suspense>
   );
 }

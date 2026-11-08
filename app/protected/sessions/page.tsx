@@ -1,14 +1,21 @@
-
-import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { connection } from "next/server";
-
 import { createClient } from "@/lib/supabase/server";
-import {
-  advanceEvaluationSessionStatus,
-  createMissingAgeSessions,
-} from "./actions";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { createMissingAgeSessions } from "./actions";
+import { SessionActions } from "./SessionActions";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { 
+  Calendar, 
+  Plus, 
+  ShieldAlert, 
+  CheckCircle2, 
+  Lock, 
+  Layers,
+  ArrowLeft
+} from "lucide-react";
 
 const LEAGUE_AGES = [16, 15, 14, 13, 12, 11, 10, 9, 8];
 
@@ -17,45 +24,52 @@ type SearchParams = Promise<{
   error?: string;
 }>;
 
-async function EvaluationSessionsPageContent({
+async function SessionsContent({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  await connection();
-
   const params = await searchParams;
   const supabase = await createClient();
 
-  const { data: claims, error: claimsError } =
-    await supabase.auth.getClaims();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (claimsError || !claims?.claims) {
-    redirect("/auth/login");
+  if (!user) {
+    return redirect("/auth/login");
   }
 
-  const { data: isAdmin, error: roleError } =
-    await supabase.rpc("is_admin");
+  // Verify admin permissions via Supabase RPC function
+  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
+  const administrator = !roleError && isAdmin === true;
 
-  if (roleError || isAdmin !== true) {
+  if (!administrator) {
     return (
-      <main className="w-full max-w-4xl space-y-4">
-        <h1 className="text-2xl font-bold">Evaluation sessions</h1>
-        <p className="rounded-md border p-4 text-sm">
-          Administrator access is required to manage evaluation sessions.
-        </p>
-        <Link className="underline" href="/protected">
-          Return to workspace
-        </Link>
-      </main>
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
+            <Link href="/protected">
+              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Return to workspace
+            </Link>
+          </Button>
+        </div>
+        <h1 className="text-2xl font-bold text-foreground">Evaluation Sessions</h1>
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 flex items-center gap-3">
+          <ShieldAlert className="h-5 w-5 text-amber-400 shrink-0" />
+          <span>Administrator access is required to manage evaluation sessions.</span>
+        </div>
+      </div>
     );
   }
 
+  // Fetch all seasons
   const { data: seasons, error: seasonsError } = await supabase
     .from("seasons")
     .select("id, name, start_date, end_date, is_closed")
     .order("start_date", { ascending: false });
 
+  // Fetch evaluation sessions matching actual schema
   const { data: sessions, error: sessionsError } = await supabase
     .from("evaluation_sessions")
     .select("id, season_id, league_age, season_division_id, status, created_at")
@@ -64,60 +78,58 @@ async function EvaluationSessionsPageContent({
     .order("league_age", { ascending: false });
 
   return (
-    <main className="w-full max-w-4xl space-y-8">
-      <header className="space-y-2">
-        <Link
-          href="/protected"
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          ← Back to workspace
-        </Link>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Evaluation sessions
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Manage one session per Little League age. Sessions start in setup
-          and can be opened or locked when appropriate.
-        </p>
-      </header>
+    <div className="space-y-8">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-6">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
+              <Link href="/protected">
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to workspace
+              </Link>
+            </Button>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Calendar className="h-7 w-7 text-emerald-400" />
+            Evaluation Sessions
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage one session per Little League age group. Sessions start in setup and can be opened or locked.
+          </p>
+        </div>
+      </div>
 
+      {/* Action Messages */}
       {params.message && (
-        <p role="status" className="rounded-md border p-3 text-sm">
+        <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300 font-mono">
           {params.message}
-        </p>
+        </div>
       )}
 
       {params.error && (
-        <p
-          role="alert"
-          className="rounded-md border border-destructive p-3 text-sm"
-        >
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300 font-mono">
           {params.error}
-        </p>
+        </div>
       )}
 
       {(seasonsError || sessionsError) && (
-        <p
-          role="alert"
-          className="rounded-md border border-destructive p-3 text-sm"
-        >
-          Could not load session data:{" "}
-          {seasonsError?.message ?? sessionsError?.message}
-        </p>
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
+          Could not load session data: {seasonsError?.message ?? sessionsError?.message}
+        </div>
       )}
 
       {!seasonsError && !sessionsError && (seasons ?? []).length === 0 && (
-        <p className="rounded-md border p-4 text-sm">
-          No seasons were found. Create a season before setting up evaluation
-          sessions.
-        </p>
+        <Card className="border-border bg-card p-6 text-center text-xs text-muted-foreground">
+          No seasons were found. Create a season before setting up evaluation sessions.
+        </Card>
       )}
 
+      {/* Seasons Grid */}
       {!seasonsError &&
         !sessionsError &&
         (seasons ?? []).map((season) => {
           const seasonSessions = (sessions ?? []).filter(
-            (session) => session.season_id === season.id,
+            (session) => session.season_id === season.id
           );
 
           const ageSessions = new Map(
@@ -125,129 +137,124 @@ async function EvaluationSessionsPageContent({
               .filter(
                 (session) =>
                   session.league_age !== null &&
-                  LEAGUE_AGES.includes(session.league_age),
+                  LEAGUE_AGES.includes(session.league_age)
               )
-              .map((session) => [session.league_age, session]),
+              .map((session) => [session.league_age, session])
           );
 
           const missingCount = LEAGUE_AGES.filter(
-            (age) => !ageSessions.has(age),
+            (age) => !ageSessions.has(age)
           ).length;
 
           return (
-            <section
-              key={season.id}
-              className="space-y-4 rounded-lg border p-5"
-            >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-1">
-                  <h2 className="text-xl font-semibold">{season.name}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {season.start_date} to {season.end_date}
-                  </p>
-                  <p className="text-sm">
-                    Season status:{" "}
-                    <span className="font-medium">
-                      {season.is_closed ? "Closed" : "Open"}
-                    </span>
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {9 - missingCount} of 9 age sessions present
-                  </p>
+            <Card key={season.id} className="border-border bg-card">
+              <CardHeader className="border-b border-border/50 py-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
+                      <Layers className="h-5 w-5 text-emerald-400" />
+                      {season.name}
+                    </CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground font-mono mt-1">
+                      {season.start_date || "No start date"} to {season.end_date || "No end date"} &bull;{" "}
+                      <span className={season.is_closed ? "text-muted-foreground" : "text-emerald-400 font-semibold"}>
+                        {season.is_closed ? "Closed" : "Open Workspace"}
+                      </span>
+                    </CardDescription>
+                    <p className="text-xs text-muted-foreground mt-1 font-mono">
+                      {9 - missingCount} of 9 age sessions present
+                    </p>
+                  </div>
+
+                  {missingCount === 0 ? (
+                    <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-mono py-1.5 px-3 gap-1.5 w-fit">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> All Age Sessions Exist
+                    </Badge>
+                  ) : (
+                    <form action={createMissingAgeSessions}>
+                      <input type="hidden" name="seasonId" value={season.id} />
+                      <Button
+                        type="submit"
+                        disabled={season.is_closed}
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs"
+                      >
+                        <Plus className="h-3.5 w-3.5 mr-1" />
+                        Create {missingCount} missing session{missingCount === 1 ? "" : "s"}
+                      </Button>
+                    </form>
+                  )}
                 </div>
+              </CardHeader>
 
-                <form action={createMissingAgeSessions}>
-                  <input
-                    type="hidden"
-                    name="seasonId"
-                    value={season.id}
-                  />
-                  <button
-                    type="submit"
-                    disabled={season.is_closed || missingCount === 0}
-                    className="inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {missingCount === 0
-                      ? "All age sessions exist"
-                      : `Create ${missingCount} missing session${missingCount === 1 ? "" : "s"}`}
-                  </button>
-                </form>
-              </div>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-background text-xs font-mono uppercase tracking-wider text-muted-foreground border-b border-border">
+                      <tr>
+                        <th className="px-4 py-3">League Age</th>
+                        <th className="px-4 py-3">Session ID</th>
+                        <th className="px-4 py-3 text-center">Status</th>
+                        <th className="px-4 py-3 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {LEAGUE_AGES.map((age) => {
+                        const session = ageSessions.get(age);
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="py-2 pr-3 font-medium">League age</th>
-                      <th className="py-2 pr-3 font-medium">Session ID</th>
-                      <th className="py-2 pr-3 font-medium">Status</th>
-                      <th className="py-2 font-medium">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {LEAGUE_AGES.map((age) => {
-                      const session = ageSessions.get(age);
-
-                      return (
-                        <tr key={age} className="border-b last:border-0">
-                          <td className="py-3 pr-3">{age}</td>
-                          <td className="py-3 pr-3">
-                            {session ? session.id : "—"}
-                          </td>
-                          <td className="py-3 pr-3">
-                            {session ? session.status : "Not created"}
-                          </td>
-                          <td className="py-3">
-                            {session &&
-                              !season.is_closed &&
-                              session.status !== "locked" && (
-                                <form action={advanceEvaluationSessionStatus}>
-                                  <input
-                                    type="hidden"
-                                    name="sessionId"
-                                    value={session.id}
-                                  />
-                                  <input
-                                    type="hidden"
-                                    name="status"
-                                    value={
-                                      session.status === "setup"
-                                        ? "open"
-                                        : "locked"
-                                    }
-                                  />
-                                  <button
-                                    type="submit"
-                                    className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent"
-                                  >
-                                    {session.status === "setup"
-                                      ? "Open session"
-                                      : "Lock session"}
-                                  </button>
-                                </form>
+                        return (
+                          <tr key={age} className="hover:bg-accent/50 transition-colors">
+                            <td className="px-4 py-3 font-semibold text-foreground text-xs font-mono">
+                              Age {age}
+                            </td>
+                            <td className="px-4 py-3 text-xs font-mono text-muted-foreground">
+                              {session ? session.id : "—"}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {!session ? (
+                                <Badge variant="outline" className="border-slate-700 bg-slate-800/50 text-muted-foreground text-xs font-mono">
+                                  Not Created
+                                </Badge>
+                              ) : session.status === "setup" ? (
+                                <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-400 text-xs font-mono">
+                                  Setup
+                                </Badge>
+                              ) : session.status === "open" ? (
+                                <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-mono gap-1">
+                                  <CheckCircle2 className="h-3 w-3" /> Open
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="border-slate-700 bg-slate-800/50 text-muted-foreground text-xs font-mono gap-1">
+                                  <Lock className="h-3 w-3" /> Locked
+                                </Badge>
                               )}
-                            {session?.status === "locked" && (
-                              <span className="text-muted-foreground">
-                                Locked permanently
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              {session ? (
+                                <SessionActions
+                                  session={session}
+                                  seasonClosed={season.is_closed}
+                                  age={age}
+                                />
+                              ) : (
+                                <span className="text-xs font-mono text-slate-500">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           );
         })}
 
-      <p className="text-xs text-muted-foreground">
-        Creating sessions does not add players or assign evaluators. A locked
-        session cannot be reopened. Only open a session when its setup and
-        evaluator access are ready.
+      <p className="text-xs font-mono text-slate-500">
+        Note: Creating sessions does not automatically add players or assign evaluators. A locked session cannot be reopened. Only open a session when setup and evaluator access are ready.
       </p>
-    </main>
+    </div>
   );
 }
 
@@ -259,12 +266,10 @@ export default function EvaluationSessionsPage({
   return (
     <Suspense
       fallback={
-        <main className="w-full max-w-4xl p-4">
-          Loading evaluation sessions…
-        </main>
+        <div className="h-96 w-full rounded-lg border border-border bg-card animate-pulse" />
       }
     >
-      <EvaluationSessionsPageContent searchParams={searchParams} />
+      <SessionsContent searchParams={searchParams} />
     </Suspense>
   );
 }

@@ -1,78 +1,75 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Laptop, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { Moon, Sun, Laptop } from "lucide-react";
 
-const ThemeSwitcher = () => {
-  const [mounted, setMounted] = useState(false);
+export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-  // useEffect only runs on the client, so now we can safely show the UI
+  // Prevent SSR hydration mismatches by ensuring component is mounted on client
   useEffect(() => {
     setMounted(true);
   }, []);
 
   if (!mounted) {
-    return null;
+    return (
+      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+        <Sun className="h-4 w-4 text-amber-500" />
+      </Button>
+    );
   }
-
-  const ICON_SIZE = 16;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size={"sm"}>
-          {theme === "light" ? (
-            <Sun
-              key="light"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          ) : theme === "dark" ? (
-            <Moon
-              key="dark"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          ) : (
-            <Laptop
-              key="system"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
+        >
+          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-amber-500" />
+          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-emerald-400" />
+          <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-content" align="start">
-        <DropdownMenuRadioGroup
-          value={theme}
-          onValueChange={(e) => setTheme(e)}
+      <DropdownMenuContent align="end" className="bg-card border-border text-foreground">
+        <DropdownMenuItem
+          onSelect={() => setTheme("light")}
+          className={`cursor-pointer flex items-center gap-2 hover:bg-accent hover:text-accent-foreground ${
+            theme === "light" ? "text-emerald-500 font-semibold" : ""
+          }`}
         >
-          <DropdownMenuRadioItem className="flex gap-2" value="light">
-            <Sun size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>Light</span>
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="dark">
-            <Moon size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>Dark</span>
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="system">
-            <Laptop size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>System</span>
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
+          <Sun className="h-4 w-4 text-amber-500" />
+          <span>Light</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() => setTheme("dark")}
+          className={`cursor-pointer flex items-center gap-2 hover:bg-accent hover:text-accent-foreground ${
+            theme === "dark" ? "text-emerald-400 font-semibold" : ""
+          }`}
+        >
+          <Moon className="h-4 w-4 text-emerald-400" />
+          <span>Dark</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setTheme("system")}
+          className={`cursor-pointer flex items-center gap-2 hover:bg-accent hover:text-accent-foreground ${
+            theme === "system" ? "text-emerald-500 font-semibold" : ""
+          }`}
+        >
+          <Laptop className="h-4 w-4 text-slate-400" />
+          <span>System</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
-};
-
-export { ThemeSwitcher };
+}

@@ -34,8 +34,8 @@ export function RatingInputs({
         initialScores[category.code] == null
           ? ""
           : String(initialScores[category.code]),
-      ]),
-    ),
+      ])
+    )
   );
 
   const summary = useMemo(() => {
@@ -49,48 +49,56 @@ export function RatingInputs({
   }, [scores]);
 
   return (
-    <fieldset className="space-y-3">
-      <legend className="font-medium">Player ratings (1–5)</legend>
-      <p className="text-xs text-muted-foreground">
-        1 is the lowest rating; 5 is the highest. Choose Not scored when a category was not evaluated.
-      </p>
+    <div className="space-y-4">
+      <div className="space-y-1">
+        <h4 className="text-xs font-bold text-foreground font-mono uppercase tracking-wider">
+          Player Ratings (1–5 Scale)
+        </h4>
+        <p className="text-[11px] text-muted-foreground font-mono">
+          1 is the lowest rating; 5 is the highest. Choose "Not scored" when a category was not evaluated.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-2 gap-3 rounded-lg border bg-muted/30 p-3 sm:grid-cols-3">
+      {/* Dynamic Score Summary Metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 rounded-lg border border-border bg-background p-3 text-xs">
         <div>
-          <p className="text-xs text-muted-foreground">Core total</p>
-          <p className="text-xl font-semibold" aria-live="polite">
+          <p className="text-[11px] font-mono text-muted-foreground">Core Total</p>
+          <p className="text-lg font-bold text-foreground font-mono mt-0.5" aria-live="polite">
             {summary.count === 0
               ? "—"
               : summary.count === 5
-                ? `${summary.total} / 25`
-                : `${summary.total} (${summary.count}/5 rated)`}
+              ? `${summary.total} / 25`
+              : `${summary.total} (${summary.count}/5 rated)`}
           </p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">Core average</p>
-          <p className="text-xl font-semibold" aria-live="polite">
+          <p className="text-[11px] font-mono text-muted-foreground">Core Average</p>
+          <p className="text-lg font-bold text-emerald-400 font-mono mt-0.5" aria-live="polite">
             {summary.average === null ? "—" : summary.average.toFixed(1)}
           </p>
         </div>
         <div className="col-span-2 sm:col-span-1">
-          <p className="text-xs text-muted-foreground">Core categories rated</p>
-          <p className="text-xl font-semibold">{summary.count} of 5</p>
+          <p className="text-[11px] font-mono text-muted-foreground">Core Categories Rated</p>
+          <p className="text-lg font-bold text-foreground font-mono mt-0.5">
+            {summary.count} of 5
+          </p>
         </div>
       </div>
 
+      {/* Rating Options Grid */}
       <div className="grid gap-4 sm:grid-cols-2">
         {categories.map((category) => (
-          <div key={category.id} className="space-y-2 text-sm">
-            <span className="block font-medium">
+          <div key={category.id} className="space-y-2 text-xs">
+            <span className="font-semibold text-slate-200 block">
               {category.name}
               {category.category_group !== "core" && (
-                <span className="ml-2 text-xs font-normal text-muted-foreground">
-                  {category.category_group}
+                <span className="ml-2 text-[10px] font-mono text-muted-foreground uppercase">
+                  ({category.category_group})
                 </span>
               )}
             </span>
             <div
-              className="grid grid-cols-3 gap-2 sm:grid-cols-6"
+              className="grid grid-cols-3 sm:grid-cols-6 gap-1.5"
               role="group"
               aria-label={`${category.name} rating`}
             >
@@ -105,7 +113,7 @@ export function RatingInputs({
                   }
                   className="peer sr-only"
                 />
-                <span className="flex min-h-12 items-center justify-center rounded-md border px-2 text-center text-sm font-medium transition-colors hover:bg-accent peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2">
+                <span className="flex min-h-10 items-center justify-center rounded-md border border-border bg-card px-1 text-center text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent peer-checked:border-emerald-500 peer-checked:bg-emerald-600/20 peer-checked:text-emerald-400">
                   Not scored
                 </span>
               </label>
@@ -124,7 +132,7 @@ export function RatingInputs({
                     }
                     className="peer sr-only"
                   />
-                  <span className="flex min-h-12 items-center justify-center rounded-md border text-lg font-semibold transition-colors hover:bg-accent peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2">
+                  <span className="flex min-h-10 items-center justify-center rounded-md border border-border bg-card text-sm font-bold font-mono text-slate-200 transition-colors hover:bg-accent peer-checked:border-emerald-500 peer-checked:bg-emerald-600 peer-checked:text-foreground">
                     {score}
                   </span>
                 </label>
@@ -133,6 +141,6 @@ export function RatingInputs({
           </div>
         ))}
       </div>
-    </fieldset>
+    </div>
   );
 }

@@ -1,44 +1,36 @@
-import { NextLogo } from "./next-logo";
-import { SupabaseLogo } from "./supabase-logo";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export function Hero() {
   return (
-    <div className="flex flex-col gap-16 items-center">
-      <div className="flex gap-8 justify-center items-center">
-        <a
-          href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <SupabaseLogo />
-        </a>
-        <span className="border-l rotate-45 h-6" />
-        <a href="https://nextjs.org/" target="_blank" rel="noreferrer">
-          <NextLogo />
-        </a>
+    <div className="flex flex-col items-center text-center py-12 px-4">
+      <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-card border border-border shadow-xl">
+        <Image
+          src="/rwcll-logo.png"
+          alt="RWCLL Logo"
+          width={56}
+          height={56}
+          className="object-contain"
+          priority
+        />
       </div>
-      <h1 className="sr-only">Supabase and Next.js Starter Template</h1>
-      <p className="text-3xl lg:text-4xl !leading-tight mx-auto max-w-xl text-center">
-        The fastest way to build apps with{" "}
-        <a
-          href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
-          target="_blank"
-          className="font-bold hover:underline"
-          rel="noreferrer"
-        >
-          Supabase
-        </a>{" "}
-        and{" "}
-        <a
-          href="https://nextjs.org/"
-          target="_blank"
-          className="font-bold hover:underline"
-          rel="noreferrer"
-        >
-          Next.js
-        </a>
+
+      <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl md:text-5xl">
+        RWCLL <span className="text-emerald-400">Player Evaluations</span>
+      </h1>
+      <p className="mt-4 max-w-2xl text-muted-foreground text-base sm:text-lg">
+        Manage evaluation sessions, track player ratings, and generate coach reports seamlessly for Redwood City Little League.
       </p>
-      <div className="w-full p-[1px] bg-gradient-to-r from-transparent via-foreground/10 to-transparent my-8" />
+
+      <div className="mt-8 flex flex-wrap justify-center gap-4">
+        <Button asChild size="lg">
+          <Link href="/protected/evaluations">Start Evaluations</Link>
+        </Button>
+        <Button asChild variant="outline" size="lg">
+          <Link href="/protected/reports">View Reports</Link>
+        </Button>
+      </div>
     </div>
   );
 }

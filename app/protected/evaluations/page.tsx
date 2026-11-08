@@ -1,12 +1,21 @@
-
 import Link from "next/link";
 import { Suspense } from "react";
-import { connection } from "next/server";
 import { redirect } from "next/navigation";
-
 import { createClient } from "@/lib/supabase/server";
 import { saveEvaluationDraft } from "./actions";
 import { RatingInputs } from "./rating-inputs";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { 
+  ClipboardList, 
+  ArrowLeft, 
+  ShieldAlert, 
+  Calendar, 
+  UserCheck, 
+  Save, 
+  Layers 
+} from "lucide-react";
 
 const OLDEST_TO_YOUNGEST = [16, 15, 14, 13, 12, 11, 10, 9, 8];
 
@@ -92,99 +101,71 @@ function ageLabel(age: number | null) {
   return age === null ? "Age not set" : `Age ${age}`;
 }
 
-function EvaluatorWorkspaceFallback() {
-  return (
-    <main className="w-full max-w-4xl space-y-4">
-      <h1 className="text-3xl font-bold tracking-tight">
-        Evaluator workspace
-      </h1>
-      <p className="text-sm text-muted-foreground">
-        Loading your assigned sessions…
-      </p>
-    </main>
-  );
-}
-
-export default function EvaluatorWorkspacePage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  return (
-    <Suspense fallback={<EvaluatorWorkspaceFallback />}>
-      <EvaluatorWorkspaceContent searchParams={searchParams} />
-    </Suspense>
-  );
-}
-
 async function EvaluatorWorkspaceContent({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  await connection();
-
   const params = await searchParams;
   const supabase = await createClient();
 
-  const { data: claims, error: claimsError } =
-    await supabase.auth.getClaims();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (claimsError || !claims?.claims) {
-    redirect("/auth/login");
+  if (!user) {
+    return redirect("/auth/login");
   }
 
-  const userId = String(claims.claims.sub);
+  const userId = user.id;
 
-  const { data: isAdmin, error: roleError } =
-    await supabase.rpc("is_admin");
+  // Verify administrator permissions: Admins are redirected back to protected workspace
+  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
 
   if (roleError) {
     return (
-      <main className="w-full max-w-4xl space-y-4">
-        <h1 className="text-2xl font-bold">Evaluator workspace</h1>
-        <p role="alert" className="rounded-md border p-4 text-sm">
+      <div className="space-y-6">
+        <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
+          <Link href="/protected">
+            <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to workspace
+          </Link>
+        </Button>
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
           Could not verify your account permissions.
-        </p>
-      </main>
+        </div>
+      </div>
     );
   }
 
   if (isAdmin === true) {
-    redirect("/protected");
+    return redirect("/protected");
   }
 
-  const [sessionResult, seasonResult, categoryResult] =
-    await Promise.all([
-      supabase
-        .from("evaluation_sessions")
-        .select("id, season_id, league_age, status")
-        .is("season_division_id", null)
-        .order("season_id", { ascending: false })
-        .order("league_age", { ascending: false }),
-      supabase.from("seasons").select("id, name"),
-      supabase
-        .from("rating_categories")
-        .select("id, code, name, category_group, sort_order")
-        .order("sort_order"),
-    ]);
+  const [sessionResult, seasonResult, categoryResult] = await Promise.all([
+    supabase
+      .from("evaluation_sessions")
+      .select("id, season_id, league_age, status")
+      .is("season_division_id", null)
+      .order("season_id", { ascending: false })
+      .order("league_age", { ascending: false }),
+    supabase.from("seasons").select("id, name"),
+    supabase
+      .from("rating_categories")
+      .select("id, code, name, category_group, sort_order")
+      .order("sort_order"),
+  ]);
 
   const sessions = (sessionResult.data ?? []) as AssignedSession[];
   const seasons = (seasonResult.data ?? []) as Season[];
   const categories = (categoryResult.data ?? []) as RatingCategory[];
 
   const seasonName = (seasonId: number) =>
-    seasons.find((season) => season.id === seasonId)?.name ??
-    `Season #${seasonId}`;
+    seasons.find((season) => season.id === seasonId)?.name ?? `Season #${seasonId}`;
 
-  const requestedId = params.sessionId
-    ? Number(params.sessionId)
-    : null;
+  const requestedId = params.sessionId ? Number(params.sessionId) : null;
 
   const selectedSession =
-    requestedId !== null &&
-    Number.isSafeInteger(requestedId) &&
-    requestedId > 0
+    requestedId !== null && Number.isSafeInteger(requestedId) && requestedId > 0
       ? sessions.find((session) => session.id === requestedId)
       : undefined;
 
@@ -203,7 +184,7 @@ async function EvaluatorWorkspaceContent({
       const registrationResult = await supabase
         .from("player_seasons")
         .select(
-          "id, evaluation_number, registration_payment_status, players(first_name, last_name, date_of_birth)",
+          "id, evaluation_number, registration_payment_status, players(first_name, last_name, date_of_birth)"
         )
         .eq("season_id", selectedSession.season_id)
         .eq("league_age", selectedSession.league_age)
@@ -211,12 +192,15 @@ async function EvaluatorWorkspaceContent({
         .order("evaluation_number", { ascending: true, nullsFirst: false });
 
       if (registrationResult.error) {
-        playerLoadError =
-          `Could not load eligible registrations: ${registrationResult.error.message}`;
+        playerLoadError = `Could not load eligible registrations: ${registrationResult.error.message}`;
       } else {
-        registrations =
-          ((registrationResult.data ?? []) as unknown as (EligibleRegistration & { registration_payment_status?: string | null })[])
-            .filter((registration) => isEligibleRegistrationStatus(registration.registration_payment_status ?? null));
+        registrations = (
+          (registrationResult.data ?? []) as unknown as (EligibleRegistration & {
+            registration_payment_status?: string | null;
+          })[]
+        ).filter((registration) =>
+          isEligibleRegistrationStatus(registration.registration_payment_status ?? null)
+        );
 
         const playerSeasonIds = registrations.map((row) => row.id);
 
@@ -229,12 +213,9 @@ async function EvaluatorWorkspaceContent({
             .in("player_season_id", playerSeasonIds);
 
           if (evaluationResult.error) {
-            playerLoadError =
-              `Could not load your existing evaluations: ${evaluationResult.error.message}`;
+            playerLoadError = `Could not load your existing evaluations: ${evaluationResult.error.message}`;
           } else {
-            evaluations =
-              (evaluationResult.data ?? []) as EvaluationRecord[];
-
+            evaluations = (evaluationResult.data ?? []) as EvaluationRecord[];
             const evaluationIds = evaluations.map((row) => row.id);
 
             if (evaluationIds.length > 0) {
@@ -250,18 +231,15 @@ async function EvaluatorWorkspaceContent({
               ]);
 
               if (ratingResult.error) {
-                playerLoadError =
-                  `Could not load saved ratings: ${ratingResult.error.message}`;
+                playerLoadError = `Could not load saved ratings: ${ratingResult.error.message}`;
               } else {
                 ratings = (ratingResult.data ?? []) as RatingRecord[];
               }
 
               if (experienceResult.error) {
-                playerLoadError =
-                  `Could not load saved experience answers: ${experienceResult.error.message}`;
+                playerLoadError = `Could not load saved experience answers: ${experienceResult.error.message}`;
               } else {
-                experienceAnswers =
-                  (experienceResult.data ?? []) as ExperienceRecord[];
+                experienceAnswers = (experienceResult.data ?? []) as ExperienceRecord[];
               }
             }
           }
@@ -271,291 +249,314 @@ async function EvaluatorWorkspaceContent({
   }
 
   const evaluationByPlayerSeason = new Map(
-    evaluations.map((evaluation) => [
-      evaluation.player_season_id,
-      evaluation,
-    ]),
+    evaluations.map((evaluation) => [evaluation.player_season_id, evaluation])
   );
 
   const ratingByEvaluationAndCategory = new Map(
     ratings.map((rating) => [
       `${rating.evaluation_id}:${rating.rating_category_id}`,
       rating.score,
-    ]),
+    ])
   );
 
   const experienceByEvaluationAndQuestion = new Map(
     experienceAnswers.map((answer) => [
       `${answer.evaluation_id}:${answer.question_code}`,
       answer.answer,
-    ]),
+    ])
   );
 
   return (
-    <main className="w-full max-w-4xl space-y-8">
-      <header className="space-y-2">
-        <Link
-          href="/protected"
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          ← Back to workspace
-        </Link>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Evaluator workspace
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Your assigned sessions, ordered from oldest to youngest.
-          Access is limited by your session assignments.
-        </p>
-        <Link href="/protected/coach-reports" className="inline-flex rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent">
-          View my players’ historical ratings
-        </Link>
-      </header>
+    <div className="space-y-8">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-6">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
+              <Link href="/protected">
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to workspace
+              </Link>
+            </Button>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <ClipboardList className="h-7 w-7 text-emerald-400" />
+            Evaluator Workspace
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Your assigned evaluation sessions, ordered from oldest to youngest.
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm" className="border-border bg-card text-xs text-slate-300 hover:bg-accent">
+          <Link href="/protected/coach-reports">View My Players' Historical Ratings &rarr;</Link>
+        </Button>
+      </div>
 
       {params.message && (
-        <p className="rounded-md border p-4 text-sm" role="status">
+        <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300 font-mono">
           {params.message}
-        </p>
+        </div>
       )}
 
       {params.error && (
-        <p className="rounded-md border p-4 text-sm" role="alert">
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300 font-mono">
           {params.error}
-        </p>
+        </div>
       )}
 
       {sessionResult.error ? (
-        <p role="alert" className="rounded-md border p-4 text-sm">
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
           Could not load your assigned sessions: {sessionResult.error.message}
-        </p>
+        </div>
       ) : (
         <>
           {params.sessionId && !selectedSession && (
-            <p role="alert" className="rounded-md border p-4 text-sm">
-              That session was not found among the sessions available to
-              your account. Ask an administrator to check your assignment.
-            </p>
+            <div role="alert" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-300">
+              That session was not found among the sessions available to your account. Ask an administrator to check your assignment.
+            </div>
           )}
 
+          {/* Active Session Scoring Interface */}
           {selectedSession && (
-            <section className="space-y-4 rounded-lg border p-5">
-              <div className="space-y-1">
-                <h2 className="text-xl font-semibold">
-                  {ageLabel(selectedSession.league_age)} session
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {seasonName(selectedSession.season_id)} · Session #
-                  {selectedSession.id}
-                </p>
-                <p className="text-sm">
-                  Status: <strong>{selectedSession.status}</strong>
-                </p>
-              </div>
+            <Card className="border-border bg-card">
+              <CardHeader className="py-4 border-b border-border/50">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
+                      <Calendar className="h-5 w-5 text-emerald-400" />
+                      {ageLabel(selectedSession.league_age)} Session
+                    </CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground font-mono mt-1">
+                      {seasonName(selectedSession.season_id)} &bull; Session #{selectedSession.id}
+                    </CardDescription>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={`text-xs font-mono w-fit ${
+                      selectedSession.status === "open"
+                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                        : selectedSession.status === "setup"
+                        ? "border-amber-500/40 bg-amber-500/10 text-amber-400"
+                        : "border-slate-700 bg-slate-800 text-muted-foreground"
+                    }`}
+                  >
+                    Status: {selectedSession.status}
+                  </Badge>
+                </div>
+              </CardHeader>
 
-              {selectedSession.status === "setup" ? (
-                <p className="text-sm text-muted-foreground">
-                  This session is still being prepared. An administrator
-                  must open it before evaluation work can begin.
-                </p>
-              ) : selectedSession.status !== "open" ? (
-                <p className="text-sm text-muted-foreground">
-                  This session is locked. Evaluation entry is not available.
-                </p>
-              ) : playerLoadError ? (
-                <p role="alert" className="rounded-md border p-4 text-sm">
-                  {playerLoadError}
-                </p>
-              ) : registrations.length === 0 ? (
-                <div className="rounded-md border p-4">
-                  <p className="font-medium">No eligible players yet</p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    No registrations match this season and age with an eligible
-                    registration status. Pending registrations remain eligible;
-                    unpaid and UNKNOWN registrations are excluded.
+              <CardContent className="p-6 space-y-6">
+                {selectedSession.status === "setup" ? (
+                  <p className="text-xs font-mono text-muted-foreground">
+                    This session is still being prepared. An administrator must open it before evaluation work can begin.
                   </p>
+                ) : selectedSession.status !== "open" ? (
+                  <p className="text-xs font-mono text-muted-foreground">
+                    This session is locked. Evaluation entry is not available.
+                  </p>
+                ) : playerLoadError ? (
+                  <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
+                    {playerLoadError}
+                  </div>
+                ) : registrations.length === 0 ? (
+                  <div className="rounded-lg border border-border bg-background p-6 text-center space-y-2">
+                    <ShieldAlert className="h-8 w-8 text-amber-400 mx-auto" />
+                    <p className="text-sm font-semibold text-foreground">No Eligible Players Yet</p>
+                    <p className="text-xs text-muted-foreground">
+                      No registrations match this season and age with an eligible registration status. Pending registrations remain eligible; unpaid and UNKNOWN registrations are excluded.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <p className="text-xs text-muted-foreground font-mono">
+                      {registrations.length} eligible player{registrations.length === 1 ? "" : "s"}. Save each player's evaluation as a draft; saving does not submit it.
+                    </p>
+
+                    {registrations.map((registration) => {
+                      const player = registration.players;
+                      const evaluation = evaluationByPlayerSeason.get(registration.id);
+                      const evaluationId = evaluation?.id;
+
+                      return (
+                        <form
+                          key={registration.id}
+                          action={saveEvaluationDraft}
+                          className="space-y-6 rounded-lg border border-border bg-background p-5"
+                        >
+                          <input type="hidden" name="sessionId" value={selectedSession.id} />
+                          <input type="hidden" name="playerSeasonId" value={registration.id} />
+
+                          <div className="space-y-1 border-b border-border pb-3">
+                            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                              <UserCheck className="h-4 w-4 text-emerald-400" />
+                              {player
+                                ? `${player.last_name}, ${player.first_name}`
+                                : `Player registration #${registration.id}`}
+                            </h3>
+                            <p className="text-xs font-mono text-muted-foreground">
+                              {registration.evaluation_number !== null
+                                ? `Evaluation #${registration.evaluation_number}`
+                                : "No evaluation number assigned"}
+                              {player?.date_of_birth ? ` · DOB ${player.date_of_birth}` : ""}
+                            </p>
+                            {evaluation && (
+                              <p className="text-[11px] font-mono text-emerald-400">
+                                Existing evaluation status: {evaluation.status}
+                              </p>
+                            )}
+                          </div>
+
+                          <RatingInputs
+                            categories={categories}
+                            initialScores={Object.fromEntries(
+                              categories.map((category) => {
+                                const score =
+                                  evaluationId === undefined
+                                    ? undefined
+                                    : ratingByEvaluationAndCategory.get(
+                                        `${evaluationId}:${category.id}`
+                                      );
+                                return [category.code, score ?? null];
+                              })
+                            )}
+                          />
+
+                          {/* Pitching & Catching Experience Radio Grid */}
+                          <div className="space-y-3 border-t border-border pt-4">
+                            <h4 className="text-xs font-bold text-foreground font-mono uppercase tracking-wider">
+                              Pitching and Catching Experience
+                            </h4>
+                            <div className="grid gap-4 sm:grid-cols-2">
+                              {EXPERIENCE_QUESTIONS.map((question) => {
+                                const savedAnswer =
+                                  evaluationId === undefined
+                                    ? undefined
+                                    : experienceByEvaluationAndQuestion.get(
+                                        `${evaluationId}:${question.code}`
+                                      );
+
+                                return (
+                                  <div key={question.code} className="space-y-2 text-xs">
+                                    <span className="font-semibold text-slate-300 block">
+                                      {question.label}
+                                    </span>
+                                    <div className="grid grid-cols-3 gap-2" role="group" aria-label={question.label}>
+                                      {[
+                                        { value: "yes", label: "Yes" },
+                                        { value: "no", label: "No" },
+                                        { value: "unknown", label: "Not sure" },
+                                      ].map((option) => (
+                                        <label key={option.value} className="cursor-pointer">
+                                          <input
+                                            type="radio"
+                                            name={`experience_${question.code}`}
+                                            value={option.value}
+                                            defaultChecked={(savedAnswer ?? "unknown") === option.value}
+                                            className="peer sr-only"
+                                          />
+                                          <span className="flex min-h-9 items-center justify-center rounded-md border border-border bg-card px-2 text-center text-xs font-medium text-slate-300 transition-colors hover:bg-accent peer-checked:border-emerald-500 peer-checked:bg-emerald-600 peer-checked:text-foreground">
+                                            {option.label}
+                                          </span>
+                                        </label>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Submit Action */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-border pt-4">
+                            <p className="text-xs font-mono text-slate-500">
+                              Drafts remain editable until the session workflow prevents further changes.
+                            </p>
+                            <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs">
+                              <Save className="h-3.5 w-3.5 mr-1.5" /> Save Draft
+                            </Button>
+                          </div>
+                        </form>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Assigned Sessions Directory */}
+          <Card className="border-border bg-card">
+            <CardHeader className="py-4 border-b border-border/50">
+              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+                <Layers className="h-4 w-4 text-emerald-400" />
+                My Assigned Sessions
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3">
+              {sessions.length === 0 ? (
+                <div className="p-4 text-center text-xs text-muted-foreground">
+                  <p className="font-semibold text-foreground">No sessions assigned</p>
+                  <p className="mt-1">Contact your administrator to be assigned to an evaluation session.</p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  <p className="text-sm text-muted-foreground">
-                    {registrations.length} eligible player
-                    {registrations.length === 1 ? "" : "s"}. Save each
-                    player's evaluation as a draft; saving does not submit it.
-                  </p>
-
-                  {registrations.map((registration) => {
-                    const player = registration.players;
-                    const evaluation =
-                      evaluationByPlayerSeason.get(registration.id);
-                    const evaluationId = evaluation?.id;
-
-                    return (
-                      <form
-                        key={registration.id}
-                        action={saveEvaluationDraft}
-                        className="space-y-5 rounded-lg border p-4"
-                      >
-                        <input
-                          type="hidden"
-                          name="sessionId"
-                          value={selectedSession.id}
-                        />
-                        <input
-                          type="hidden"
-                          name="playerSeasonId"
-                          value={registration.id}
-                        />
-
-                        <div className="space-y-1">
-                          <h3 className="text-lg font-semibold">
-                            {player
-                              ? `${player.last_name}, ${player.first_name}`
-                              : `Player registration #${registration.id}`}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {registration.evaluation_number !== null
-                              ? `Evaluation #${registration.evaluation_number}`
-                              : "No evaluation number assigned"}
-                            {player?.date_of_birth
-                              ? ` · DOB ${player.date_of_birth}`
-                              : ""}
-                          </p>
-                          {evaluation && (
-                            <p className="text-xs text-muted-foreground">
-                              Existing evaluation: {evaluation.status}
+                <div className="space-y-3">
+                  {OLDEST_TO_YOUNGEST.map((age) =>
+                    sessions
+                      .filter((session) => session.league_age === age)
+                      .map((session) => (
+                        <div
+                          key={session.id}
+                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-border bg-background p-4"
+                        >
+                          <div>
+                            <h3 className="font-bold text-foreground text-xs font-mono">Age {age}</h3>
+                            <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                              {seasonName(session.season_id)} &bull; Session #{session.id}
                             </p>
-                          )}
-                        </div>
-
-                        <RatingInputs
-                          categories={categories}
-                          initialScores={Object.fromEntries(
-                            categories.map((category) => {
-                              const score =
-                                evaluationId === undefined
-                                  ? undefined
-                                  : ratingByEvaluationAndCategory.get(
-                                      `${evaluationId}:${category.id}`,
-                                    );
-                              return [category.code, score ?? null];
-                            }),
-                          )}
-                        />
-
-                        <fieldset className="space-y-3">
-                          <legend className="font-medium">
-                            Pitching and catching experience
-                          </legend>
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            {EXPERIENCE_QUESTIONS.map((question) => {
-                              const savedAnswer =
-                                evaluationId === undefined
-                                  ? undefined
-                                  : experienceByEvaluationAndQuestion.get(
-                                      `${evaluationId}:${question.code}`,
-                                    );
-
-                              return (
-                                <fieldset key={question.code} className="space-y-2 text-sm">
-                                  <legend className="font-medium">
-                                    {question.label}
-                                  </legend>
-                                  <div
-                                    className="grid grid-cols-3 gap-2"
-                                    role="group"
-                                    aria-label={question.label}
-                                  >
-                                    {[
-                                      { value: "yes", label: "Yes" },
-                                      { value: "no", label: "No" },
-                                      { value: "unknown", label: "Not sure" },
-                                    ].map((option) => (
-                                      <label key={option.value} className="cursor-pointer">
-                                        <input
-                                          type="radio"
-                                          name={`experience_${question.code}`}
-                                          value={option.value}
-                                          defaultChecked={(savedAnswer ?? "unknown") === option.value}
-                                          className="peer sr-only"
-                                        />
-                                        <span className="flex min-h-12 items-center justify-center rounded-md border px-2 text-center font-medium transition-colors hover:bg-accent peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2">
-                                          {option.label}
-                                        </span>
-                                      </label>
-                                    ))}
-                                  </div>
-                                </fieldset>
-                              );
-                            })}
                           </div>
-                        </fieldset>
-
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <p className="text-xs text-muted-foreground">
-                            Drafts remain editable until the session workflow
-                            prevents further changes.
-                          </p>
-                          <button
-                            type="submit"
-                            className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent"
-                          >
-                            Save draft
-                          </button>
+                          <div className="flex items-center gap-3">
+                            <Badge
+                              variant="outline"
+                              className={`text-xs font-mono ${
+                                session.status === "open"
+                                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                                  : session.status === "setup"
+                                  ? "border-amber-500/40 bg-amber-500/10 text-amber-400"
+                                  : "border-slate-700 bg-slate-800 text-muted-foreground"
+                              }`}
+                            >
+                              {session.status}
+                            </Badge>
+                            <Button asChild variant="outline" size="sm" className="h-7 border-border bg-card text-xs text-slate-200 hover:bg-accent">
+                              <Link href={`/protected/evaluations?sessionId=${session.id}`}>
+                                View Session
+                              </Link>
+                            </Button>
+                          </div>
                         </div>
-                      </form>
-                    );
-                  })}
+                      ))
+                  )}
                 </div>
               )}
-            </section>
-          )}
-
-          <section className="space-y-3">
-            <h2 className="text-xl font-semibold">My assigned sessions</h2>
-
-            {sessions.length === 0 ? (
-              <div className="rounded-lg border p-5">
-                <p className="font-medium">No sessions assigned</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Contact your administrator to be assigned to an evaluation
-                  session.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {OLDEST_TO_YOUNGEST.map((age) =>
-                  sessions
-                    .filter((session) => session.league_age === age)
-                    .map((session) => (
-                      <div
-                        key={session.id}
-                        className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div>
-                          <h3 className="font-semibold">Age {age}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {seasonName(session.season_id)} · Session #
-                            {session.id}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="rounded-md border px-2 py-1 text-xs">
-                            {session.status}
-                          </span>
-                          <Link
-                            href={`/protected/evaluations?sessionId=${session.id}`}
-                            className="inline-flex rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent"
-                          >
-                            View session
-                          </Link>
-                        </div>
-                      </div>
-                    )),
-                )}
-              </div>
-            )}
-          </section>
+            </CardContent>
+          </Card>
         </>
       )}
-    </main>
+    </div>
+  );
+}
+
+export default function EvaluatorWorkspacePage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-96 w-full rounded-lg border border-border bg-card animate-pulse" />
+      }
+    >
+      <EvaluatorWorkspaceContent searchParams={searchParams} />
+    </Suspense>
   );
 }
