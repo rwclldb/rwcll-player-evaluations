@@ -5,6 +5,8 @@ import Link from "next/link";
 import { createMissingAgeSessions } from "./actions";
 import { SessionActions } from "./SessionActions";
 import { SessionEventManager } from "./SessionEventManager";
+import { GlobalPrimarySchedule } from "./GlobalPrimarySchedule";
+import { GlobalMakeupSchedule } from "./GlobalMakeupSchedule";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -198,7 +200,21 @@ async function SessionsContent({
                 </div>
               </CardHeader>
 
-              <CardContent className="p-0">
+              <CardContent className="p-4">
+                <GlobalPrimarySchedule
+                  seasonId={season.id}
+                  seasonName={season.name}
+                  seasonClosed={season.is_closed}
+                  sessions={seasonSessions.filter((session) => session.league_age !== null && LEAGUE_AGES.includes(session.league_age))}
+                  events={(sessionEvents ?? []).filter((event) => seasonSessions.some((session) => session.id === event.evaluation_session_id)).map((event) => ({ evaluation_session_id: event.evaluation_session_id, event_type: event.event_type }))}
+                />
+                <GlobalMakeupSchedule
+                  seasonId={season.id}
+                  seasonName={season.name}
+                  seasonClosed={season.is_closed}
+                  sessions={seasonSessions.filter((session) => session.league_age !== null && LEAGUE_AGES.includes(session.league_age))}
+                  events={(sessionEvents ?? []).filter((event) => seasonSessions.some((session) => session.id === event.evaluation_session_id)).map((event) => ({ evaluation_session_id: event.evaluation_session_id, event_type: event.event_type }))}
+                />
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead className="bg-background text-xs font-mono uppercase tracking-wider text-muted-foreground border-b border-border">

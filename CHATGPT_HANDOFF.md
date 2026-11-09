@@ -759,3 +759,14 @@ requirements, implemented code, and tested behavior.
 - Session admin UI/actions now schedule/edit/delete events in Setup, disable Open until primary event and evaluator assignment exist, and retain server/database checks. Session creation, evaluator assignment, evaluator workspace, and admin evaluation review age lists now include ages 7–16.
 - Added `npm run test:session-administration` and `docs/STAGE_1_SESSION_ADMINISTRATION_TESTS.md`. Static tests passed in the packaged workspace. Dependency installation timed out in this environment, so lint/TypeScript/build/full-suite results for these new changes are not yet verified.
 - These changes are prepared in a reviewed ZIP only. Do not assume the migrations are applied to local or hosted Supabase; apply to local only after inspecting migration status.
+
+
+## 2026-11-09 Global schedule and return-to-setup update (static checks completed; build validation blocked by dependency install)
+- User supplied `rwcll-player-evaluations-2026-11-08r3.zip` from branch `feature/admin-evaluation-review`; used that archive as the code baseline.
+- Added a per-season Global primary event schedule UI with example defaults 2027-02-20, 09:00–13:00, required location, optional notes, and a preview step. Preview targets only Setup sessions without an existing primary event.
+- Added server action that rechecks season/session eligibility, creates primary events only for eligible sessions, preserves existing primary events, and excludes Open/Locked sessions. Makeup events remain individually managed.
+- Added admin Return to Setup action for Open sessions. It is rejected if any evaluation records exist; no event, assignment, or evaluation rows are deleted. Locked sessions remain locked. Fixed status validation to allow the requested `setup` destination.
+- Added a global makeup schedule with preview. It adds a makeup event to each eligible Setup session that already has a primary event; existing events are preserved, and Open/Locked sessions are skipped.
+- Updated session-administration regression test, test-plan docs, FAQ, and decision log.
+- Validation: `npm run test:session-administration` passed. `npm run test:all` passed 13 source-level test groups including session administration; lint, TypeScript, and production build could not run because `npm ci --ignore-scripts --no-audit --no-fund` timed out and left dependencies incomplete (`eslint`/`next` unavailable and type definitions missing). These failures are environment/dependency setup failures, not a successful code validation. Runtime browser/database behavior remains untested here.
+- No migrations were added or applied. No local or hosted database was modified. Continue local-only migration/testing workflow.

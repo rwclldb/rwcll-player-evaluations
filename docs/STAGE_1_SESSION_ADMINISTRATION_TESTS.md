@@ -45,12 +45,14 @@ Use the local app and sign in as the administrator.
 1. Open **Evaluation Sessions**.
 2. For a season that currently has ages 8–16, create missing sessions. Confirm age 7 is created and age 6 is not offered. Confirm the page reports ten age sessions (ages 7–16).
 3. For a setup session, enter a primary event date, start time, end time, and location; save it and confirm the values remain after refresh.
-4. Add two makeup events. Confirm both are listed and can be edited or removed while the session remains in Setup.
-5. Try to open a session before scheduling a primary event. The UI should prevent opening and explain the missing requirement.
-6. Schedule a primary event but leave the session without an evaluator assignment. The UI should prevent opening and explain that an evaluator must be assigned.
-7. Assign at least one evaluator using the existing evaluator-assignment workflow. Confirm the session can now be opened.
-8. After opening, confirm event fields are read-only and event changes are rejected server-side. Confirm a locked session remains locked.
-9. Close a test season if one is available, and confirm events cannot be added or edited in that season.
+4. Use the Global primary event schedule for a season. Keep the example date/time defaults or enter a test schedule, add a location, and click Preview eligible sessions. Confirm only Setup sessions without an existing primary event are listed. Apply it and verify existing primary events and Open/Locked sessions remain unchanged.
+5. Add two makeup events. Confirm both are listed and can be edited or removed while the session remains in Setup.
+6. For an Open session with no evaluation records, use Return to Setup. Confirm its existing event schedule and evaluator assignments remain. For an Open session with evaluation records, confirm the action is refused and no work is deleted.
+7. Try to open a session before scheduling a primary event. The UI should prevent opening and explain the missing requirement.
+8. Schedule a primary event but leave the session without an evaluator assignment. The UI should prevent opening and explain that an evaluator must be assigned.
+9. Assign at least one evaluator using the existing evaluator-assignment workflow. Confirm the session can now be opened.
+10. After opening, confirm event fields are read-only and event changes are rejected server-side. Confirm a locked session remains locked.
+11. Close a test season if one is available, and confirm events cannot be added or edited in that season.
 
 ## Manual evaluator eligibility tests
 

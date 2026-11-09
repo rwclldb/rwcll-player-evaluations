@@ -229,3 +229,14 @@ Complete the coach authorization matrix locally, then run fresh focused and cons
 6. Update this roadmap, `docs/DECISIONS.md`, `docs/FAQ.md`, and `CHATGPT_HANDOFF.md` with actual results.
 
 **Safety boundary:** Continue local-only validation. Do not apply migrations to hosted Supabase or modify hosted data without explicit approval.
+
+
+## Global primary schedule and safe session reopening — implementation added, validation pending
+- [x] Add per-season global primary schedule form with preview and example defaults.
+- [x] Add per-season global makeup schedule form with preview; add to Setup sessions that already have a primary event without overwriting existing events.
+- [x] Apply only to Setup sessions without an existing primary event; preserve existing schedules and exclude Open/Locked sessions.
+- [x] Add guarded admin Return to Setup action for Open sessions with no evaluation records; preserve existing events and assignments.
+- [x] Update FAQ, decisions, handoff, and focused regression test.
+- [x] Run focused session-administration test and full source-level test suite (13 groups passed).
+- [ ] Run lint, TypeScript, and production build after dependencies install successfully; npm ci timed out in this environment.
+- [ ] Manually verify global preview/apply and return-to-setup behavior against local Supabase only.

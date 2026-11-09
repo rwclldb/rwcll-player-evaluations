@@ -331,3 +331,14 @@ Runtime authorization test plan:
 3. Sign in as a coach with no team assignment and verify no roster is returned.
 4. Verify direct reads of historical_evaluations and historical_ratings remain denied to non-admin accounts.
 5. Verify administrators retain the existing full player-report page and CSV export.
+
+
+## Can I apply one primary event schedule to multiple age sessions?
+
+Yes. On the Evaluation Sessions page, use **Global primary event schedule** within the season card. Enter the date, start/end time, and location, then choose **Preview eligible sessions** before applying. The bulk action applies only to Setup sessions that do not already have a primary event. Existing primary schedules are preserved, Open and Locked sessions are skipped, and the server checks eligibility again when applying. The separate **Global makeup event schedule** section can add the same makeup date/time/location to Setup sessions that already have a primary event; it adds a new makeup event and never replaces existing events.
+
+The date and time shown by default (`2027-02-20`, `09:00`–`13:00`) are example defaults, not a real league booking. Enter the actual location and confirm the preview before applying.
+
+## How do I return an Open session to Setup to edit its schedule?
+
+An administrator can choose **Return to Setup** for an Open session. The action accepts the Setup destination status and is allowed only when the session has no evaluation records. Existing event schedules and evaluator assignments are retained. If evaluation records exist, the action is refused and no evaluation work is deleted. Locked sessions cannot be reopened.

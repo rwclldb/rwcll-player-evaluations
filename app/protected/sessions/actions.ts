@@ -125,7 +125,7 @@ export async function advanceEvaluationSessionStatus(formData: FormData) {
   if (
     !Number.isSafeInteger(sessionId) ||
     sessionId < 1 ||
-    !["open", "locked"].includes(requestedStatus)
+    !["open", "locked", "setup"].includes(requestedStatus)
   ) {
     redirect("/protected/sessions?error=Invalid%20session%20or%20status.");
   }
@@ -152,11 +152,12 @@ export async function advanceEvaluationSessionStatus(formData: FormData) {
 
   const allowed =
     (session.status === "setup" && requestedStatus === "open") ||
-    (session.status === "open" && requestedStatus === "locked");
+    (session.status === "open" && requestedStatus === "locked") ||
+    (session.status === "open" && requestedStatus === "setup");
 
   if (!allowed) {
     redirect(
-      "/protected/sessions?error=Only%20setup%20to%20open%20and%20open%20to%20locked%20transitions%20are%20allowed.",
+      "/protected/sessions?error=Only%20setup%20to%20open%2C%20open%20to%20setup%2C%20and%20open%20to%20locked%20transitions%20are%20allowed.",
     );
   }
 
@@ -174,6 +175,22 @@ export async function advanceEvaluationSessionStatus(formData: FormData) {
     redirect(
       "/protected/sessions?error=Cannot%20change%20sessions%20in%20a%20closed%20season.",
     );
+  }
+
+  if (requestedStatus === "setup") {
+    // Reopening setup is allowed only before any evaluation work exists. Nothing
+    // is deleted; existing scheduled events and evaluator assignments are retained.
+    const { count, error: evaluationCountError } = await supabase
+      .from("evaluations")
+      .select("id", { count: "exact", head: true })
+      .eq("evaluation_session_id", sessionId);
+
+    if (evaluationCountError) {
+      redirect(`/protected/sessions?error=${encodeURIComponent(evaluationCountError.message)}`);
+    }
+    if ((count ?? 0) > 0) {
+      redirect("/protected/sessions?error=This%20session%20has%20evaluation%20records.%20It%20cannot%20return%20to%20Setup%20until%20that%20work%20is%20reviewed.");
+    }
   }
 
   if (requestedStatus === "open") {
@@ -225,6 +242,165 @@ export async function advanceEvaluationSessionStatus(formData: FormData) {
       `Session status updated to ${requestedStatus}.`,
     )}`,
   );
+}
+
+export async function applyGlobalPrimaryEventSchedule(formData: FormData) {
+  const seasonId = Number(formData.get("seasonId"));
+  const eventDate = String(formData.get("eventDate") ?? "").trim();
+  const startTime = String(formData.get("startTime") ?? "").trim();
+  const endTime = String(formData.get("endTime") ?? "").trim();
+  const location = String(formData.get("location") ?? "").trim();
+  const notes = String(formData.get("notes") ?? "").trim();
+
+  if (
+    !Number.isSafeInteger(seasonId) || seasonId < 1 ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(eventDate) ||
+    !/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime) ||
+    !/^([01]\d|2[0-3]):[0-5]\d$/.test(endTime) ||
+    endTime <= startTime || !location
+  ) {
+    redirect("/protected/sessions?error=Enter%20a%20valid%20global%20schedule%20including%20location.");
+  }
+
+  const auth = await getAdministratorClient();
+  if ("error" in auth && auth.error) {
+    redirect(`/protected/sessions?error=${encodeURIComponent(auth.error)}`);
+  }
+  const { supabase, userId } = auth;
+
+  const { data: season, error: seasonError } = await supabase
+    .from("seasons")
+    .select("id, name, is_closed")
+    .eq("id", seasonId)
+    .maybeSingle();
+  if (seasonError || !season) {
+    redirect("/protected/sessions?error=Season%20not%20found.");
+  }
+  if (season.is_closed) {
+    redirect("/protected/sessions?error=Cannot%20schedule%20events%20for%20a%20closed%20season.");
+  }
+
+  const { data: sessions, error: sessionsError } = await supabase
+    .from("evaluation_sessions")
+    .select("id, status")
+    .eq("season_id", seasonId)
+    .is("season_division_id", null)
+    .in("league_age", [...LEAGUE_AGES]);
+  if (sessionsError) {
+    redirect(`/protected/sessions?error=${encodeURIComponent(sessionsError.message)}`);
+  }
+
+  const setupIds = (sessions ?? []).filter((session) => session.status === "setup").map((session) => session.id);
+  if (setupIds.length === 0) {
+    redirect("/protected/sessions?error=No%20Setup%20sessions%20are%20eligible%20for%20the%20global%20schedule.");
+  }
+
+  const { data: existingPrimary, error: primaryError } = await supabase
+    .from("evaluation_session_events")
+    .select("evaluation_session_id")
+    .in("evaluation_session_id", setupIds)
+    .eq("event_type", "primary");
+  if (primaryError) {
+    redirect(`/protected/sessions?error=${encodeURIComponent(primaryError.message)}`);
+  }
+
+  const alreadyScheduled = new Set((existingPrimary ?? []).map((event) => event.evaluation_session_id));
+  const eligibleIds = setupIds.filter((id) => !alreadyScheduled.has(id));
+  if (eligibleIds.length === 0) {
+    redirect("/protected/sessions?error=All%20Setup%20sessions%20already%20have%20a%20primary%20event.%20Existing%20schedules%20were%20left%20unchanged.");
+  }
+
+  const { error: insertError } = await supabase
+    .from("evaluation_session_events")
+    .insert(eligibleIds.map((evaluation_session_id) => ({
+      evaluation_session_id,
+      event_type: "primary",
+      event_date: eventDate,
+      start_time: startTime,
+      end_time: endTime,
+      location,
+      notes: notes || null,
+      created_by: userId,
+    })));
+  if (insertError) {
+    redirect(`/protected/sessions?error=${encodeURIComponent(insertError.message)}`);
+  }
+
+  revalidatePath("/protected/sessions");
+  revalidatePath("/protected/evaluations");
+  redirect(`/protected/sessions?message=${encodeURIComponent(`Applied the global primary schedule to ${eligibleIds.length} Setup session(s) in ${season.name}. Existing primary schedules and non-Setup sessions were not changed.`)}`);
+}
+
+export async function applyGlobalMakeupEventSchedule(formData: FormData) {
+  const seasonId = Number(formData.get("seasonId"));
+  const eventDate = String(formData.get("eventDate") ?? "").trim();
+  const startTime = String(formData.get("startTime") ?? "").trim();
+  const endTime = String(formData.get("endTime") ?? "").trim();
+  const location = String(formData.get("location") ?? "").trim();
+  const notes = String(formData.get("notes") ?? "").trim();
+
+  if (
+    !Number.isSafeInteger(seasonId) || seasonId < 1 ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(eventDate) ||
+    !/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime) ||
+    !/^([01]\d|2[0-3]):[0-5]\d$/.test(endTime) ||
+    endTime <= startTime || !location
+  ) {
+    redirect("/protected/sessions?error=Enter%20a%20valid%20global%20makeup%20schedule%20including%20location.");
+  }
+
+  const auth = await getAdministratorClient();
+  if ("error" in auth && auth.error) {
+    redirect(`/protected/sessions?error=${encodeURIComponent(auth.error)}`);
+  }
+  const { supabase, userId } = auth;
+
+  const { data: season, error: seasonError } = await supabase
+    .from("seasons")
+    .select("id, name, is_closed")
+    .eq("id", seasonId)
+    .maybeSingle();
+  if (seasonError || !season) redirect("/protected/sessions?error=Season%20not%20found.");
+  if (season.is_closed) redirect("/protected/sessions?error=Cannot%20schedule%20events%20for%20a%20closed%20season.");
+
+  const { data: sessions, error: sessionsError } = await supabase
+    .from("evaluation_sessions")
+    .select("id, status")
+    .eq("season_id", seasonId)
+    .is("season_division_id", null)
+    .in("league_age", [...LEAGUE_AGES]);
+  if (sessionsError) redirect(`/protected/sessions?error=${encodeURIComponent(sessionsError.message)}`);
+
+  const setupIds = (sessions ?? []).filter((session) => session.status === "setup").map((session) => session.id);
+  if (setupIds.length === 0) redirect("/protected/sessions?error=No%20Setup%20sessions%20are%20eligible%20for%20a%20global%20makeup%20event.");
+
+  const { data: primaryEvents, error: primaryError } = await supabase
+    .from("evaluation_session_events")
+    .select("evaluation_session_id")
+    .in("evaluation_session_id", setupIds)
+    .eq("event_type", "primary");
+  if (primaryError) redirect(`/protected/sessions?error=${encodeURIComponent(primaryError.message)}`);
+  const hasPrimary = new Set((primaryEvents ?? []).map((event) => event.evaluation_session_id));
+  const eligibleIds = setupIds.filter((id) => hasPrimary.has(id));
+  if (eligibleIds.length === 0) redirect("/protected/sessions?error=No%20Setup%20sessions%20have%20a%20primary%20event.%20Schedule%20primary%20events%20first.");
+
+  const { error: insertError } = await supabase.from("evaluation_session_events").insert(
+    eligibleIds.map((evaluation_session_id) => ({
+      evaluation_session_id,
+      event_type: "makeup",
+      event_date: eventDate,
+      start_time: startTime,
+      end_time: endTime,
+      location,
+      notes: notes || null,
+      created_by: userId,
+    })),
+  );
+  if (insertError) redirect(`/protected/sessions?error=${encodeURIComponent(insertError.message)}`);
+
+  revalidatePath("/protected/sessions");
+  revalidatePath("/protected/evaluations");
+  redirect(`/protected/sessions?message=${encodeURIComponent(`Added the global makeup schedule to ${eligibleIds.length} Setup session(s) in ${season.name}. Existing events and non-Setup sessions were not changed.`)}`);
 }
 
 export async function saveEvaluationSessionEvent(formData: FormData) {
