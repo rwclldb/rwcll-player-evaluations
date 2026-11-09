@@ -28,7 +28,8 @@
     "test:player-reports": "node scripts/test-player-reports.cjs",
     "test:historical-coach-evaluation-schema": "node scripts/test-historical-coach-evaluation-schema.cjs",
     "test:coach-historical-reports": "node scripts/test-coach-historical-reports.cjs",
-    "manual:import-duplicate-player-id-resolution": "node scripts/test-import-duplicate-player-id-resolution.cjs"
+    "manual:import-duplicate-player-id-resolution": "node scripts/test-import-duplicate-player-id-resolution.cjs",
+    "test:session-administration": "node scripts/test-session-administration.cjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.1",

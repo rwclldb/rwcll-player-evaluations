@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useSyncExternalStore } from "react";
@@ -18,13 +17,7 @@ const getServerSnapshot = () => false;
 
 export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
-
-  // Render a stable placeholder on the server and during initial hydration.
-  const mounted = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot
-  );
+  const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   if (!mounted) {
     return (
@@ -54,11 +47,7 @@ export function ThemeSwitcher() {
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
-
-      <DropdownMenuContent
-        align="end"
-        className="bg-card border-border text-foreground"
-      >
+      <DropdownMenuContent align="end" className="bg-card border-border text-foreground">
         <DropdownMenuItem
           onSelect={() => setTheme("light")}
           className={`cursor-pointer flex items-center gap-2 hover:bg-accent hover:text-accent-foreground ${
@@ -68,19 +57,15 @@ export function ThemeSwitcher() {
           <Sun className="h-4 w-4 text-amber-500" />
           <span>Light</span>
         </DropdownMenuItem>
-
         <DropdownMenuItem
           onSelect={() => setTheme("dark")}
           className={`cursor-pointer flex items-center gap-2 hover:bg-accent hover:text-accent-foreground ${
-            theme === "dark"
-              ? "text-emerald-700 dark:text-emerald-400 font-semibold"
-              : ""
+            theme === "dark" ? "text-emerald-700 dark:text-emerald-400 font-semibold" : ""
           }`}
         >
           <Moon className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
           <span>Dark</span>
         </DropdownMenuItem>
-
         <DropdownMenuItem
           onSelect={() => setTheme("system")}
           className={`cursor-pointer flex items-center gap-2 hover:bg-accent hover:text-accent-foreground ${

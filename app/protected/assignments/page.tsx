@@ -70,7 +70,7 @@ const EVALUATOR_TYPES = [
   { value: "independent_evaluator", label: "Independent evaluator" },
 ] as const;
 
-const LEAGUE_AGES = [16, 15, 14, 13, 12, 11, 10, 9, 8];
+const LEAGUE_AGES = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7];
 
 function accountLabel(candidate: Candidate) {
   return candidate.display_name?.trim() || candidate.email || candidate.user_id;

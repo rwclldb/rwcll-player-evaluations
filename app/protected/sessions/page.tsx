@@ -1,9 +1,10 @@
-import { Suspense } from "react";
+import { Fragment, Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createMissingAgeSessions } from "./actions";
 import { SessionActions } from "./SessionActions";
+import { SessionEventManager } from "./SessionEventManager";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ import {
   ArrowLeft
 } from "lucide-react";
 
-const LEAGUE_AGES = [16, 15, 14, 13, 12, 11, 10, 9, 8];
+const LEAGUE_AGES = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7];
 
 type SearchParams = Promise<{
   message?: string;
@@ -77,6 +78,16 @@ async function SessionsContent({
     .order("season_id", { ascending: false })
     .order("league_age", { ascending: false });
 
+  const { data: sessionEvents, error: eventsError } = await supabase
+    .from("evaluation_session_events")
+    .select("id, evaluation_session_id, event_type, event_date, start_time, end_time, location, notes")
+    .order("event_date", { ascending: true })
+    .order("start_time", { ascending: true });
+
+  const { data: evaluatorAssignments, error: assignmentsError } = await supabase
+    .from("evaluator_assignments")
+    .select("evaluation_session_id");
+
   return (
     <div className="space-y-8">
       {/* Top Header */}
@@ -94,7 +105,7 @@ async function SessionsContent({
             Evaluation Sessions
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage one session per Little League age group. Sessions start in setup and can be opened or locked.
+            Manage one session per Little League age group (ages 7–16). Sessions start in setup and can be opened or locked.
           </p>
         </div>
       </div>
@@ -112,9 +123,9 @@ async function SessionsContent({
         </div>
       )}
 
-      {(seasonsError || sessionsError) && (
+      {(seasonsError || sessionsError || eventsError || assignmentsError) && (
         <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300">
-          Could not load session data: {seasonsError?.message ?? sessionsError?.message}
+          Could not load session data: {seasonsError?.message ?? sessionsError?.message ?? eventsError?.message ?? assignmentsError?.message}
         </div>
       )}
 
@@ -162,7 +173,7 @@ async function SessionsContent({
                       </span>
                     </CardDescription>
                     <p className="text-xs text-muted-foreground mt-1 font-mono">
-                      {9 - missingCount} of 9 age sessions present
+                      {10 - missingCount} of 10 age sessions present
                     </p>
                   </div>
 
@@ -201,9 +212,13 @@ async function SessionsContent({
                     <tbody className="divide-y divide-border">
                       {LEAGUE_AGES.map((age) => {
                         const session = ageSessions.get(age);
+                        const ageEvents = sessionEvents?.filter((event) => event.evaluation_session_id === session?.id) ?? [];
+                        const hasPrimaryEvent = ageEvents.some((event) => event.event_type === "primary");
+                        const hasEvaluator = (evaluatorAssignments ?? []).some((assignment) => assignment.evaluation_session_id === session?.id);
 
                         return (
-                          <tr key={age} className="hover:bg-accent/50 transition-colors">
+                          <Fragment key={age}>
+                          <tr className="hover:bg-accent/50 transition-colors">
                             <td className="px-4 py-3 font-semibold text-foreground text-xs font-mono">
                               Age {age}
                             </td>
@@ -235,12 +250,39 @@ async function SessionsContent({
                                   session={session}
                                   seasonClosed={season.is_closed}
                                   age={age}
+                                  hasPrimaryEvent={hasPrimaryEvent}
+                                  hasEvaluator={hasEvaluator}
                                 />
                               ) : (
                                 <span className="text-xs font-mono text-slate-600 dark:text-slate-400">—</span>
                               )}
                             </td>
                           </tr>
+                          {session && (
+                            <tr>
+                              <td colSpan={4} className="px-3 pb-4 pt-1">
+                                <details className="group rounded-lg border border-border/70 bg-card/60">
+                                  <summary className="cursor-pointer list-none px-3 py-3 text-sm font-semibold text-foreground marker:hidden">
+                                    <span className="inline-flex items-center gap-2">
+                                      <Calendar className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+                                      Manage event schedule
+                                      <span className="text-xs font-normal text-muted-foreground">
+                                        {hasPrimaryEvent ? "Primary scheduled" : "Primary required"} · {ageEvents.filter((event) => event.event_type === "makeup").length} makeup
+                                      </span>
+                                    </span>
+                                  </summary>
+                                  <div className="border-t border-border/70 p-3">
+                                    <SessionEventManager
+                                      sessionId={session.id}
+                                      events={ageEvents}
+                                      disabled={season.is_closed || session.status !== "setup"}
+                                    />
+                                  </div>
+                                </details>
+                              </td>
+                            </tr>
+                          )}
+                          </Fragment>
                         );
                       })}
                     </tbody>
@@ -252,7 +294,7 @@ async function SessionsContent({
         })}
 
       <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
-        Note: Creating sessions does not automatically add players or assign evaluators. A locked session cannot be reopened. Only open a session when setup and evaluator access are ready.
+        Note: Sessions cover ages 7–16. Configure a primary event and assign at least one evaluator before opening. Makeup events are optional and can be added as needed. A locked session cannot be reopened.
       </p>
     </div>
   );

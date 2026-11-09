@@ -749,3 +749,13 @@ At the end of each substantial work session, update this file with
 verified state, changed files, test results, decisions, blockers, and
 the single best next step. Keep it factual; distinguish confirmed
 requirements, implemented code, and tested behavior.
+
+
+## 2026-11-09 Stage 1 session administration update (prepared, not yet applied locally)
+- User confirmed evaluation ages are 7–16; age 6 is excluded.
+- User confirmed all payment statuses, including Unpaid and Unknown and blank where present, are eligible for rating. Payment status should not be shown on evaluation screens.
+- Added migration `20261109090000_allow_all_payment_statuses_in_evaluations.sql`, which supersedes the earlier pending-only eligibility migration in database-side validation and scoped read policies.
+- Added migration `20261109100000_add_evaluation_session_events.sql`: one primary event per session, multiple makeup events, date/start/end/location/notes, assigned-evaluator read access, immutable schedules after opening/season close, and database guard requiring a primary event plus an evaluator assignment before opening.
+- Session admin UI/actions now schedule/edit/delete events in Setup, disable Open until primary event and evaluator assignment exist, and retain server/database checks. Session creation, evaluator assignment, evaluator workspace, and admin evaluation review age lists now include ages 7–16.
+- Added `npm run test:session-administration` and `docs/STAGE_1_SESSION_ADMINISTRATION_TESTS.md`. Static tests passed in the packaged workspace. Dependency installation timed out in this environment, so lint/TypeScript/build/full-suite results for these new changes are not yet verified.
+- These changes are prepared in a reviewed ZIP only. Do not assume the migrations are applied to local or hosted Supabase; apply to local only after inspecting migration status.

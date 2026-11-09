@@ -17,11 +17,9 @@ assert.match(reviewPage, /ratingSummary\(/, "review page must calculate player r
 assert.match(reviewPage, /CORE_CODES/, "rating summaries must use the five core categories");
 assert.match(reviewPage, /evaluation\.status === "submitted"/, "aggregate averages must use submitted evaluations only");
 assert.match(reviewPage, /values\.length \? \(values\.reduce/, "missing ratings must be excluded from averages");
-assert.match(evaluatorPage, /function isEligibleRegistrationStatus/, "evaluator page must centralize registration eligibility");
-assert.match(evaluatorPage, /\["completed", "paid", "pending"\]/, "Pending, Paid, and Completed registrations must be eligible");
-assert.match(reviewPage, /\["completed", "paid", "pending"\]/, "review page must use the same registration eligibility rule");
-assert.match(eligibilityMigration, /IN \('completed', 'paid', 'pending'\)/, "database eligibility and RLS must include Pending registrations");
-assert.match(eligibilityMigration, /Only Paid, Completed, or Pending registrations are eligible/, "database validation must document the eligibility rule");
+assert.doesNotMatch(evaluatorPage, /isEligibleRegistrationStatus|\.not\("registration_payment_status"/, "all payment statuses must be eligible for evaluation");
+assert.doesNotMatch(reviewPage, /isEligibleRegistrationStatus/, "admin review must include all registration statuses");
+assert.match(eligibilityMigration, /registration_payment_status/, "eligibility migration must retain registration payment data while allowing all statuses");
 assert.match(workspacePage, /\/protected\/evaluation-review/, "administrator workspace must link to review page");
 assert.match(signUpPage, /ALLOW_PUBLIC_SIGNUP !== "true"/, "public self-registration must be disabled unless explicitly enabled");
 assert.match(actions, /if \(process\.env\.ALLOW_PUBLIC_SIGNUP !== "true"\)/, "server action must reject public self-registration when disabled");

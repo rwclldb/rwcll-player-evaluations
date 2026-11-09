@@ -13,16 +13,13 @@ import {
   ShieldAlert, 
   Calendar, 
   UserCheck, 
-  Save, 
-  Layers 
+  Save,
+  Layers,
+  MapPin,
+  Clock,
 } from "lucide-react";
 
-const OLDEST_TO_YOUNGEST = [16, 15, 14, 13, 12, 11, 10, 9, 8];
-
-function isEligibleRegistrationStatus(status: string | null) {
-  const normalized = status?.trim().toLowerCase();
-  return ["completed", "paid", "pending"].includes(normalized ?? "");
-}
+const OLDEST_TO_YOUNGEST = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7];
 
 type SearchParams = Promise<{
   sessionId?: string;
@@ -169,6 +166,16 @@ async function EvaluatorWorkspaceContent({
       ? sessions.find((session) => session.id === requestedId)
       : undefined;
 
+  const selectedSessionEventsResult = selectedSession
+    ? await supabase
+        .from("evaluation_session_events")
+        .select("id, event_type, event_date, start_time, end_time, location, notes")
+        .eq("evaluation_session_id", selectedSession.id)
+        .order("event_date", { ascending: true })
+        .order("start_time", { ascending: true })
+    : { data: [], error: null };
+  const selectedSessionEvents = selectedSessionEventsResult.data ?? [];
+
   let registrations: EligibleRegistration[] = [];
   let evaluations: EvaluationRecord[] = [];
   let ratings: RatingRecord[] = [];
@@ -184,23 +191,17 @@ async function EvaluatorWorkspaceContent({
       const registrationResult = await supabase
         .from("player_seasons")
         .select(
-          "id, evaluation_number, registration_payment_status, players(first_name, last_name, date_of_birth)"
+          "id, evaluation_number, players(first_name, last_name, date_of_birth)"
         )
         .eq("season_id", selectedSession.season_id)
         .eq("league_age", selectedSession.league_age)
-        .not("registration_payment_status", "is", null)
         .order("evaluation_number", { ascending: true, nullsFirst: false });
 
       if (registrationResult.error) {
         playerLoadError = `Could not load eligible registrations: ${registrationResult.error.message}`;
       } else {
-        registrations = (
-          (registrationResult.data ?? []) as unknown as (EligibleRegistration & {
-            registration_payment_status?: string | null;
-          })[]
-        ).filter((registration) =>
-          isEligibleRegistrationStatus(registration.registration_payment_status ?? null)
-        );
+        // Evaluation eligibility is based on season and Little League age, not payment status.
+        registrations = (registrationResult.data ?? []) as unknown as EligibleRegistration[];
 
         const playerSeasonIds = registrations.map((row) => row.id);
 
@@ -345,6 +346,31 @@ async function EvaluatorWorkspaceContent({
               </CardHeader>
 
               <CardContent className="p-6 space-y-6">
+                {selectedSessionEvents.length > 0 && (
+                  <section className="rounded-lg border border-border bg-background p-4 space-y-3" aria-label="Scheduled evaluation events">
+                    <h3 className="text-sm font-semibold text-foreground">Scheduled events</h3>
+                    {selectedSessionEvents.map((event) => (
+                      <div key={event.id} className="flex flex-col gap-1 border-t border-border pt-3 first:border-t-0 first:pt-0 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="space-y-1">
+                          <p className="text-xs font-semibold text-foreground">
+                            {event.event_type === "primary" ? "Primary evaluation" : "Makeup evaluation"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {event.event_date} · {event.start_time.slice(0, 5)}–{event.end_time.slice(0, 5)}
+                          </p>
+                          <p className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3.5 w-3.5 shrink-0" />{event.location}</p>
+                          {event.notes && <p className="text-xs text-muted-foreground">{event.notes}</p>}
+                        </div>
+                        <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground"><Clock className="h-3 w-3" /> Local league time</span>
+                      </div>
+                    ))}
+                  </section>
+                )}
+                {selectedSessionEventsResult.error && (
+                  <div role="status" className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-200">
+                    Event schedule details are temporarily unavailable.
+                  </div>
+                )}
                 {selectedSession.status === "setup" ? (
                   <p className="text-xs font-mono text-muted-foreground">
                     This session is still being prepared. An administrator must open it before evaluation work can begin.
@@ -362,7 +388,7 @@ async function EvaluatorWorkspaceContent({
                     <ShieldAlert className="h-8 w-8 text-amber-700 dark:text-amber-400 mx-auto" />
                     <p className="text-sm font-semibold text-foreground">No Eligible Players Yet</p>
                     <p className="text-xs text-muted-foreground">
-                      No registrations match this season and age with an eligible registration status. Pending registrations remain eligible; unpaid and UNKNOWN registrations are excluded.
+                      No registrations match this season and Little League age. Check that the season registrations have been imported.
                     </p>
                   </div>
                 ) : (

@@ -12,9 +12,11 @@ interface SessionActionsProps {
   };
   seasonClosed?: boolean;
   age: number;
+  hasPrimaryEvent: boolean;
+  hasEvaluator: boolean;
 }
 
-export function SessionActions({ session, seasonClosed, age }: SessionActionsProps) {
+export function SessionActions({ session, seasonClosed, age, hasPrimaryEvent, hasEvaluator }: SessionActionsProps) {
   const [openModal, setOpenModal] = useState<"open" | "lock" | null>(null);
 
   if (seasonClosed || session.status === "locked") {
@@ -31,15 +33,27 @@ export function SessionActions({ session, seasonClosed, age }: SessionActionsPro
     <div className="relative inline-block text-left">
       {/* Action Trigger Buttons */}
       {session.status === "setup" && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setOpenModal(openModal === "open" ? null : "open")}
-          className="h-7 text-xs border-border bg-background hover:bg-accent text-slate-700 dark:text-slate-200"
-        >
-          <Play className="h-3 w-3 mr-1 text-emerald-700 dark:text-emerald-400" /> Open Session
-        </Button>
+        <div className="flex flex-col items-end gap-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!hasPrimaryEvent || !hasEvaluator}
+            onClick={() => setOpenModal(openModal === "open" ? null : "open")}
+            className="h-7 text-xs border-border bg-background hover:bg-accent text-slate-700 dark:text-slate-200"
+          >
+            <Play className="h-3 w-3 mr-1 text-emerald-700 dark:text-emerald-400" /> Open Session
+          </Button>
+          {(!hasPrimaryEvent || !hasEvaluator) && (
+            <span className="max-w-48 text-right text-[10px] text-muted-foreground">
+              {!hasPrimaryEvent && !hasEvaluator
+                ? "Schedule primary event and assign an evaluator"
+                : !hasPrimaryEvent
+                  ? "Schedule primary event first"
+                  : "Assign at least one evaluator first"}
+            </span>
+          )}
+        </div>
       )}
 
       {session.status === "open" && (

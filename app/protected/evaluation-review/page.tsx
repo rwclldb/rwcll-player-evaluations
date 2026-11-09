@@ -28,7 +28,6 @@ type Registration = {
   season_id: number;
   league_age: number | null;
   evaluation_number: number | null;
-  registration_payment_status: string | null;
   players: { first_name: string; last_name: string } | null;
 };
 type Evaluation = {
@@ -60,12 +59,7 @@ const CORE_CODES = [
   "fly_balls",
   "running_awareness",
 ] as const;
-const AGES = [16, 15, 14, 13, 12, 11, 10, 9, 8];
-
-function isEligibleRegistrationStatus(status: string | null) {
-  const normalized = status?.trim().toLowerCase();
-  return ["completed", "paid", "pending"].includes(normalized ?? "");
-}
+const AGES = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7];
 
 function ratingSummary(
   evaluationId: number,
@@ -130,7 +124,7 @@ async function EvaluationReviewContent() {
       .order("league_age", { ascending: false }),
     supabase
       .from("player_seasons")
-      .select("id, season_id, league_age, evaluation_number, registration_payment_status, players(first_name, last_name)"),
+      .select("id, season_id, league_age, evaluation_number, players(first_name, last_name)"),
     supabase
       .from("evaluations")
       .select("id, evaluation_session_id, player_season_id, evaluator_user_id, evaluator_type, status"),
@@ -224,8 +218,7 @@ async function EvaluationReviewContent() {
                   const eligible = registrations.filter(
                     (registration) =>
                       registration.season_id === season.id &&
-                      registration.league_age === age &&
-                      isEligibleRegistrationStatus(registration.registration_payment_status)
+                      registration.league_age === age
                   );
                   const sessionEvaluations = evaluations.filter(
                     (evaluation) => evaluation.evaluation_session_id === session.id
@@ -410,7 +403,6 @@ async function EvaluationReviewContent() {
                                 <tr>
                                   <th className="px-4 py-2.5">Player</th>
                                   <th className="px-4 py-2.5 text-center">Eval #</th>
-                                  <th className="px-4 py-2.5">Payment</th>
                                   <th className="px-4 py-2.5">Evaluation Records</th>
                                   <th className="px-4 py-2.5 text-center">Missing Core</th>
                                 </tr>
@@ -435,9 +427,6 @@ async function EvaluationReviewContent() {
                                       </td>
                                       <td className="px-4 py-3 text-center font-mono text-xs text-emerald-700 dark:text-emerald-400 font-bold">
                                         {registration.evaluation_number ?? "—"}
-                                      </td>
-                                      <td className="px-4 py-3 text-xs font-mono text-muted-foreground">
-                                        {registration.registration_payment_status ?? "Unknown"}
                                       </td>
                                       <td className="px-4 py-3">
                                         {playerEvaluations.length ? (
