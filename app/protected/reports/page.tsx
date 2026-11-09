@@ -60,13 +60,13 @@ async function ReportsContent({
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
             <Link href="/protected">
-              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Return to workspace
+              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Return to workspace
             </Link>
           </Button>
         </div>
         <h1 className="text-2xl font-bold text-foreground">Administrator Access Required</h1>
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 flex items-center gap-3">
-          <ShieldAlert className="h-5 w-5 text-amber-400 shrink-0" />
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-800 dark:text-amber-200 flex items-center gap-3">
+          <ShieldAlert className="h-5 w-5 text-amber-700 dark:text-amber-400 shrink-0" />
           <span>Full league analytics and reports are restricted to assigned administrators.</span>
         </div>
       </div>
@@ -84,7 +84,7 @@ async function ReportsContent({
   const activeSeason = seasons.find((s) => s.id === selectedSeasonId) || seasons[0];
 
   // Fetch player registrations for selected season
-  let registrationResult = activeSeason
+  const registrationResult = activeSeason
     ? await supabase
         .from("player_seasons")
         .select(`
@@ -115,12 +115,12 @@ async function ReportsContent({
           <div className="flex items-center gap-2 mb-2">
             <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
               <Link href="/protected">
-                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to workspace
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to workspace
               </Link>
             </Button>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <BarChart3 className="h-7 w-7 text-emerald-400" />
+            <BarChart3 className="h-7 w-7 text-emerald-700 dark:text-emerald-400" />
             League Executive Reports
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -129,7 +129,7 @@ async function ReportsContent({
         </div>
 
         {activeSeason && (
-          <Button asChild variant="outline" size="sm" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 text-xs font-mono">
+          <Button asChild variant="outline" size="sm" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 text-xs font-mono">
             <a href={`/protected/reports/export?seasonId=${activeSeason.id}`}>
               <Download className="h-3.5 w-3.5 mr-1.5" /> Export Season CSV
             </a>
@@ -142,7 +142,7 @@ async function ReportsContent({
         <Card className="border-border bg-card">
           <CardHeader className="py-3 border-b border-border/50">
             <CardTitle className="text-xs font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <Layers className="h-4 w-4 text-emerald-400" /> Select Season Context
+              <Layers className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Select Season Context
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
@@ -158,7 +158,7 @@ async function ReportsContent({
                     className={
                       isActive
                         ? "bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs font-semibold"
-                        : "border-border bg-background text-slate-300 hover:bg-accent text-xs"
+                        : "border-border bg-background text-slate-700 dark:text-slate-300 hover:bg-accent text-xs"
                     }
                   >
                     <Link href={`/protected/reports?seasonId=${s.id}`}>
@@ -179,11 +179,11 @@ async function ReportsContent({
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Total Registrations
             </CardTitle>
-            <Users className="h-4 w-4 text-emerald-400" />
+            <Users className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground font-mono">{registrations.length}</div>
-            <p className="text-xs text-slate-500 mt-1">Registered in {activeSeason?.name || "season"}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Registered in {activeSeason?.name || "season"}</p>
           </CardContent>
         </Card>
 
@@ -192,13 +192,13 @@ async function ReportsContent({
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Assigned Eval #s
             </CardTitle>
-            <UserCheck className="h-4 w-4 text-emerald-400" />
+            <UserCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-400 font-mono">
+            <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 font-mono">
               {registrations.filter((r) => r.evaluation_number !== null).length}
             </div>
-            <p className="text-xs text-slate-500 mt-1">Ready for station evaluation</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Ready for station evaluation</p>
           </CardContent>
         </Card>
 
@@ -207,13 +207,13 @@ async function ReportsContent({
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Active Season Context
             </CardTitle>
-            <Layers className="h-4 w-4 text-emerald-400" />
+            <Layers className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold text-foreground font-mono truncate">
               {activeSeason?.name || "None"}
             </div>
-            <p className="text-xs text-slate-500 mt-1">{activeSeason?.is_closed ? "Closed" : "Active Workspace"}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{activeSeason?.is_closed ? "Closed" : "Active Workspace"}</p>
           </CardContent>
         </Card>
       </div>
@@ -222,7 +222,7 @@ async function ReportsContent({
       <Card className="border-border bg-card">
         <CardHeader className="py-4 border-b border-border/50">
           <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-            <UserCheck className="h-4 w-4 text-emerald-400" />
+            <UserCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
             Player Directory & Report Log
           </CardTitle>
           <CardDescription className="text-xs text-muted-foreground">
@@ -232,11 +232,11 @@ async function ReportsContent({
 
         <CardContent className="p-0">
           {queryError ? (
-            <div className="p-6 text-xs text-rose-300 font-mono">
+            <div className="p-6 text-xs text-rose-700 dark:text-rose-300 font-mono">
               Could not load player reports: {queryError.message}
             </div>
           ) : registrations.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500 italic">
+            <div className="p-8 text-center text-xs text-slate-600 dark:text-slate-400 italic">
               No player registrations found for {activeSeason?.name || "this season"}.
             </div>
           ) : (
@@ -263,13 +263,13 @@ async function ReportsContent({
 
                     return (
                       <tr key={registration.id} className="hover:bg-accent/50 transition-colors">
-                        <td className="px-4 py-3 font-mono text-sm font-bold text-emerald-400">
+                        <td className="px-4 py-3 font-mono text-sm font-bold text-emerald-700 dark:text-emerald-400">
                           {registration.evaluation_number ? `#${registration.evaluation_number}` : "—"}
                         </td>
                         <td className="px-4 py-3 font-medium text-foreground text-xs">
                           {name}
                         </td>
-                        <td className="px-4 py-3 text-center text-xs font-mono text-slate-300 font-bold">
+                        <td className="px-4 py-3 text-center text-xs font-mono text-slate-700 dark:text-slate-300 font-bold">
                           {registration.league_age ?? "—"}
                         </td>
                         <td className="px-4 py-3 text-xs font-mono">
@@ -278,17 +278,17 @@ async function ReportsContent({
                             className={`text-xs ${
                               registration.registration_payment_status?.toLowerCase() === "paid" ||
                               registration.registration_payment_status?.toLowerCase() === "completed"
-                                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-                                : "border-amber-500/40 bg-amber-500/10 text-amber-400"
+                                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                                : "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
                             }`}
                           >
                             {registration.registration_payment_status ?? "Unknown"}
                           </Badge>
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <Button asChild variant="outline" size="sm" className="h-7 border-border bg-background text-xs text-slate-300 hover:bg-accent hover:text-foreground">
+                          <Button asChild variant="outline" size="sm" className="h-7 border-border bg-background text-xs text-slate-700 dark:text-slate-300 hover:bg-accent hover:text-foreground">
                             <Link href={`/protected/reports/player/${registration.id}`}>
-                              <FileText className="h-3.5 w-3.5 mr-1 text-emerald-400" /> Open Report
+                              <FileText className="h-3.5 w-3.5 mr-1 text-emerald-700 dark:text-emerald-400" /> Open Report
                             </Link>
                           </Button>
                         </td>

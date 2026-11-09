@@ -7,8 +7,8 @@ export default function AuthErrorPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <Card className="w-full max-w-md border-border bg-card text-center">
         <CardHeader>
-          <CardTitle className="text-xl text-rose-400">Authentication Error</CardTitle>
-          <CardDescription className="text-slate-300">
+          <CardTitle className="text-xl text-rose-700 dark:text-rose-400">Authentication Error</CardTitle>
+          <CardDescription className="text-slate-700 dark:text-slate-300">
             An issue occurred during authentication or link verification.
           </CardDescription>
         </CardHeader>

@@ -20,7 +20,7 @@ assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.coach_historical_repo
 assert.match(rosterPage, /coach_historical_report_roster/, "coach roster page must use the scoped roster RPC");
 assert.match(playerPage, /coach_historical_report"/, "coach report page must use the scoped history RPC");
 assert.doesNotMatch(playerPage, /from\("historical_evaluations"\)|from\("historical_ratings"\)/, "coach UI must not directly query admin-only historical tables");
-assert.match(playerPage, /if \(result\.error\) notFound\(\)/, "unauthorized player report requests must not disclose report data");
+assert.match(playerPage, /if \(result\.error\) \{\s*notFound\(\);\s*\}/, "unauthorized player report requests must not disclose report data");
 assert.match(evaluatorPage, /\/protected\/coach-reports/, "coach workspace must link to historical reports");
 
 console.log("PASS: scoped coach historical report authorization source checks");

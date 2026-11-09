@@ -91,7 +91,7 @@ async function PlayerReportContent({ params }: Props) {
 
   if (registrationResult.error) {
     return (
-      <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300 font-mono">
+      <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300 font-mono">
         Could not load player report: {registrationResult.error.message}
       </div>
     );
@@ -120,7 +120,7 @@ async function PlayerReportContent({ params }: Props) {
 
   if (loadError) {
     return (
-      <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300 font-mono">
+      <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300 font-mono">
         Could not load report details: {loadError}
       </div>
     );
@@ -202,14 +202,14 @@ async function PlayerReportContent({ params }: Props) {
       {/* Navigation & Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
         <div className="flex items-center gap-3">
-          <Button asChild variant="outline" size="sm" className="h-9 border-border bg-card text-xs text-slate-300 hover:bg-accent">
+          <Button asChild variant="outline" size="sm" className="h-9 border-border bg-card text-xs text-slate-700 dark:text-slate-300 hover:bg-accent">
             <Link href={`/protected/reports?seasonId=${registration.season_id}`}>
               <ArrowLeft className="h-4 w-4 mr-1 text-muted-foreground" /> Back to {seasonName} Reports
             </Link>
           </Button>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-              <User className="h-6 w-6 text-emerald-400" />
+              <User className="h-6 w-6 text-emerald-700 dark:text-emerald-400" />
               {playerName}
             </h1>
             <p className="text-xs text-muted-foreground">
@@ -219,7 +219,7 @@ async function PlayerReportContent({ params }: Props) {
         </div>
 
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="font-mono text-emerald-400 border-emerald-500/30 bg-emerald-500/10 py-1 px-3 text-xs">
+          <Badge variant="outline" className="font-mono text-emerald-700 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10 py-1 px-3 text-xs">
             {seasonName}
           </Badge>
           <Badge variant="default" className="font-mono py-1 px-3 bg-emerald-600 text-foreground text-xs">
@@ -229,7 +229,7 @@ async function PlayerReportContent({ params }: Props) {
       </div>
 
       {downstreamError && (
-        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300 font-mono">
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300 font-mono">
           Could not load all ratings: {downstreamError}
         </div>
       )}
@@ -241,13 +241,13 @@ async function PlayerReportContent({ params }: Props) {
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Little League Age
             </CardTitle>
-            <Calendar className="h-4 w-4 text-emerald-400" />
+            <Calendar className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground font-mono">
               Age {registration.league_age ?? "Not Set"}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
               DOB: {registration.players?.date_of_birth || "Not recorded"}
             </p>
           </CardContent>
@@ -258,13 +258,13 @@ async function PlayerReportContent({ params }: Props) {
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Registration Status
             </CardTitle>
-            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+            <ShieldCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold text-emerald-400 font-mono uppercase">
+            <div className="text-xl font-bold text-emerald-700 dark:text-emerald-400 font-mono uppercase">
               {registration.registration_payment_status ?? "Unknown"}
             </div>
-            <p className="text-xs text-slate-500 mt-1">Payment & clearance state</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Payment & clearance state</p>
           </CardContent>
         </Card>
 
@@ -273,13 +273,13 @@ async function PlayerReportContent({ params }: Props) {
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Current Evaluation Records
             </CardTitle>
-            <Award className="h-4 w-4 text-emerald-400" />
+            <Award className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground font-mono">
               {evaluations.length}
             </div>
-            <p className="text-xs text-slate-500 mt-1">Logged evaluator forms</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Logged evaluator forms</p>
           </CardContent>
         </Card>
       </div>
@@ -288,7 +288,7 @@ async function PlayerReportContent({ params }: Props) {
       <Card className="border-border bg-card">
         <CardHeader className="py-4 border-b border-border/50">
           <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-emerald-400" />
+            <BarChart3 className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
             Current-Season Evaluator Submissions
           </CardTitle>
           <CardDescription className="text-xs text-muted-foreground">
@@ -298,7 +298,7 @@ async function PlayerReportContent({ params }: Props) {
 
         <CardContent className="p-4 space-y-4">
           {evaluations.length === 0 ? (
-            <div className="p-6 text-center text-xs text-slate-500 italic">
+            <div className="p-6 text-center text-xs text-slate-600 dark:text-slate-400 italic">
               No current-season evaluation records found for this player.
             </div>
           ) : (
@@ -312,7 +312,7 @@ async function PlayerReportContent({ params }: Props) {
                     <div>
                       <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
                         Age {session?.league_age ?? "—"} &bull;{" "}
-                        <span className="text-emerald-400">
+                        <span className="text-emerald-700 dark:text-emerald-400">
                           {evaluation.evaluator_type === "independent_evaluator" ? "Independent Evaluator" : "Coach"}
                         </span>
                       </h4>
@@ -324,15 +324,15 @@ async function PlayerReportContent({ params }: Props) {
                   </div>
 
                   {ownRatings.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic">No category ratings entered.</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 italic">No category ratings entered.</p>
                   ) : (
                     <div className="grid gap-2 sm:grid-cols-2">
                       {ownRatings.map((rating) => {
                         const category = categories.find((item) => item.id === rating.rating_category_id);
                         return (
                           <div key={rating.rating_category_id} className="flex items-center justify-between rounded border border-border bg-card p-2.5 text-xs">
-                            <span className="text-slate-300 font-medium">{category?.name ?? "Unmapped category"}</span>
-                            <span className="font-mono font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded">
+                            <span className="text-slate-700 dark:text-slate-300 font-medium">{category?.name ?? "Unmapped category"}</span>
+                            <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded">
                               {rating.score} / 5
                             </span>
                           </div>
@@ -351,7 +351,7 @@ async function PlayerReportContent({ params }: Props) {
       <Card className="border-border bg-card">
         <CardHeader className="py-4 border-b border-border/50">
           <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-            <Users className="h-4 w-4 text-emerald-400" />
+            <Users className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
             Current Age-Group Benchmark Ratings
           </CardTitle>
           <CardDescription className="text-xs text-muted-foreground">
@@ -361,7 +361,7 @@ async function PlayerReportContent({ params }: Props) {
 
         <CardContent className="p-0">
           {registration.league_age === null || groupSessionIds.length === 0 ? (
-            <div className="p-6 text-center text-xs text-slate-500 italic">
+            <div className="p-6 text-center text-xs text-slate-600 dark:text-slate-400 italic">
               No age-group session is available for this registration.
             </div>
           ) : (
@@ -401,9 +401,9 @@ async function PlayerReportContent({ params }: Props) {
                       return (
                         <tr key={category.id} className="hover:bg-accent/50 transition-colors">
                           <td className="px-4 py-3 font-medium text-foreground text-xs">{category.name}</td>
-                          <td className="px-4 py-3 text-center font-mono text-xs text-slate-300">{coach.average}</td>
+                          <td className="px-4 py-3 text-center font-mono text-xs text-slate-700 dark:text-slate-300">{coach.average}</td>
                           <td className="px-4 py-3 text-center font-mono text-xs text-muted-foreground">{coach.count}</td>
-                          <td className="px-4 py-3 text-center font-mono text-xs text-emerald-400 font-bold">{independent.average}</td>
+                          <td className="px-4 py-3 text-center font-mono text-xs text-emerald-700 dark:text-emerald-400 font-bold">{independent.average}</td>
                           <td className="px-4 py-3 text-center font-mono text-xs text-muted-foreground">{independent.count}</td>
                         </tr>
                       );
@@ -419,7 +419,7 @@ async function PlayerReportContent({ params }: Props) {
       <Card className="border-border bg-card">
         <CardHeader className="py-4 border-b border-border/50">
           <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-            <History className="h-4 w-4 text-emerald-400" />
+            <History className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
             Historical Coach Evaluations
           </CardTitle>
           <CardDescription className="text-xs text-muted-foreground">
@@ -429,7 +429,7 @@ async function PlayerReportContent({ params }: Props) {
 
         <CardContent className="p-4 space-y-4">
           {historical.length === 0 ? (
-            <div className="p-6 text-center text-xs text-slate-500 italic">
+            <div className="p-6 text-center text-xs text-slate-600 dark:text-slate-400 italic">
               No matched historical coach evaluations found.
             </div>
           ) : (
@@ -444,19 +444,19 @@ async function PlayerReportContent({ params }: Props) {
                       {item.source_coach_name ? `Coach: ${item.source_coach_name}` : "Coach not recorded"} &bull; {item.source_division_name}
                       {item.source_team_label ? ` &bull; Team: ${item.source_team_label}` : ""}
                     </p>
-                    {item.coverage_note && <p className="mt-2 text-xs text-slate-300 italic">{item.coverage_note}</p>}
+                    {item.coverage_note && <p className="mt-2 text-xs text-slate-700 dark:text-slate-300 italic">{item.coverage_note}</p>}
                   </div>
 
                   {ownRatings.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic">No historical ratings recorded.</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 italic">No historical ratings recorded.</p>
                   ) : (
                     <div className="grid gap-2 sm:grid-cols-2">
                       {ownRatings.map((rating) => {
                         const category = categories.find((entry) => entry.id === rating.rating_category_id);
                         return (
                           <div key={`${item.id}:${rating.category_name}`} className="flex items-center justify-between rounded border border-border bg-card p-2.5 text-xs">
-                            <span className="text-slate-300 font-medium">{category?.name ?? rating.category_name}</span>
-                            <span className="font-mono font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded">
+                            <span className="text-slate-700 dark:text-slate-300 font-medium">{category?.name ?? rating.category_name}</span>
+                            <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded">
                               {rating.score} / 5
                             </span>
                           </div>

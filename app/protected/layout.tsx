@@ -18,7 +18,7 @@ async function ProtectedLayoutContent({
   }
 
   return (
-    <div className="min-h-screen bg-background text-slate-100 flex flex-col font-sans antialiased">
+    <div className="min-h-screen bg-background text-slate-800 dark:text-slate-100 flex flex-col font-sans antialiased">
       <AppHeader user={user} />
       <main className="flex-1 bg-gradient-to-b from-[#121824] to-[#0d131d]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">

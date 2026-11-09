@@ -55,7 +55,7 @@ export function RatingInputs({
           Player Ratings (1–5 Scale)
         </h4>
         <p className="text-[11px] text-muted-foreground font-mono">
-          1 is the lowest rating; 5 is the highest. Choose "Not scored" when a category was not evaluated.
+          1 is the lowest rating; 5 is the highest. Choose &quot;Not scored&quot; when a category was not evaluated.
         </p>
       </div>
 
@@ -73,7 +73,7 @@ export function RatingInputs({
         </div>
         <div>
           <p className="text-[11px] font-mono text-muted-foreground">Core Average</p>
-          <p className="text-lg font-bold text-emerald-400 font-mono mt-0.5" aria-live="polite">
+          <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400 font-mono mt-0.5" aria-live="polite">
             {summary.average === null ? "—" : summary.average.toFixed(1)}
           </p>
         </div>
@@ -89,7 +89,7 @@ export function RatingInputs({
       <div className="grid gap-4 sm:grid-cols-2">
         {categories.map((category) => (
           <div key={category.id} className="space-y-2 text-xs">
-            <span className="font-semibold text-slate-200 block">
+            <span className="font-semibold text-slate-700 dark:text-slate-200 block">
               {category.name}
               {category.category_group !== "core" && (
                 <span className="ml-2 text-[10px] font-mono text-muted-foreground uppercase">
@@ -132,7 +132,7 @@ export function RatingInputs({
                     }
                     className="peer sr-only"
                   />
-                  <span className="flex min-h-10 items-center justify-center rounded-md border border-border bg-card text-sm font-bold font-mono text-slate-200 transition-colors hover:bg-accent peer-checked:border-emerald-500 peer-checked:bg-emerald-600 peer-checked:text-foreground">
+                  <span className="flex min-h-10 items-center justify-center rounded-md border border-border bg-card text-sm font-bold font-mono text-slate-700 dark:text-slate-200 transition-colors hover:bg-accent peer-checked:border-emerald-500 peer-checked:bg-emerald-600 peer-checked:text-foreground">
                     {score}
                   </span>
                 </label>

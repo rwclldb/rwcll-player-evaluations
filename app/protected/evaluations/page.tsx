@@ -127,10 +127,10 @@ async function EvaluatorWorkspaceContent({
       <div className="space-y-6">
         <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
           <Link href="/protected">
-            <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to workspace
+            <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to workspace
           </Link>
         </Button>
-        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300">
           Could not verify your account permissions.
         </div>
       </div>
@@ -274,43 +274,43 @@ async function EvaluatorWorkspaceContent({
           <div className="flex items-center gap-2 mb-2">
             <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
               <Link href="/protected">
-                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to workspace
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to workspace
               </Link>
             </Button>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <ClipboardList className="h-7 w-7 text-emerald-400" />
+            <ClipboardList className="h-7 w-7 text-emerald-700 dark:text-emerald-400" />
             Evaluator Workspace
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Your assigned evaluation sessions, ordered from oldest to youngest.
           </p>
         </div>
-        <Button asChild variant="outline" size="sm" className="border-border bg-card text-xs text-slate-300 hover:bg-accent">
-          <Link href="/protected/coach-reports">View My Players' Historical Ratings &rarr;</Link>
+        <Button asChild variant="outline" size="sm" className="border-border bg-card text-xs text-slate-700 dark:text-slate-300 hover:bg-accent">
+          <Link href="/protected/coach-reports">View My Players&apos; Historical Ratings &rarr;</Link>
         </Button>
       </div>
 
       {params.message && (
-        <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300 font-mono">
+        <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-300 font-mono">
           {params.message}
         </div>
       )}
 
       {params.error && (
-        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300 font-mono">
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-700 dark:text-rose-300 font-mono">
           {params.error}
         </div>
       )}
 
       {sessionResult.error ? (
-        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300">
           Could not load your assigned sessions: {sessionResult.error.message}
         </div>
       ) : (
         <>
           {params.sessionId && !selectedSession && (
-            <div role="alert" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-300">
+            <div role="alert" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-800 dark:text-amber-300">
               That session was not found among the sessions available to your account. Ask an administrator to check your assignment.
             </div>
           )}
@@ -322,7 +322,7 @@ async function EvaluatorWorkspaceContent({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
-                      <Calendar className="h-5 w-5 text-emerald-400" />
+                      <Calendar className="h-5 w-5 text-emerald-700 dark:text-emerald-400" />
                       {ageLabel(selectedSession.league_age)} Session
                     </CardTitle>
                     <CardDescription className="text-xs text-muted-foreground font-mono mt-1">
@@ -333,9 +333,9 @@ async function EvaluatorWorkspaceContent({
                     variant="outline"
                     className={`text-xs font-mono w-fit ${
                       selectedSession.status === "open"
-                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                         : selectedSession.status === "setup"
-                        ? "border-amber-500/40 bg-amber-500/10 text-amber-400"
+                        ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
                         : "border-slate-700 bg-slate-800 text-muted-foreground"
                     }`}
                   >
@@ -354,12 +354,12 @@ async function EvaluatorWorkspaceContent({
                     This session is locked. Evaluation entry is not available.
                   </p>
                 ) : playerLoadError ? (
-                  <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
+                  <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300">
                     {playerLoadError}
                   </div>
                 ) : registrations.length === 0 ? (
                   <div className="rounded-lg border border-border bg-background p-6 text-center space-y-2">
-                    <ShieldAlert className="h-8 w-8 text-amber-400 mx-auto" />
+                    <ShieldAlert className="h-8 w-8 text-amber-700 dark:text-amber-400 mx-auto" />
                     <p className="text-sm font-semibold text-foreground">No Eligible Players Yet</p>
                     <p className="text-xs text-muted-foreground">
                       No registrations match this season and age with an eligible registration status. Pending registrations remain eligible; unpaid and UNKNOWN registrations are excluded.
@@ -368,7 +368,7 @@ async function EvaluatorWorkspaceContent({
                 ) : (
                   <div className="space-y-6">
                     <p className="text-xs text-muted-foreground font-mono">
-                      {registrations.length} eligible player{registrations.length === 1 ? "" : "s"}. Save each player's evaluation as a draft; saving does not submit it.
+                      {registrations.length} eligible player{registrations.length === 1 ? "" : "s"}. Save each player&apos;s evaluation as a draft; saving does not submit it.
                     </p>
 
                     {registrations.map((registration) => {
@@ -387,7 +387,7 @@ async function EvaluatorWorkspaceContent({
 
                           <div className="space-y-1 border-b border-border pb-3">
                             <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                              <UserCheck className="h-4 w-4 text-emerald-400" />
+                              <UserCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                               {player
                                 ? `${player.last_name}, ${player.first_name}`
                                 : `Player registration #${registration.id}`}
@@ -399,7 +399,7 @@ async function EvaluatorWorkspaceContent({
                               {player?.date_of_birth ? ` · DOB ${player.date_of_birth}` : ""}
                             </p>
                             {evaluation && (
-                              <p className="text-[11px] font-mono text-emerald-400">
+                              <p className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400">
                                 Existing evaluation status: {evaluation.status}
                               </p>
                             )}
@@ -436,7 +436,7 @@ async function EvaluatorWorkspaceContent({
 
                                 return (
                                   <div key={question.code} className="space-y-2 text-xs">
-                                    <span className="font-semibold text-slate-300 block">
+                                    <span className="font-semibold text-slate-700 dark:text-slate-300 block">
                                       {question.label}
                                     </span>
                                     <div className="grid grid-cols-3 gap-2" role="group" aria-label={question.label}>
@@ -453,7 +453,7 @@ async function EvaluatorWorkspaceContent({
                                             defaultChecked={(savedAnswer ?? "unknown") === option.value}
                                             className="peer sr-only"
                                           />
-                                          <span className="flex min-h-9 items-center justify-center rounded-md border border-border bg-card px-2 text-center text-xs font-medium text-slate-300 transition-colors hover:bg-accent peer-checked:border-emerald-500 peer-checked:bg-emerald-600 peer-checked:text-foreground">
+                                          <span className="flex min-h-9 items-center justify-center rounded-md border border-border bg-card px-2 text-center text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors hover:bg-accent peer-checked:border-emerald-500 peer-checked:bg-emerald-600 peer-checked:text-foreground">
                                             {option.label}
                                           </span>
                                         </label>
@@ -467,7 +467,7 @@ async function EvaluatorWorkspaceContent({
 
                           {/* Submit Action */}
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-border pt-4">
-                            <p className="text-xs font-mono text-slate-500">
+                            <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
                               Drafts remain editable until the session workflow prevents further changes.
                             </p>
                             <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs">
@@ -487,7 +487,7 @@ async function EvaluatorWorkspaceContent({
           <Card className="border-border bg-card">
             <CardHeader className="py-4 border-b border-border/50">
               <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                <Layers className="h-4 w-4 text-emerald-400" />
+                <Layers className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                 My Assigned Sessions
               </CardTitle>
             </CardHeader>
@@ -518,15 +518,15 @@ async function EvaluatorWorkspaceContent({
                               variant="outline"
                               className={`text-xs font-mono ${
                                 session.status === "open"
-                                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                                   : session.status === "setup"
-                                  ? "border-amber-500/40 bg-amber-500/10 text-amber-400"
+                                  ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
                                   : "border-slate-700 bg-slate-800 text-muted-foreground"
                               }`}
                             >
                               {session.status}
                             </Badge>
-                            <Button asChild variant="outline" size="sm" className="h-7 border-border bg-card text-xs text-slate-200 hover:bg-accent">
+                            <Button asChild variant="outline" size="sm" className="h-7 border-border bg-card text-xs text-slate-700 dark:text-slate-200 hover:bg-accent">
                               <Link href={`/protected/evaluations?sessionId=${session.id}`}>
                                 View Session
                               </Link>

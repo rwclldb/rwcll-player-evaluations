@@ -29,7 +29,7 @@ export function LoginForm({
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <Label htmlFor="password">Password</Label>
-              <Link href="/auth/forgot-password" className="text-xs text-emerald-400 hover:underline">
+              <Link href="/auth/forgot-password" className="text-xs text-emerald-700 dark:text-emerald-400 hover:underline">
                 Forgot password?
               </Link>
             </div>
@@ -37,7 +37,7 @@ export function LoginForm({
           </div>
 
           {searchParams?.message && (
-            <div className="p-3 text-xs rounded bg-rose-500/10 border border-rose-500/20 text-rose-400">
+            <div className="p-3 text-xs rounded bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400">
               {searchParams.message}
             </div>
           )}

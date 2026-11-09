@@ -17,7 +17,7 @@ export function Hero() {
       </div>
 
       <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl md:text-5xl">
-        RWCLL <span className="text-emerald-400">Player Evaluations</span>
+        RWCLL <span className="text-emerald-700 dark:text-emerald-400">Player Evaluations</span>
       </h1>
       <p className="mt-4 max-w-2xl text-muted-foreground text-base sm:text-lg">
         Manage evaluation sessions, track player ratings, and generate coach reports seamlessly for Redwood City Little League.

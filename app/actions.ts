@@ -57,6 +57,9 @@ export async function signOutAction() {
 }
 
 export async function signUpAction(formData: FormData) {
+  if (process.env.ALLOW_PUBLIC_SIGNUP !== "true") {
+    return redirect("/auth/sign-up");
+  }
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const supabase = await createClient();

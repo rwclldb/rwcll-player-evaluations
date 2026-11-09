@@ -18,7 +18,7 @@ export function SessionActions({ session, seasonClosed, age }: SessionActionsPro
   const [openModal, setOpenModal] = useState<"open" | "lock" | null>(null);
 
   if (seasonClosed || session.status === "locked") {
-    return <span className="text-xs font-mono text-slate-500">Locked Permanently</span>;
+    return <span className="text-xs font-mono text-slate-600 dark:text-slate-400">Locked Permanently</span>;
   }
 
   // Pop downward for higher age groups near table top to prevent overlapping header
@@ -36,9 +36,9 @@ export function SessionActions({ session, seasonClosed, age }: SessionActionsPro
           variant="outline"
           size="sm"
           onClick={() => setOpenModal(openModal === "open" ? null : "open")}
-          className="h-7 text-xs border-border bg-background hover:bg-accent text-slate-200"
+          className="h-7 text-xs border-border bg-background hover:bg-accent text-slate-700 dark:text-slate-200"
         >
-          <Play className="h-3 w-3 mr-1 text-emerald-400" /> Open Session
+          <Play className="h-3 w-3 mr-1 text-emerald-700 dark:text-emerald-400" /> Open Session
         </Button>
       )}
 
@@ -48,27 +48,27 @@ export function SessionActions({ session, seasonClosed, age }: SessionActionsPro
           variant="outline"
           size="sm"
           onClick={() => setOpenModal(openModal === "lock" ? null : "lock")}
-          className="h-7 text-xs border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300"
+          className="h-7 text-xs border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300"
         >
-          <Lock className="h-3 w-3 mr-1 text-amber-400" /> Lock Session
+          <Lock className="h-3 w-3 mr-1 text-amber-700 dark:text-amber-400" /> Lock Session
         </Button>
       )}
 
       {/* Confirmation Modal for Opening Session */}
       {openModal === "open" && (
         <div className={`absolute ${popoverPositionClass} right-0 w-72 rounded-lg border border-border bg-background p-4 shadow-2xl z-50 text-left`}>
-          <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold mb-1">
+          <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 text-xs font-bold mb-1">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             Open Age {age} Session?
           </div>
-          <p className="text-[11px] text-slate-300 leading-normal mb-3">
-            Are you ready to enable scoring for <span className="text-emerald-400 font-semibold">League Age {age}</span>? This will make the session active for assigned evaluators.
+          <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-normal mb-3">
+            Are you ready to enable scoring for <span className="text-emerald-700 dark:text-emerald-400 font-semibold">League Age {age}</span>? This will make the session active for assigned evaluators.
           </p>
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={() => setOpenModal(null)}
-              className="rounded border border-border bg-card px-3 py-1 text-xs font-medium text-slate-300 hover:bg-accent transition-colors"
+              className="rounded border border-border bg-card px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-accent transition-colors"
             >
               Cancel
             </button>
@@ -89,19 +89,19 @@ export function SessionActions({ session, seasonClosed, age }: SessionActionsPro
       {/* Confirmation Modal for Locking Session */}
       {openModal === "lock" && (
         <div className={`absolute ${popoverPositionClass} right-0 w-72 rounded-lg border border-border bg-background p-4 shadow-2xl z-50 text-left`}>
-          <div className="flex items-center gap-2 text-amber-400 text-xs font-bold mb-1">
+          <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-xs font-bold mb-1">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             Lock Age {age} Session?
           </div>
-          <p className="text-[11px] text-slate-300 leading-normal mb-3">
+          <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-normal mb-3">
             Locking is permanent. Once locked, evaluators cannot enter or modify scores and{" "}
-            <span className="text-amber-400 font-semibold">this session cannot be reopened</span>.
+            <span className="text-amber-700 dark:text-amber-400 font-semibold">this session cannot be reopened</span>.
           </p>
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={() => setOpenModal(null)}
-              className="rounded border border-border bg-card px-3 py-1 text-xs font-medium text-slate-300 hover:bg-accent transition-colors"
+              className="rounded border border-border bg-card px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-accent transition-colors"
             >
               Cancel
             </button>

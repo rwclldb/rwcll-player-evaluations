@@ -175,12 +175,12 @@ async function EvaluationReviewContent() {
           <div className="flex items-center gap-2 mb-2">
             <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
               <Link href="/protected">
-                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to workspace
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to workspace
               </Link>
             </Button>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <ClipboardCheck className="h-7 w-7 text-emerald-400" />
+            <ClipboardCheck className="h-7 w-7 text-emerald-700 dark:text-emerald-400" />
             Administrator Evaluation Review
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -190,14 +190,14 @@ async function EvaluationReviewContent() {
       </div>
 
       {loadError || ratingResult.error ? (
-        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300 font-mono">
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300 font-mono">
           Could not load evaluation review data: {loadError ?? ratingResult.error?.message}
         </div>
       ) : sessions.length === 0 ? (
         <Card className="border-border bg-card p-8 text-center space-y-3">
-          <ShieldAlert className="h-8 w-8 text-amber-400 mx-auto" />
+          <ShieldAlert className="h-8 w-8 text-amber-700 dark:text-amber-400 mx-auto" />
           <p className="text-sm font-semibold text-foreground">No Age-Based Evaluation Sessions Found</p>
-          <Button asChild variant="outline" size="sm" className="border-border bg-background text-xs text-slate-300 hover:bg-accent">
+          <Button asChild variant="outline" size="sm" className="border-border bg-background text-xs text-slate-700 dark:text-slate-300 hover:bg-accent">
             <Link href="/protected/sessions">Manage Sessions</Link>
           </Button>
         </Card>
@@ -211,7 +211,7 @@ async function EvaluationReviewContent() {
               <div key={season.id} className="space-y-6">
                 <div className="border-b border-border pb-3">
                   <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                    <Layers className="h-5 w-5 text-emerald-400" />
+                    <Layers className="h-5 w-5 text-emerald-700 dark:text-emerald-400" />
                     {season.name}
                   </h2>
                   <p className="text-xs text-muted-foreground font-mono mt-0.5">
@@ -251,11 +251,11 @@ async function EvaluationReviewContent() {
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                           <div>
                             <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-emerald-400" />
+                              <Calendar className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                               Age {age} &bull; Session #{session.id}
                             </CardTitle>
                             <CardDescription className="text-xs text-muted-foreground font-mono mt-1">
-                              Status: <span className="text-emerald-400 font-semibold">{session.status}</span>
+                              Status: <span className="text-emerald-700 dark:text-emerald-400 font-semibold">{session.status}</span>
                             </CardDescription>
                           </div>
 
@@ -267,13 +267,13 @@ async function EvaluationReviewContent() {
                             </div>
                             <div className="rounded border border-border bg-background p-2">
                               <p className="text-[10px] font-mono text-muted-foreground">Evaluated</p>
-                              <p className="text-sm font-bold text-emerald-400 font-mono">
+                              <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400 font-mono">
                                 {eligible.filter((r) => evaluatedPlayerIds.has(r.id)).length}
                               </p>
                             </div>
                             <div className="rounded border border-border bg-background p-2">
                               <p className="text-[10px] font-mono text-muted-foreground">Missing</p>
-                              <p className="text-sm font-bold text-amber-400 font-mono">{missing.length}</p>
+                              <p className="text-sm font-bold text-amber-700 dark:text-amber-400 font-mono">{missing.length}</p>
                             </div>
                             <div className="rounded border border-border bg-background p-2">
                               <p className="text-[10px] font-mono text-muted-foreground">Draft/Submitted</p>
@@ -333,13 +333,13 @@ async function EvaluationReviewContent() {
                                         <td className="px-4 py-2.5 font-medium text-foreground text-xs">
                                           {category.name}
                                         </td>
-                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-slate-300">
+                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-slate-700 dark:text-slate-300">
                                           {coach.average}
                                         </td>
                                         <td className="px-4 py-2.5 text-center font-mono text-xs text-muted-foreground">
                                           {coach.count}
                                         </td>
-                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-emerald-400 font-bold">
+                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-emerald-700 dark:text-emerald-400 font-bold">
                                           {independent.average}
                                         </td>
                                         <td className="px-4 py-2.5 text-center font-mono text-xs text-muted-foreground">
@@ -381,13 +381,13 @@ async function EvaluationReviewContent() {
                                         <td className="px-4 py-2.5 text-xs font-mono text-muted-foreground">
                                           {type === "independent_evaluator" ? "Independent evaluator" : "Coach"}
                                         </td>
-                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-slate-300">
+                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-slate-700 dark:text-slate-300">
                                           {rows.length}
                                         </td>
-                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-amber-400">
+                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-amber-700 dark:text-amber-400">
                                           {rows.filter((row) => row.status === "draft").length}
                                         </td>
-                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-emerald-400 font-bold">
+                                        <td className="px-4 py-2.5 text-center font-mono text-xs text-emerald-700 dark:text-emerald-400 font-bold">
                                           {rows.filter((row) => row.status === "submitted").length}
                                         </td>
                                       </tr>
@@ -401,7 +401,7 @@ async function EvaluationReviewContent() {
 
                         {/* Collapsible Player Level Details */}
                         <details className="group pt-2 border-t border-border">
-                          <summary className="cursor-pointer font-bold text-xs font-mono text-emerald-400 hover:text-emerald-300 py-2">
+                          <summary className="cursor-pointer font-bold text-xs font-mono text-emerald-700 dark:text-emerald-400 hover:text-emerald-300 py-2">
                             + View Player-Level Review ({eligible.length} Eligible Players)
                           </summary>
                           <div className="mt-3 overflow-x-auto rounded-md border border-border">
@@ -433,7 +433,7 @@ async function EvaluationReviewContent() {
                                       <td className="px-4 py-3 font-medium text-foreground text-xs">
                                         {name}
                                       </td>
-                                      <td className="px-4 py-3 text-center font-mono text-xs text-emerald-400 font-bold">
+                                      <td className="px-4 py-3 text-center font-mono text-xs text-emerald-700 dark:text-emerald-400 font-bold">
                                         {registration.evaluation_number ?? "—"}
                                       </td>
                                       <td className="px-4 py-3 text-xs font-mono text-muted-foreground">
@@ -448,14 +448,14 @@ async function EvaluationReviewContent() {
                                                 <div key={evaluation.id} className="rounded border border-border bg-background p-2 text-xs">
                                                   <p className="font-semibold text-foreground">
                                                     {evaluation.status} &bull;{" "}
-                                                    <span className="text-emerald-400">
+                                                    <span className="text-emerald-700 dark:text-emerald-400">
                                                       {evaluation.evaluator_type === "independent_evaluator" ? "Independent" : "Coach"}
                                                     </span>
                                                   </p>
                                                   <p className="text-[11px] font-mono text-muted-foreground">
                                                     {evaluatorName(evaluation.evaluator_user_id)}
                                                   </p>
-                                                  <p className="text-[11px] font-mono text-slate-300 mt-1">
+                                                  <p className="text-[11px] font-mono text-slate-700 dark:text-slate-300 mt-1">
                                                     Total: {summary.total} &bull; Avg: {summary.average} &bull; Rated: {summary.count}/5
                                                   </p>
                                                 </div>
@@ -463,10 +463,10 @@ async function EvaluationReviewContent() {
                                             })}
                                           </div>
                                         ) : (
-                                          <span className="text-xs text-slate-500 italic">No record</span>
+                                          <span className="text-xs text-slate-600 dark:text-slate-400 italic">No record</span>
                                         )}
                                       </td>
-                                      <td className="px-4 py-3 text-center font-mono text-xs font-bold text-amber-400">
+                                      <td className="px-4 py-3 text-center font-mono text-xs font-bold text-amber-700 dark:text-amber-400">
                                         {missingCore}
                                       </td>
                                     </tr>
@@ -479,7 +479,7 @@ async function EvaluationReviewContent() {
 
                         {missing.length > 0 && (
                           <details className="group pt-2 border-t border-border">
-                            <summary className="cursor-pointer font-bold text-xs font-mono text-rose-400 hover:text-rose-300 py-1">
+                            <summary className="cursor-pointer font-bold text-xs font-mono text-rose-700 dark:text-rose-400 hover:text-rose-300 py-1">
                               + View Players With No Evaluation Record ({missing.length})
                             </summary>
                             <ul className="mt-2 list-disc space-y-1 pl-5 text-xs font-mono text-muted-foreground">

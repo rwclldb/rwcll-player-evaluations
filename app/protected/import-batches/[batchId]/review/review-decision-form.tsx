@@ -158,14 +158,14 @@ export function ReviewDecisionForm({
       {/* Committed Registration Card */}
       {isCommitted && (
         <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4 text-xs space-y-1">
-          <h3 className="font-semibold text-emerald-400 flex items-center gap-1.5">
+          <h3 className="font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
             <CheckCircle2 className="h-4 w-4 shrink-0" /> Commit Details
           </h3>
-          <p className="text-slate-300">
+          <p className="text-slate-700 dark:text-slate-300">
             <span className="font-medium text-foreground">Player:</span>{" "}
             {committedPlayerLabel ?? "Could not load the linked player name"}
           </p>
-          <p className="text-slate-300 font-mono">
+          <p className="text-slate-700 dark:text-slate-300 font-mono">
             <span className="font-medium text-foreground">Season Registration ID:</span>{" "}
             {committedPlayerSeasonId ?? "—"}
           </p>
@@ -175,13 +175,13 @@ export function ReviewDecisionForm({
       {/* Duplicate Player ID Warning Controls */}
       {hasDuplicatePlayerIdFlag && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs space-y-3">
-          <h3 className="font-semibold text-amber-400 flex items-center gap-1.5">
+          <h3 className="font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
             <AlertTriangle className="h-4 w-4 shrink-0" /> Duplicate Player ID Warning
           </h3>
 
           {duplicatePlayerIdResolved ? (
-            <div className="space-y-1 text-slate-300">
-              <p className="font-semibold text-emerald-400">Explicitly Resolved</p>
+            <div className="space-y-1 text-slate-700 dark:text-slate-300">
+              <p className="font-semibold text-emerald-700 dark:text-emerald-400">Explicitly Resolved</p>
               <p>Resolution reason: {duplicatePlayerIdResolutionReason || "Not available"}</p>
               <p className="text-[11px] text-muted-foreground italic">
                 The original import warning is preserved. The resolution and audit entry are recorded separately.
@@ -189,12 +189,12 @@ export function ReviewDecisionForm({
             </div>
           ) : (
             <>
-              <p className="text-slate-300 leading-relaxed">
+              <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
                 This row has a duplicate Player ID warning from the uploaded file. Verify source rows and player identity before resolving it.
               </p>
 
               <div className="space-y-1">
-                <label className="text-slate-300 font-semibold block">
+                <label className="text-slate-700 dark:text-slate-300 font-semibold block">
                   Resolution Reason <span className="text-muted-foreground font-normal">(5–1,000 characters)</span>
                 </label>
                 <textarea
@@ -222,14 +222,14 @@ export function ReviewDecisionForm({
                     duplicateResolutionReason.trim().length < 5 ||
                     duplicateResolutionReason.trim().length > 1000
                   }
-                  className="border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-xs"
+                  className="border-amber-500/40 bg-amber-500/20 text-amber-800 dark:text-amber-300 hover:bg-amber-500/30 text-xs"
                 >
                   {isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : null}
                   Resolve Duplicate Player ID Warning
                 </Button>
 
                 {duplicateResolutionMessage && (
-                  <span className="text-xs font-mono text-emerald-400">{duplicateResolutionMessage}</span>
+                  <span className="text-xs font-mono text-emerald-700 dark:text-emerald-400">{duplicateResolutionMessage}</span>
                 )}
               </div>
             </>
@@ -240,15 +240,15 @@ export function ReviewDecisionForm({
       {/* Ignored Row Controls */}
       {isIgnored && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs space-y-3">
-          <h3 className="font-semibold text-amber-400 flex items-center gap-1.5">
+          <h3 className="font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
             <Lock className="h-4 w-4 shrink-0" /> Row Is Ignored
           </h3>
-          <p className="text-slate-300 leading-relaxed">
+          <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
             Ignored rows cannot be changed through ordinary review. An administrator must explicitly reopen this row and record a reason.
           </p>
 
           <div className="space-y-1">
-            <label className="text-slate-300 font-semibold block">
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block">
               Reopening Reason <span className="text-muted-foreground font-normal">(5–1,000 characters)</span>
             </label>
             <textarea
@@ -276,13 +276,13 @@ export function ReviewDecisionForm({
                 reopenReason.trim().length < 5 ||
                 reopenReason.trim().length > 1000
               }
-              className="border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-xs"
+              className="border-amber-500/40 bg-amber-500/20 text-amber-800 dark:text-amber-300 hover:bg-amber-500/30 text-xs"
             >
               {isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
               Reopen Ignored Row
             </Button>
 
-            {reopenMessage && <span className="text-xs font-mono text-emerald-400">{reopenMessage}</span>}
+            {reopenMessage && <span className="text-xs font-mono text-emerald-700 dark:text-emerald-400">{reopenMessage}</span>}
           </div>
         </div>
       )}
@@ -290,11 +290,11 @@ export function ReviewDecisionForm({
       {/* Review Decision Standard Form */}
       <div className="space-y-3">
         <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-          <UserCheck className="h-4 w-4 text-emerald-400" /> Review Decision
+          <UserCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Review Decision
         </h3>
 
         <div className="space-y-1">
-          <label className="text-xs font-semibold text-slate-300 block">Decision</label>
+          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">Decision</label>
           <select
             className="w-full rounded-md border border-border bg-background p-2 text-xs text-foreground focus:outline-none focus:border-emerald-500"
             value={decision}
@@ -311,8 +311,8 @@ export function ReviewDecisionForm({
 
         {match && (
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300 block">
-              Existing Player <span className="text-rose-400">*</span>
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
+              Existing Player <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <select
               className="w-full rounded-md border border-border bg-background p-2 text-xs text-foreground focus:outline-none focus:border-emerald-500"
@@ -328,7 +328,7 @@ export function ReviewDecisionForm({
               ))}
             </select>
             {candidates.length === 0 && (
-              <p className="text-xs text-amber-400 font-mono italic mt-1">
+              <p className="text-xs text-amber-700 dark:text-amber-400 font-mono italic mt-1">
                 No suggestions available. Do not approve a match without verifying the player.
               </p>
             )}
@@ -336,7 +336,7 @@ export function ReviewDecisionForm({
         )}
 
         <div className="space-y-1">
-          <label className="text-xs font-semibold text-slate-300 block">
+          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
             Reason <span className="text-muted-foreground font-normal">(5–1,000 characters)</span>
           </label>
           <textarea
@@ -371,22 +371,22 @@ export function ReviewDecisionForm({
             Save Decision
           </Button>
 
-          {message && <span className="text-xs font-mono text-emerald-400">{message}</span>}
+          {message && <span className="text-xs font-mono text-emerald-700 dark:text-emerald-400">{message}</span>}
         </div>
       </div>
 
       {/* Commit Approved Row Section */}
       {(currentDecision === "approved_new" || currentDecision === "approved_match") && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs space-y-3">
-          <h3 className="font-semibold text-amber-400 flex items-center gap-1.5">
+          <h3 className="font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
             <CheckCircle2 className="h-4 w-4 shrink-0" /> Commit Approved Row
           </h3>
-          <p className="text-slate-300 leading-relaxed">
+          <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
             This creates the season registration and, for an approved new player, creates the player record. Confirm review decision and source data before continuing.
           </p>
 
           <div className="space-y-1">
-            <label className="text-slate-300 font-semibold block">
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block">
               Commit Reason <span className="text-muted-foreground font-normal">(5–1,000 characters)</span>
             </label>
             <textarea
@@ -413,17 +413,17 @@ export function ReviewDecisionForm({
                 commitReason.trim().length < 5 ||
                 commitReason.trim().length > 1000
               }
-              className="border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-xs"
+              className="border-amber-500/40 bg-amber-500/20 text-amber-800 dark:text-amber-300 hover:bg-amber-500/30 text-xs"
             >
               {isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : null}
               Commit Approved Row
             </Button>
-            {commitMessage && <span className="text-xs font-mono text-emerald-400">{commitMessage}</span>}
+            {commitMessage && <span className="text-xs font-mono text-emerald-700 dark:text-emerald-400">{commitMessage}</span>}
           </div>
         </div>
       )}
 
-      <p className="text-xs font-mono text-slate-500">
+      <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
         Every successful save records a reason and audit entry. This does not create a player or registration. Verify name and birth date manually; IDs alone are not proof of identity.
       </p>
     </div>

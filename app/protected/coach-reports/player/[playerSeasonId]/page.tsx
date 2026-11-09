@@ -56,10 +56,10 @@ async function CoachPlayerReportContent({ params }: Props) {
       <div className="space-y-6">
         <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
           <Link href="/protected/coach-reports">
-            <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to assigned players
+            <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to assigned players
           </Link>
         </Button>
-        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300">
           Could not verify account permissions.
         </div>
       </div>
@@ -107,14 +107,14 @@ async function CoachPlayerReportContent({ params }: Props) {
       {/* Top Header & Navigation Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
         <div className="flex items-center gap-3">
-          <Button asChild variant="outline" size="sm" className="h-9 border-border bg-card text-xs text-slate-300 hover:bg-accent">
+          <Button asChild variant="outline" size="sm" className="h-9 border-border bg-card text-xs text-slate-700 dark:text-slate-300 hover:bg-accent">
             <Link href="/protected/coach-reports">
               <ArrowLeft className="h-4 w-4 mr-1 text-muted-foreground" /> Back to Assigned Players
             </Link>
           </Button>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-              <User className="h-6 w-6 text-emerald-400" />
+              <User className="h-6 w-6 text-emerald-700 dark:text-emerald-400" />
               {playerName}
             </h1>
             <p className="text-xs text-muted-foreground">
@@ -123,15 +123,15 @@ async function CoachPlayerReportContent({ params }: Props) {
           </div>
         </div>
 
-        <Badge variant="outline" className="font-mono text-emerald-400 border-emerald-500/30 bg-emerald-500/10 py-1 px-3 text-xs w-fit">
+        <Badge variant="outline" className="font-mono text-emerald-700 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10 py-1 px-3 text-xs w-fit">
           Coach Access Scoped
         </Badge>
       </div>
 
       {/* Info Context Note */}
       <Card className="border-border bg-card">
-        <CardContent className="p-4 flex items-center gap-3 text-xs text-slate-300">
-          <History className="h-5 w-5 text-emerald-400 shrink-0" />
+        <CardContent className="p-4 flex items-center gap-3 text-xs text-slate-700 dark:text-slate-300">
+          <History className="h-5 w-5 text-emerald-700 dark:text-emerald-400 shrink-0" />
           <span>
             These ratings show prior-season coach evaluations for context only. They are read-only and are not combined with current-season evaluation averages.
           </span>
@@ -142,7 +142,7 @@ async function CoachPlayerReportContent({ params }: Props) {
       <div className="space-y-6">
         {evaluations.length === 0 ? (
           <Card className="border-border bg-card p-8 text-center space-y-2">
-            <ShieldAlert className="h-8 w-8 text-amber-400 mx-auto" />
+            <ShieldAlert className="h-8 w-8 text-amber-700 dark:text-amber-400 mx-auto" />
             <p className="text-sm font-semibold text-foreground">No Historical Ratings Available</p>
             <p className="text-xs text-muted-foreground">
               No matched historical coach evaluations were found for this player.
@@ -163,7 +163,7 @@ async function CoachPlayerReportContent({ params }: Props) {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
-                        <Award className="h-4 w-4 text-emerald-400" />
+                        <Award className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                         {evaluation.season ?? "Season Not Recorded"}
                       </CardTitle>
                       <CardDescription className="text-xs text-muted-foreground font-mono mt-0.5">
@@ -174,7 +174,7 @@ async function CoachPlayerReportContent({ params }: Props) {
                     </div>
                   </div>
                   {evaluation.coverage && (
-                    <p className="mt-2 text-xs text-slate-300 italic font-mono">
+                    <p className="mt-2 text-xs text-slate-700 dark:text-slate-300 italic font-mono">
                       {evaluation.coverage}
                     </p>
                   )}
@@ -182,7 +182,7 @@ async function CoachPlayerReportContent({ params }: Props) {
 
                 <CardContent className="p-4">
                   {ratings.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic">No historical ratings recorded.</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 italic">No historical ratings recorded.</p>
                   ) : (
                     <div className="grid gap-3 sm:grid-cols-2">
                       {ratings.map((rating) => (
@@ -190,8 +190,8 @@ async function CoachPlayerReportContent({ params }: Props) {
                           key={`${evaluation.id}:${rating.category_name}`}
                           className="flex items-center justify-between rounded-lg border border-border bg-background p-3 text-xs"
                         >
-                          <span className="font-semibold text-slate-200">{rating.category_name}</span>
-                          <span className="font-mono font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2.5 py-1 rounded">
+                          <span className="font-semibold text-slate-700 dark:text-slate-200">{rating.category_name}</span>
+                          <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2.5 py-1 rounded">
                             {rating.score} / 5
                           </span>
                         </div>

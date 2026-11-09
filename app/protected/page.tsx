@@ -23,6 +23,14 @@ import {
   ClipboardCheck
 } from "lucide-react";
 
+type SeasonListItem = {
+  id: number;
+  name: string;
+  start_date: string | null;
+  end_date: string | null;
+  is_closed: boolean;
+};
+
 async function ProtectedDashboardContent() {
   const supabase = await createClient();
   const {
@@ -61,16 +69,16 @@ async function ProtectedDashboardContent() {
             Evaluations Dashboard
           </h1>
           <div className="mt-1 text-sm text-muted-foreground flex items-center gap-2">
-            <span>Welcome back, <span className="text-emerald-400 font-mono">{user.email}</span></span>
+            <span>Welcome back, <span className="text-emerald-700 dark:text-emerald-400 font-mono">{user.email}</span></span>
             {administrator && (
-              <Badge variant="outline" className="text-[10px] font-mono border-amber-500/40 bg-amber-500/10 text-amber-400 gap-1">
+              <Badge variant="outline" className="text-[10px] font-mono border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400 gap-1">
                 <ShieldCheck className="h-3 w-3" /> Admin Mode
               </Badge>
             )}
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Badge variant="outline" className="py-1 px-3 border-emerald-500/40 bg-emerald-500/10 text-emerald-400 font-mono text-xs">
+          <Badge variant="outline" className="py-1 px-3 border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono text-xs">
             Active Season: {activeSeasonName}
           </Badge>
           {!administrator && (
@@ -87,7 +95,7 @@ async function ProtectedDashboardContent() {
       {administrator && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-mono uppercase tracking-wider text-amber-400 font-semibold flex items-center gap-1.5">
+            <h2 className="text-xs font-mono uppercase tracking-wider text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-1.5">
               <ShieldCheck className="h-3.5 w-3.5" /> Registration Administration
             </h2>
           </div>
@@ -99,7 +107,7 @@ async function ProtectedDashboardContent() {
                 <CardTitle className="text-base font-semibold text-foreground">
                   Sports Connect Import
                 </CardTitle>
-                <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 group-hover:bg-amber-500 group-hover:text-foreground transition-colors">
+                <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-700 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-foreground transition-colors">
                   <UploadCloud className="h-5 w-5" />
                 </div>
               </CardHeader>
@@ -107,7 +115,7 @@ async function ProtectedDashboardContent() {
                 <CardDescription className="text-xs text-muted-foreground">
                   Upload and stage new CSV player rosters exported from Sports Connect.
                 </CardDescription>
-                <Button asChild variant="outline" className="w-full border-border bg-background hover:bg-accent text-amber-300 text-xs">
+                <Button asChild variant="outline" className="w-full border-border bg-background hover:bg-accent text-amber-800 dark:text-amber-300 text-xs">
                   <Link href="/protected/import-preview">Sports Connect Import</Link>
                 </Button>
               </CardContent>
@@ -119,7 +127,7 @@ async function ProtectedDashboardContent() {
                 <CardTitle className="text-base font-semibold text-foreground">
                   Staged Import Review
                 </CardTitle>
-                <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 group-hover:bg-amber-500 group-hover:text-foreground transition-colors">
+                <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-700 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-foreground transition-colors">
                   <FileSpreadsheet className="h-5 w-5" />
                 </div>
               </CardHeader>
@@ -127,7 +135,7 @@ async function ProtectedDashboardContent() {
                 <CardDescription className="text-xs text-muted-foreground">
                   Review historical player batch imports and check mapping errors.
                 </CardDescription>
-                <Button asChild variant="outline" className="w-full border-border bg-background hover:bg-accent text-amber-300 text-xs">
+                <Button asChild variant="outline" className="w-full border-border bg-background hover:bg-accent text-amber-800 dark:text-amber-300 text-xs">
                   <Link href="/protected/import-batches">Review Staged Batches</Link>
                 </Button>
               </CardContent>
@@ -143,7 +151,7 @@ async function ProtectedDashboardContent() {
           <Card className="border-border bg-card lg:col-span-1">
             <CardHeader>
               <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                <PlusCircle className="h-4 w-4 text-emerald-400" />
+                <PlusCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                 Create New Season
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground">
@@ -153,7 +161,7 @@ async function ProtectedDashboardContent() {
             <CardContent>
               <form action={createSeason} className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="name" className="text-xs text-slate-300">
+                  <Label htmlFor="name" className="text-xs text-slate-700 dark:text-slate-300">
                     Season Name
                   </Label>
                   <Input
@@ -167,7 +175,7 @@ async function ProtectedDashboardContent() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="start_date" className="text-xs text-slate-300">
+                    <Label htmlFor="start_date" className="text-xs text-slate-700 dark:text-slate-300">
                       Start Date
                     </Label>
                     <Input
@@ -179,7 +187,7 @@ async function ProtectedDashboardContent() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="end_date" className="text-xs text-slate-300">
+                    <Label htmlFor="end_date" className="text-xs text-slate-700 dark:text-slate-300">
                       End Date
                     </Label>
                     <Input
@@ -203,7 +211,7 @@ async function ProtectedDashboardContent() {
         <Card className={`border-border bg-card ${administrator ? "lg:col-span-2" : "lg:col-span-3"}`}>
           <CardHeader>
             <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-emerald-400" />
+              <Sparkles className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
               League Seasons Directory
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground">
@@ -212,14 +220,14 @@ async function ProtectedDashboardContent() {
           </CardHeader>
           <CardContent>
             {seasonsError ? (
-              <p className="text-xs text-rose-400">Could not load seasons: {seasonsError.message}</p>
+              <p className="text-xs text-rose-700 dark:text-rose-400">Could not load seasons: {seasonsError.message}</p>
             ) : seasonList.length === 0 ? (
               <div className="py-4 text-center">
-                <p className="text-xs text-muted-foreground">Default Active Season: <span className="font-mono text-emerald-400 font-semibold">Spring 2027</span></p>
+                <p className="text-xs text-muted-foreground">Default Active Season: <span className="font-mono text-emerald-700 dark:text-emerald-400 font-semibold">Spring 2027</span></p>
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {seasonList.map((season: any) => (
+                {seasonList.map((season: SeasonListItem) => (
                   <div key={season.id} className="flex items-center justify-between py-3">
                     <div>
                       <h4 className="text-sm font-semibold text-foreground">{season.name}</h4>
@@ -232,7 +240,7 @@ async function ProtectedDashboardContent() {
                       className={`text-xs font-mono ${
                         season.is_closed
                           ? "border-slate-700 bg-slate-800/50 text-muted-foreground"
-                          : "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                          : "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                       }`}
                     >
                       {season.is_closed ? "Closed" : "Active / Open"}
@@ -255,7 +263,7 @@ async function ProtectedDashboardContent() {
                 <CardTitle className="text-lg font-semibold text-foreground">
                   Player Evaluations
                 </CardTitle>
-                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
                   <ClipboardList className="h-5 w-5" />
                 </div>
               </CardHeader>
@@ -274,7 +282,7 @@ async function ProtectedDashboardContent() {
                 <CardTitle className="text-lg font-semibold text-foreground">
                   Evaluator Assignments
                 </CardTitle>
-                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
                   <Users className="h-5 w-5" />
                 </div>
               </CardHeader>
@@ -293,7 +301,7 @@ async function ProtectedDashboardContent() {
                 <CardTitle className="text-lg font-semibold text-foreground">
                   Evaluation Sessions
                 </CardTitle>
-                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
                   <Calendar className="h-5 w-5" />
                 </div>
               </CardHeader>
@@ -312,7 +320,7 @@ async function ProtectedDashboardContent() {
                 <CardTitle className="text-lg font-semibold text-foreground">
                   Coach Draft Packets
                 </CardTitle>
-                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
                   <Award className="h-5 w-5" />
                 </div>
               </CardHeader>
@@ -334,7 +342,7 @@ async function ProtectedDashboardContent() {
                 <CardTitle className="text-lg font-semibold text-foreground">
                   Data Review
                 </CardTitle>
-                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
                   <ClipboardCheck className="h-5 w-5" />
                 </div>
               </CardHeader>
@@ -353,7 +361,7 @@ async function ProtectedDashboardContent() {
                 <CardTitle className="text-lg font-semibold text-foreground">
                   Evaluator Assignments
                 </CardTitle>
-                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
                   <Users className="h-5 w-5" />
                 </div>
               </CardHeader>
@@ -372,7 +380,7 @@ async function ProtectedDashboardContent() {
                 <CardTitle className="text-lg font-semibold text-foreground">
                   Evaluation Sessions
                 </CardTitle>
-                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
                   <Calendar className="h-5 w-5" />
                 </div>
               </CardHeader>
@@ -391,7 +399,7 @@ async function ProtectedDashboardContent() {
                 <CardTitle className="text-lg font-semibold text-foreground">
                   Reports & Exports
                 </CardTitle>
-                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
                   <FileBarChart className="h-5 w-5" />
                 </div>
               </CardHeader>

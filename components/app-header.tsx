@@ -28,12 +28,12 @@ export async function AppHeader({ user }: { user: User }) {
               priority
             />
             <span className="font-bold text-lg tracking-tight text-foreground">
-              RWCLL <span className="text-emerald-400 font-normal">Evaluations</span>
+              RWCLL <span className="text-emerald-700 dark:text-emerald-400 font-normal">Evaluations</span>
             </span>
           </Link>
 
           {/* Role-Based Navigation Links */}
-          <nav className="flex items-center gap-4 text-sm font-medium text-slate-300">
+          <nav className="flex items-center gap-4 text-sm font-medium text-slate-700 dark:text-slate-300">
             {administrator ? (
               /* Administrator Navigation Links */
               <>

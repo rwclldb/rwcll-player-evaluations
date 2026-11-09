@@ -212,7 +212,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
       <Card className="border-border bg-card">
         <CardHeader>
           <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-            <UploadCloud className="h-4 w-4 text-emerald-400" />
+            <UploadCloud className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
             Upload Sports Connect CSV
           </CardTitle>
           <CardDescription className="text-xs text-muted-foreground">
@@ -223,7 +223,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Drag and Drop Zone + Browse Button */}
             <div className="space-y-2">
-              <label htmlFor="sports-connect-csv" className="text-xs font-semibold text-slate-300">
+              <label htmlFor="sports-connect-csv" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Choose CSV File
               </label>
               
@@ -239,12 +239,12 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
                 }`}
               >
                 <UploadCloud className={`mx-auto h-8 w-8 mb-1.5 transition-colors ${
-                  isDragging ? "text-emerald-400" : "text-slate-500 group-hover:text-emerald-400"
+                  isDragging ? "text-emerald-700 dark:text-emerald-400" : "text-slate-600 dark:text-slate-400 group-hover:text-emerald-400"
                 }`} />
-                <p className="text-xs font-medium text-slate-200">
+                <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
                   {isDragging ? "Drop CSV file here" : "Drag & drop CSV file here, or click to browse"}
                 </p>
-                <p className="mt-1 text-[11px] text-slate-500 font-mono">
+                <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-400 font-mono">
                   Supported format: .csv (max 10MB)
                 </p>
               </div>
@@ -261,7 +261,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
 
             {/* Target Season Selection */}
             <div className="space-y-2">
-              <label htmlFor="import-season" className="text-xs font-semibold text-slate-300">
+              <label htmlFor="import-season" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Target Open Season
               </label>
               <select
@@ -287,25 +287,25 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
           </div>
 
           {seasons.length === 0 && (
-            <p className="text-xs text-amber-400 italic">
+            <p className="text-xs text-amber-700 dark:text-amber-400 italic">
               No open seasons were found. Create or reopen a season through the approved admin workflow before staging.
             </p>
           )}
 
           {fileName && (
-            <p className="text-xs font-mono text-emerald-400">
+            <p className="text-xs font-mono text-emerald-700 dark:text-emerald-400">
               Selected File: <span className="font-semibold">{fileName}</span>
             </p>
           )}
 
           {error && (
-            <div role="alert" className="rounded-md border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300 font-mono">
+            <div role="alert" className="rounded-md border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-700 dark:text-rose-300 font-mono">
               {error}
             </div>
           )}
 
           {missingHeaders.length > 0 && (
-            <div role="alert" className="rounded-md border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">
+            <div role="alert" className="rounded-md border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-700 dark:text-rose-300">
               <strong>Missing required columns:</strong> {missingHeaders.join(", ")}
             </div>
           )}
@@ -315,8 +315,8 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
               role={stagedBatchId ? "status" : "alert"}
               className={`rounded-md border p-3 text-xs font-mono ${
                 stagedBatchId
-                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                  : "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                  : "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300"
               }`}
             >
               {stageMessage}
@@ -331,9 +331,9 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
           {/* Top Stat Metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Metric label="Rows Previewed" value={rows.length} color="text-foreground" />
-            <Metric label="Rows Needing Review" value={summary.issues} color={summary.issues > 0 ? "text-amber-400" : "text-emerald-400"} />
-            <Metric label="Duplicate Player IDs" value={summary.duplicateIds} color={summary.duplicateIds > 0 ? "text-amber-400" : "text-slate-300"} />
-            <Metric label="Outside Active Divisions" value={summary.reviewDivisions} color={summary.reviewDivisions > 0 ? "text-amber-400" : "text-slate-300"} />
+            <Metric label="Rows Needing Review" value={summary.issues} color={summary.issues > 0 ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400"} />
+            <Metric label="Duplicate Player IDs" value={summary.duplicateIds} color={summary.duplicateIds > 0 ? "text-amber-700 dark:text-amber-400" : "text-slate-700 dark:text-slate-300"} />
+            <Metric label="Outside Active Divisions" value={summary.reviewDivisions} color={summary.reviewDivisions > 0 ? "text-amber-700 dark:text-amber-400" : "text-slate-700 dark:text-slate-300"} />
           </div>
 
           {/* Breakdown Summaries Grid */}
@@ -351,7 +351,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
             <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
-                  <FileCheck className="h-4 w-4 text-emerald-400" />
+                  <FileCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                   Save Staging Batch
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -370,7 +370,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
                   </>
                 ) : stagedBatchId ? (
                   <>
-                    <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 text-emerald-300" /> Staged as #{stagedBatchId}
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 text-emerald-700 dark:text-emerald-300" /> Staged as #{stagedBatchId}
                   </>
                 ) : (
                   "Save Batch for Review"
@@ -383,7 +383,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-                <ListFilter className="h-4 w-4 text-emerald-400" />
+                <ListFilter className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                 Row Preview {rows.length > 25 && !showAll ? `(First 25 of ${rows.length})` : `(${rows.length})`}
               </h2>
               <div className="flex items-center gap-2">
@@ -393,7 +393,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
                     variant="outline"
                     size="sm"
                     onClick={() => setShowAll((current) => !current)}
-                    className="border-border bg-background hover:bg-accent text-xs text-slate-300"
+                    className="border-border bg-background hover:bg-accent text-xs text-slate-700 dark:text-slate-300"
                   >
                     {showAll ? "Show First 25" : "Show All Rows"}
                   </Button>
@@ -404,7 +404,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
                   size="sm"
                   onClick={downloadIssueReport}
                   disabled={summary.issues === 0}
-                  className="border-border bg-background hover:bg-accent text-xs text-amber-300 disabled:opacity-40"
+                  className="border-border bg-background hover:bg-accent text-xs text-amber-800 dark:text-amber-300 disabled:opacity-40"
                 >
                   <Download className="h-3.5 w-3.5 mr-1" /> Download Issue Report
                 </Button>
@@ -426,23 +426,23 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
                       {visibleRows.map((row) => (
                         <tr key={`${row.line}-${row.playerId}`} className="hover:bg-accent/50 transition-colors align-top">
                           <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{row.line}</td>
-                          <td className="px-4 py-3 font-mono text-xs text-emerald-400 font-semibold">{row.playerId || "—"}</td>
+                          <td className="px-4 py-3 font-mono text-xs text-emerald-700 dark:text-emerald-400 font-semibold">{row.playerId || "—"}</td>
                           <td className="px-4 py-3 font-medium text-foreground text-xs">{row.firstName} {row.lastName}</td>
-                          <td className="px-4 py-3 font-mono text-xs text-slate-300">{row.birthDate || "—"}</td>
-                          <td className="px-4 py-3 font-mono text-xs text-slate-300">{row.leagueAge ?? "Review"}</td>
-                          <td className="px-4 py-3 text-xs text-slate-300">{row.division || "—"}</td>
-                          <td className="px-4 py-3 text-xs text-slate-300">{row.paymentStatus || "—"}</td>
+                          <td className="px-4 py-3 font-mono text-xs text-slate-700 dark:text-slate-300">{row.birthDate || "—"}</td>
+                          <td className="px-4 py-3 font-mono text-xs text-slate-700 dark:text-slate-300">{row.leagueAge ?? "Review"}</td>
+                          <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{row.division || "—"}</td>
+                          <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{row.paymentStatus || "—"}</td>
                           <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{row.registrationNumber || "—"}</td>
                           <td className="px-4 py-3">
                             <div className="flex max-w-sm flex-wrap gap-1">
                               {row.issues.length ? (
                                 row.issues.map((issue) => (
-                                  <Badge key={issue} variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-300 text-[10px] font-mono">
+                                  <Badge key={issue} variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-[10px] font-mono">
                                     {issue}
                                   </Badge>
                                 ))
                               ) : (
-                                <span className="text-xs text-slate-500 italic">No preview flags</span>
+                                <span className="text-xs text-slate-600 dark:text-slate-400 italic">No preview flags</span>
                               )}
                             </div>
                           </td>
@@ -454,8 +454,8 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
               </CardContent>
             </Card>
 
-            <p className="text-xs font-mono text-slate-500">
-              A staged batch is not an import. "No preview flags" does not mean a row is approved. Existing-player matching, database conflict checks, administrator decisions, and transaction-safe player/registration commit occur at a later stage.
+            <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
+              A staged batch is not an import. &quot;No preview flags&quot; does not mean a row is approved. Existing-player matching, database conflict checks, administrator decisions, and transaction-safe player/registration commit occur at a later stage.
             </p>
           </div>
         </>
@@ -488,13 +488,13 @@ function SummaryList({ title, entries }: { title: string; entries: [string, numb
           <ul className="space-y-2">
             {entries.map(([label, count]) => (
               <li key={label} className="flex justify-between items-center text-xs">
-                <span className="text-slate-300">{label}</span>
-                <span className="font-mono text-emerald-400 font-semibold">{count}</span>
+                <span className="text-slate-700 dark:text-slate-300">{label}</span>
+                <span className="font-mono text-emerald-700 dark:text-emerald-400 font-semibold">{count}</span>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-xs text-slate-500 italic">No data available</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400 italic">No data available</p>
         )}
       </CardContent>
     </Card>

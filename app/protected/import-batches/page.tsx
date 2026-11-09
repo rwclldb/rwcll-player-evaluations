@@ -49,13 +49,13 @@ async function ImportBatchesContent() {
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
             <Link href="/protected">
-              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Return to workspace
+              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Return to workspace
             </Link>
           </Button>
         </div>
         <h1 className="text-2xl font-bold text-foreground">Administrator Access Required</h1>
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 flex items-center gap-3">
-          <ShieldAlert className="h-5 w-5 text-amber-400 shrink-0" />
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-800 dark:text-amber-200 flex items-center gap-3">
+          <ShieldAlert className="h-5 w-5 text-amber-700 dark:text-amber-400 shrink-0" />
           <span>Staged import batches are restricted to assigned administrators.</span>
         </div>
       </div>
@@ -95,12 +95,12 @@ async function ImportBatchesContent() {
           <div className="flex items-center gap-2 mb-2">
             <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
               <Link href="/protected">
-                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to workspace
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to workspace
               </Link>
             </Button>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <FileSpreadsheet className="h-7 w-7 text-emerald-400" />
+            <FileSpreadsheet className="h-7 w-7 text-emerald-700 dark:text-emerald-400" />
             Staged Import Batches
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -115,15 +115,15 @@ async function ImportBatchesContent() {
       </div>
 
       {/* Audit Banner */}
-      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200/90 leading-relaxed">
-        <strong className="text-amber-300 font-semibold">Review only.</strong> Opening a batch reads its staged rows and flags. No player or registration records are changed here.
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-800 dark:text-amber-200/90 leading-relaxed">
+        <strong className="text-amber-800 dark:text-amber-300 font-semibold">Review only.</strong> Opening a batch reads its staged rows and flags. No player or registration records are changed here.
       </div>
 
       {/* Import Batches Directory Table Card */}
       <Card className="border-border bg-card">
         <CardHeader className="py-4 border-b border-border/50">
           <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-            <History className="h-4 w-4 text-emerald-400" />
+            <History className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
             Staged Player Batches Log
           </CardTitle>
           <CardDescription className="text-xs text-muted-foreground">
@@ -133,15 +133,15 @@ async function ImportBatchesContent() {
 
         <CardContent className="p-0">
           {error ? (
-            <div role="alert" className="p-6 text-xs text-rose-300 space-y-2">
-              <strong className="text-rose-400 font-semibold">Could not load staged batches.</strong>
+            <div role="alert" className="p-6 text-xs text-rose-700 dark:text-rose-300 space-y-2">
+              <strong className="text-rose-700 dark:text-rose-400 font-semibold">Could not load staged batches.</strong>
               <p>Confirm that the Phase 5.0 staging migration has been applied to the intended local database and that the administrator role is configured.</p>
             </div>
           ) : batches.length === 0 ? (
             <div className="p-8 text-center space-y-3">
               <p className="text-sm font-semibold text-foreground">No staged batches yet</p>
               <p className="text-xs text-muted-foreground">Once a CSV is saved for review, its batch will appear here.</p>
-              <Button asChild variant="outline" size="sm" className="border-border bg-background text-xs text-emerald-400 hover:bg-accent">
+              <Button asChild variant="outline" size="sm" className="border-border bg-background text-xs text-emerald-700 dark:text-emerald-400 hover:bg-accent">
                 <Link href="/protected/import-preview">
                   Open Sports Connect import preview &rarr;
                 </Link>
@@ -171,10 +171,10 @@ async function ImportBatchesContent() {
 
                     return (
                       <tr key={batch.id} className="hover:bg-accent/50 transition-colors">
-                        <td className="px-4 py-4 font-mono text-xs font-bold text-emerald-400">
+                        <td className="px-4 py-4 font-mono text-xs font-bold text-emerald-700 dark:text-emerald-400">
                           #{batch.id}
                         </td>
-                        <td className="px-4 py-4 text-xs font-mono text-slate-300">
+                        <td className="px-4 py-4 text-xs font-mono text-slate-700 dark:text-slate-300">
                           {seasonName}
                         </td>
                         <td className="px-4 py-4 text-xs font-mono text-foreground">
@@ -183,35 +183,35 @@ async function ImportBatchesContent() {
                         <td className="px-4 py-4 text-xs font-mono text-muted-foreground">
                           {new Date(batch.created_at).toLocaleString()}
                         </td>
-                        <td className="px-4 py-4 text-center font-mono text-xs text-slate-300">
+                        <td className="px-4 py-4 text-center font-mono text-xs text-slate-700 dark:text-slate-300">
                           {batch.rows_received}
                         </td>
                         <td className="px-4 py-4 text-center font-mono text-xs">
                           {batch.rows_with_errors > 0 ? (
-                            <span className="text-amber-400 font-semibold">{batch.rows_with_errors}</span>
+                            <span className="text-amber-700 dark:text-amber-400 font-semibold">{batch.rows_with_errors}</span>
                           ) : (
                             <span className="text-muted-foreground">0</span>
                           )}
                         </td>
                         <td className="px-4 py-4 text-center">
                           {batch.status === "staged" || batch.status === "completed" ? (
-                            <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-mono gap-1 py-0.5">
+                            <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-mono gap-1 py-0.5">
                               <CheckCircle2 className="h-3 w-3" /> {batch.status}
                             </Badge>
                           ) : batch.status === "failed" ? (
-                            <Badge variant="outline" className="border-rose-500/40 bg-rose-500/10 text-rose-400 text-xs font-mono gap-1 py-0.5">
+                            <Badge variant="outline" className="border-rose-500/40 bg-rose-500/10 text-rose-700 dark:text-rose-400 text-xs font-mono gap-1 py-0.5">
                               <AlertCircle className="h-3 w-3" /> Failed
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-400 text-xs font-mono gap-1 py-0.5">
+                            <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs font-mono gap-1 py-0.5">
                               <Clock className="h-3 w-3" /> {batch.status}
                             </Badge>
                           )}
                         </td>
                         <td className="px-4 py-4 text-right">
-                          <Button asChild variant="ghost" size="sm" className="h-8 text-xs text-slate-300 hover:text-foreground hover:bg-accent">
+                          <Button asChild variant="ghost" size="sm" className="h-8 text-xs text-slate-700 dark:text-slate-300 hover:text-foreground hover:bg-accent">
                             <Link href={`/protected/import-batches/${batch.id}`}>
-                              View Rows <ArrowRight className="ml-1 h-3.5 w-3.5 text-emerald-400" />
+                              View Rows <ArrowRight className="ml-1 h-3.5 w-3.5 text-emerald-700 dark:text-emerald-400" />
                             </Link>
                           </Button>
                         </td>
@@ -225,7 +225,7 @@ async function ImportBatchesContent() {
         </CardContent>
       </Card>
       
-      <p className="text-xs font-mono text-slate-500">
+      <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
         Showing at most the 100 most recent player-import batches. Other import types are not shown on this page.
       </p>
     </div>

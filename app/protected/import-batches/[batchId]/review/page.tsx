@@ -58,7 +58,7 @@ async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId:
       <div className="space-y-6">
         <Button asChild variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground hover:text-foreground">
           <Link href="/protected/import-batches">
-            <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to staged batches
+            <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to staged batches
           </Link>
         </Button>
         <h1 className="text-2xl font-bold text-foreground">Invalid Batch ID</h1>
@@ -83,13 +83,13 @@ async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId:
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
             <Link href="/protected">
-              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Return to workspace
+              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Return to workspace
             </Link>
           </Button>
         </div>
         <h1 className="text-2xl font-bold text-foreground">Administrator Access Required</h1>
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 flex items-center gap-3">
-          <ShieldAlert className="h-5 w-5 text-amber-400 shrink-0" />
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-800 dark:text-amber-200 flex items-center gap-3">
+          <ShieldAlert className="h-5 w-5 text-amber-700 dark:text-amber-400 shrink-0" />
           <span>Only administrators can record import review decisions.</span>
         </div>
       </div>
@@ -109,11 +109,11 @@ async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId:
       <div className="space-y-6">
         <Button asChild variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground hover:text-foreground">
           <Link href="/protected/import-batches">
-            <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to batches
+            <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to batches
           </Link>
         </Button>
         <h1 className="text-2xl font-bold text-foreground">Batch Unavailable</h1>
-        <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300 font-mono">
+        <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300 font-mono">
           Could not load this player import batch. No data was changed.
         </div>
       </div>
@@ -169,12 +169,12 @@ async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId:
           <div className="flex items-center gap-2 mb-2">
             <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
               <Link href={`/protected/import-batches/${id}`}>
-                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to Batch Detail
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to Batch Detail
               </Link>
             </Button>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <ShieldAlert className="h-7 w-7 text-amber-400" />
+            <ShieldAlert className="h-7 w-7 text-amber-700 dark:text-amber-400" />
             Administrator Row Review &bull; Batch #{id}
           </h1>
           <p className="mt-1 text-xs text-muted-foreground font-mono">
@@ -184,18 +184,18 @@ async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId:
       </div>
 
       {/* Warning Notice Banner */}
-      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200/90 leading-relaxed">
-        <strong className="text-amber-300 font-semibold">Review only.</strong> Saving a decision updates the staged row and audit log. It does not create or update players or registrations, merge identities, or commit the batch.
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-800 dark:text-amber-200/90 leading-relaxed">
+        <strong className="text-amber-800 dark:text-amber-300 font-semibold">Review only.</strong> Saving a decision updates the staged row and audit log. It does not create or update players or registrations, merge identities, or commit the batch.
       </div>
 
       {playersError && (
-        <div role="alert" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300 font-mono">
+        <div role="alert" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-300 font-mono">
           Existing-player candidates could not be loaded. Approved-match decisions require a player selection; do not infer identity from a Sports Connect ID.
         </div>
       )}
 
       {rowsError ? (
-        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300 font-mono">
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300 font-mono">
           Could not load staged rows. Confirm the local staging and review-decision migrations are applied.
         </div>
       ) : !rows?.length ? (
@@ -231,14 +231,14 @@ async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId:
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
-                        <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
+                        <FileSpreadsheet className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                         Row {rowData.source_row_number}: {rowData.first_name} {rowData.last_name}
                       </CardTitle>
                       <CardDescription className="text-xs text-muted-foreground font-mono mt-0.5">
                         Staged row #{rowData.id} &bull; State: {rowData.review_state}
                       </CardDescription>
                     </div>
-                    <Badge variant="outline" className="font-mono text-xs border-emerald-500/40 bg-emerald-500/10 text-emerald-400 w-fit">
+                    <Badge variant="outline" className="font-mono text-xs border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 w-fit">
                       {rowData.review_state}
                     </Badge>
                   </div>
@@ -265,14 +265,14 @@ async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId:
                     </div>
                     <div>
                       <span className="text-muted-foreground block font-mono text-[11px]">League Age</span>
-                      <span className="text-emerald-400 font-mono font-bold">{rowData.league_age ?? "—"}</span>
+                      <span className="text-emerald-700 dark:text-emerald-400 font-mono font-bold">{rowData.league_age ?? "—"}</span>
                     </div>
                   </div>
 
                   {/* Review Flags */}
                   {flags(rowData.review_flags).length > 0 && (
-                    <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
-                      <strong className="font-semibold text-amber-400 mr-1">Flags:</strong>
+                    <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-300">
+                      <strong className="font-semibold text-amber-700 dark:text-amber-400 mr-1">Flags:</strong>
                       {flags(rowData.review_flags).join(" · ")}
                     </div>
                   )}
@@ -301,7 +301,7 @@ async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId:
         </div>
       )}
 
-      <p className="text-xs font-mono text-slate-500">
+      <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
         Candidate list is limited to the first 1,000 visible players and up to 10 suggestions per row. A suggestion is not an identity match; verify manually.
       </p>
     </div>

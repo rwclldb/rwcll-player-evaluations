@@ -94,7 +94,7 @@ async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
       <div className="space-y-6">
         <Button asChild variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground hover:text-foreground">
           <Link href="/protected/import-batches">
-            <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to staged batches
+            <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to staged batches
           </Link>
         </Button>
         <h1 className="text-2xl font-bold text-foreground">Invalid Batch ID</h1>
@@ -121,13 +121,13 @@ async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
             <Link href="/protected">
-              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Return to workspace
+              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Return to workspace
             </Link>
           </Button>
         </div>
         <h1 className="text-2xl font-bold text-foreground">Administrator Access Required</h1>
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 flex items-center gap-3">
-          <ShieldAlert className="h-5 w-5 text-amber-400 shrink-0" />
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-800 dark:text-amber-200 flex items-center gap-3">
+          <ShieldAlert className="h-5 w-5 text-amber-700 dark:text-amber-400 shrink-0" />
           <span>Staged import rows are restricted to assigned administrators.</span>
         </div>
       </div>
@@ -147,11 +147,11 @@ async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
       <div className="space-y-6">
         <Button asChild variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground hover:text-foreground">
           <Link href="/protected/import-batches">
-            <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to staged batches
+            <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to staged batches
           </Link>
         </Button>
         <h1 className="text-2xl font-bold text-foreground">Batch Review Unavailable</h1>
-        <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300 font-mono">
+        <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300 font-mono">
           Could not read this batch. Confirm the Phase 5.0 migration is installed in the intended database. No data was changed.
         </div>
       </div>
@@ -199,12 +199,12 @@ async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
           <div className="flex items-center gap-2 mb-2">
             <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
               <Link href="/protected/import-batches">
-                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to Staged Batches
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to Staged Batches
               </Link>
             </Button>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
-            <FileSpreadsheet className="h-7 w-7 text-emerald-400" />
+            <FileSpreadsheet className="h-7 w-7 text-emerald-700 dark:text-emerald-400" />
             Import Batch #{batch.id}
           </h1>
           <p className="mt-1 text-xs text-muted-foreground font-mono">
@@ -220,12 +220,12 @@ async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
       </div>
 
       {/* Read-Only Notice */}
-      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200/90 leading-relaxed">
-        <strong className="text-amber-300 font-semibold">Read-only review.</strong> Possible matches below are suggestions only. They never link or merge players, approve rows, or commit registrations.
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-800 dark:text-amber-200/90 leading-relaxed">
+        <strong className="text-amber-800 dark:text-amber-300 font-semibold">Read-only review.</strong> Possible matches below are suggestions only. They never link or merge players, approve rows, or commit registrations.
       </div>
 
       {playersError ? (
-        <div role="alert" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
+        <div role="alert" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-300">
           Existing-player suggestions are unavailable for this view. Confirm administrator read access to players. Staged rows remain unchanged.
         </div>
       ) : (
@@ -241,13 +241,13 @@ async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Rows Received
             </CardTitle>
-            <Layers className="h-4 w-4 text-emerald-400" />
+            <Layers className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground font-mono">
               {batch.rows_received}
             </div>
-            <p className="text-xs text-slate-500 mt-1">Staged in CSV payload</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Staged in CSV payload</p>
           </CardContent>
         </Card>
 
@@ -256,13 +256,13 @@ async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Rows Flagged
             </CardTitle>
-            <AlertCircle className="h-4 w-4 text-amber-400" />
+            <AlertCircle className="h-4 w-4 text-amber-700 dark:text-amber-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-400 font-mono">
+            <div className="text-2xl font-bold text-amber-700 dark:text-amber-400 font-mono">
               {batch.rows_with_errors}
             </div>
-            <p className="text-xs text-slate-500 mt-1">Validation or duplicate warnings</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Validation or duplicate warnings</p>
           </CardContent>
         </Card>
 
@@ -271,13 +271,13 @@ async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Batch Status
             </CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            <CheckCircle2 className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold text-emerald-400 font-mono capitalize">
+            <div className="text-xl font-bold text-emerald-700 dark:text-emerald-400 font-mono capitalize">
               {batch.status}
             </div>
-            <p className="text-xs text-slate-500 mt-1">Staging state</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Staging state</p>
           </CardContent>
         </Card>
       </div>
@@ -286,7 +286,7 @@ async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
       <Card className="border-border bg-card">
         <CardHeader className="py-4 border-b border-border/50">
           <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-            <UserCheck className="h-4 w-4 text-emerald-400" />
+            <UserCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
             Staged Registration Rows & Candidates
           </CardTitle>
           <CardDescription className="text-xs text-muted-foreground">
@@ -296,11 +296,11 @@ async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
 
         <CardContent className="p-0">
           {rowsError ? (
-            <div role="alert" className="p-6 text-xs text-rose-300">
+            <div role="alert" className="p-6 text-xs text-rose-700 dark:text-rose-300">
               Could not load staged rows. Confirm the staging migration is applied and the current account has administrator access.
             </div>
           ) : !rows?.length ? (
-            <div className="p-8 text-center text-xs text-slate-500 italic">
+            <div className="p-8 text-center text-xs text-slate-600 dark:text-slate-400 italic">
               No staged rows were found for this batch.
             </div>
           ) : (
@@ -330,50 +330,50 @@ async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
                     return (
                       <tr key={row.id} className="hover:bg-accent/50 transition-colors align-top">
                         <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{row.source_row_number}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-emerald-400 font-semibold">{row.external_player_id || "—"}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-emerald-700 dark:text-emerald-400 font-semibold">{row.external_player_id || "—"}</td>
                         <td className="px-4 py-3 font-medium text-foreground text-xs">{row.first_name} {row.last_name}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-slate-300">{row.birth_date_text || row.birth_date || "—"}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-slate-300">{row.league_age ?? "Review"}</td>
-                        <td className="px-4 py-3 text-xs text-slate-300">{row.source_program || "—"}</td>
-                        <td className="px-4 py-3 text-xs text-slate-300">{row.source_division || "—"}</td>
-                        <td className="px-4 py-3 text-xs text-slate-300">{row.payment_status || "—"}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-slate-700 dark:text-slate-300">{row.birth_date_text || row.birth_date || "—"}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-slate-700 dark:text-slate-300">{row.league_age ?? "Review"}</td>
+                        <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{row.source_program || "—"}</td>
+                        <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{row.source_division || "—"}</td>
+                        <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{row.payment_status || "—"}</td>
                         <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{row.registration_number || "—"}</td>
                         <td className="px-4 py-3">
                           <div className="flex max-w-sm flex-wrap gap-1">
                             {flags.length ? (
                               flags.map((flag, index) => (
-                                <Badge key={`${flag}-${index}`} variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-300 text-[10px] font-mono">
+                                <Badge key={`${flag}-${index}`} variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-[10px] font-mono">
                                   {flag}
                                 </Badge>
                               ))
                             ) : (
-                              <span className="text-xs text-slate-500 italic">No preview flags</span>
+                              <span className="text-xs text-slate-600 dark:text-slate-400 italic">No preview flags</span>
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-xs font-mono text-slate-300">{row.review_state}</td>
+                        <td className="px-4 py-3 text-xs font-mono text-slate-700 dark:text-slate-300">{row.review_state}</td>
                         <td className="px-4 py-3">
                           {playersError ? (
-                            <span className="text-xs text-slate-500 italic">Unavailable</span>
+                            <span className="text-xs text-slate-600 dark:text-slate-400 italic">Unavailable</span>
                           ) : candidates.length ? (
                             <div className="space-y-1.5">
                               {candidates.map((candidate) => (
                                 <div key={candidate.player.id} className="rounded border border-border bg-background p-2 text-xs">
                                   <p className="font-semibold text-foreground flex items-center gap-1 font-mono">
-                                    <UserSearch className="h-3 w-3 text-emerald-400 shrink-0" />
+                                    <UserSearch className="h-3 w-3 text-emerald-700 dark:text-emerald-400 shrink-0" />
                                     #{candidate.player.id} &bull; {candidate.player.first_name} {candidate.player.last_name}
                                   </p>
                                   <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
                                     DOB: {candidate.player.date_of_birth || "unknown"}
                                   </p>
-                                  <p className="text-[11px] text-amber-300 font-mono mt-0.5">
+                                  <p className="text-[11px] text-amber-800 dark:text-amber-300 font-mono mt-0.5">
                                     {candidate.reason}
                                   </p>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <span className="text-xs text-slate-500 italic">No suggested match</span>
+                            <span className="text-xs text-slate-600 dark:text-slate-400 italic">No suggested match</span>
                           )}
                         </td>
                       </tr>
@@ -386,7 +386,7 @@ async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
         </CardContent>
       </Card>
 
-      <p className="text-xs font-mono text-slate-500">
+      <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
         This page displays staged data and read-only candidate suggestions only. Candidate results are not identity decisions. The eventual commit must use explicit administrator decisions and a separate atomic workflow.
       </p>
     </div>

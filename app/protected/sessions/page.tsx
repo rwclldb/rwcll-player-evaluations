@@ -50,13 +50,13 @@ async function SessionsContent({
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
             <Link href="/protected">
-              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Return to workspace
+              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Return to workspace
             </Link>
           </Button>
         </div>
         <h1 className="text-2xl font-bold text-foreground">Evaluation Sessions</h1>
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 flex items-center gap-3">
-          <ShieldAlert className="h-5 w-5 text-amber-400 shrink-0" />
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-800 dark:text-amber-200 flex items-center gap-3">
+          <ShieldAlert className="h-5 w-5 text-amber-700 dark:text-amber-400 shrink-0" />
           <span>Administrator access is required to manage evaluation sessions.</span>
         </div>
       </div>
@@ -85,12 +85,12 @@ async function SessionsContent({
           <div className="flex items-center gap-2 mb-2">
             <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
               <Link href="/protected">
-                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to workspace
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to workspace
               </Link>
             </Button>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Calendar className="h-7 w-7 text-emerald-400" />
+            <Calendar className="h-7 w-7 text-emerald-700 dark:text-emerald-400" />
             Evaluation Sessions
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -101,19 +101,19 @@ async function SessionsContent({
 
       {/* Action Messages */}
       {params.message && (
-        <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300 font-mono">
+        <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-300 font-mono">
           {params.message}
         </div>
       )}
 
       {params.error && (
-        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300 font-mono">
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-700 dark:text-rose-300 font-mono">
           {params.error}
         </div>
       )}
 
       {(seasonsError || sessionsError) && (
-        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300">
           Could not load session data: {seasonsError?.message ?? sessionsError?.message}
         </div>
       )}
@@ -152,12 +152,12 @@ async function SessionsContent({
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
-                      <Layers className="h-5 w-5 text-emerald-400" />
+                      <Layers className="h-5 w-5 text-emerald-700 dark:text-emerald-400" />
                       {season.name}
                     </CardTitle>
                     <CardDescription className="text-xs text-muted-foreground font-mono mt-1">
                       {season.start_date || "No start date"} to {season.end_date || "No end date"} &bull;{" "}
-                      <span className={season.is_closed ? "text-muted-foreground" : "text-emerald-400 font-semibold"}>
+                      <span className={season.is_closed ? "text-muted-foreground" : "text-emerald-700 dark:text-emerald-400 font-semibold"}>
                         {season.is_closed ? "Closed" : "Open Workspace"}
                       </span>
                     </CardDescription>
@@ -167,8 +167,8 @@ async function SessionsContent({
                   </div>
 
                   {missingCount === 0 ? (
-                    <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-mono py-1.5 px-3 gap-1.5 w-fit">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> All Age Sessions Exist
+                    <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-mono py-1.5 px-3 gap-1.5 w-fit">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-400" /> All Age Sessions Exist
                     </Badge>
                   ) : (
                     <form action={createMissingAgeSessions}>
@@ -216,11 +216,11 @@ async function SessionsContent({
                                   Not Created
                                 </Badge>
                               ) : session.status === "setup" ? (
-                                <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-400 text-xs font-mono">
+                                <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs font-mono">
                                   Setup
                                 </Badge>
                               ) : session.status === "open" ? (
-                                <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-mono gap-1">
+                                <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-mono gap-1">
                                   <CheckCircle2 className="h-3 w-3" /> Open
                                 </Badge>
                               ) : (
@@ -237,7 +237,7 @@ async function SessionsContent({
                                   age={age}
                                 />
                               ) : (
-                                <span className="text-xs font-mono text-slate-500">—</span>
+                                <span className="text-xs font-mono text-slate-600 dark:text-slate-400">—</span>
                               )}
                             </td>
                           </tr>
@@ -251,7 +251,7 @@ async function SessionsContent({
           );
         })}
 
-      <p className="text-xs font-mono text-slate-500">
+      <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
         Note: Creating sessions does not automatically add players or assign evaluators. A locked session cannot be reopened. Only open a session when setup and evaluator access are ready.
       </p>
     </div>

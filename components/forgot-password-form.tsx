@@ -27,7 +27,7 @@ export function ForgotPasswordForm({
           </div>
 
           {searchParams?.message && (
-            <div className="p-3 text-xs rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+            <div className="p-3 text-xs rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
               {searchParams.message}
             </div>
           )}

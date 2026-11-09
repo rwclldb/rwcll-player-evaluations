@@ -31,7 +31,7 @@ export function SignUpForm({
           </div>
 
           {searchParams?.message && (
-            <div className="p-3 text-xs rounded bg-rose-500/10 border border-rose-500/20 text-rose-400">
+            <div className="p-3 text-xs rounded bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400">
               {searchParams.message}
             </div>
           )}

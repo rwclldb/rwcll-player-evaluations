@@ -64,7 +64,7 @@ for (const [label, ok] of [
   [
     "UI disables ordinary review for ignored rows",
     /isIgnored/.test(reviewForm) &&
-      /Reopen ignored row/.test(reviewForm),
+      /Reopen Ignored Row/i.test(reviewForm),
   ],
 ]) {
   console.log(`${ok ? "PASS" : "FAIL"} ${label}`);

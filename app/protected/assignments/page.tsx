@@ -145,12 +145,12 @@ async function AssignmentsContent({
           <div className="flex items-center gap-2 mb-2">
             <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
               <Link href="/protected">
-                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-400" /> Back to workspace
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to workspace
               </Link>
             </Button>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Users className="h-7 w-7 text-emerald-400" />
+            <Users className="h-7 w-7 text-emerald-700 dark:text-emerald-400" />
             Evaluator Assignments
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -161,19 +161,19 @@ async function AssignmentsContent({
 
       {/* Action Notifications */}
       {params.message && (
-        <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300 font-mono">
+        <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-300 font-mono">
           {params.message}
         </div>
       )}
 
       {params.error && (
-        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300 font-mono">
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-700 dark:text-rose-300 font-mono">
           {params.error}
         </div>
       )}
 
       {loadError ? (
-        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
+        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300">
           Could not load assignment data: {loadError}
         </div>
       ) : (
@@ -182,7 +182,7 @@ async function AssignmentsContent({
           <Card className="border-border bg-card">
             <CardHeader className="py-4 border-b border-border/50">
               <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                <UserCheck className="h-4 w-4 text-emerald-400" />
+                <UserCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                 Registered Accounts ({candidates.length})
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground">
@@ -191,7 +191,7 @@ async function AssignmentsContent({
             </CardHeader>
             <CardContent className="p-0">
               {candidates.length === 0 ? (
-                <div className="p-6 text-center text-xs text-slate-500 italic">
+                <div className="p-6 text-center text-xs text-slate-600 dark:text-slate-400 italic">
                   No registered accounts found.
                 </div>
               ) : (
@@ -210,12 +210,12 @@ async function AssignmentsContent({
                           <td className="px-4 py-3 font-medium text-foreground text-xs font-mono">
                             {accountLabel(candidate)}
                           </td>
-                          <td className="px-4 py-3 text-xs font-mono text-slate-300">
+                          <td className="px-4 py-3 text-xs font-mono text-slate-700 dark:text-slate-300">
                             {candidate.email ?? "—"}
                           </td>
                           <td className="px-4 py-3 text-center">
                             {candidate.email_confirmed ? (
-                              <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-mono">
+                              <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-mono">
                                 Confirmed
                               </Badge>
                             ) : (
@@ -260,12 +260,12 @@ async function AssignmentsContent({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                       <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
-                        <Layers className="h-5 w-5 text-emerald-400" />
+                        <Layers className="h-5 w-5 text-emerald-700 dark:text-emerald-400" />
                         {season.name}
                       </CardTitle>
                       <CardDescription className="text-xs text-muted-foreground font-mono mt-1">
                         {season.start_date} to {season.end_date} &bull;{" "}
-                        <span className={season.is_closed ? "text-muted-foreground" : "text-emerald-400 font-semibold"}>
+                        <span className={season.is_closed ? "text-muted-foreground" : "text-emerald-700 dark:text-emerald-400 font-semibold"}>
                           {season.is_closed ? "Closed" : "Open"}
                         </span>
                       </CardDescription>
@@ -277,11 +277,11 @@ async function AssignmentsContent({
                   {/* Grant Evaluator Role Section */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                      <Award className="h-4 w-4 text-emerald-400" /> Grant Season Evaluator Role
+                      <Award className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Grant Season Evaluator Role
                     </h3>
 
                     {season.is_closed ? (
-                      <p className="text-xs font-mono text-slate-500">
+                      <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
                         This season is closed. Role changes are disabled.
                       </p>
                     ) : (
@@ -366,7 +366,7 @@ async function AssignmentsContent({
                                   )}
                                 </td>
                                 <td className="px-4 py-3 text-xs font-mono">
-                                  <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-400">
+                                  <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
                                     {type.label}
                                   </Badge>
                                 </td>
@@ -380,13 +380,13 @@ async function AssignmentsContent({
                                         type="submit"
                                         variant="outline"
                                         size="sm"
-                                        className="h-7 text-xs border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300"
+                                        className="h-7 text-xs border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-300"
                                       >
                                         <Trash2 className="h-3 w-3 mr-1" /> Revoke Role
                                       </Button>
                                     </form>
                                   ) : (
-                                    <span className="text-xs font-mono text-slate-500">Season closed</span>
+                                    <span className="text-xs font-mono text-slate-600 dark:text-slate-400">Season closed</span>
                                   )}
                                 </td>
                               </tr>
@@ -395,7 +395,7 @@ async function AssignmentsContent({
 
                           {seasonRoles.length === 0 && (
                             <tr>
-                              <td colSpan={3} className="px-4 py-4 text-center text-xs text-slate-500 italic">
+                              <td colSpan={3} className="px-4 py-4 text-center text-xs text-slate-600 dark:text-slate-400 italic">
                                 No evaluator roles granted for this season yet.
                               </td>
                             </tr>
@@ -408,7 +408,7 @@ async function AssignmentsContent({
                   {/* Age-Session Assignments Section */}
                   <div className="space-y-4 pt-4 border-t border-border">
                     <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                      <Users className="h-4 w-4 text-emerald-400" /> Age-Session Assignments
+                      <Users className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Age-Session Assignments
                     </h3>
                     <p className="text-xs text-muted-foreground">
                       Assignments require matching season role and can only be updated while the session is in setup.
@@ -452,9 +452,9 @@ async function AssignmentsContent({
                                 variant="outline"
                                 className={`text-xs font-mono ${
                                   session.status === "open"
-                                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                                     : session.status === "setup"
-                                    ? "border-amber-500/40 bg-amber-500/10 text-amber-400"
+                                    ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
                                     : "border-slate-700 bg-slate-800 text-muted-foreground"
                                 }`}
                               >
@@ -482,7 +482,7 @@ async function AssignmentsContent({
                                       <span className="text-foreground font-mono">
                                         {candidate ? accountLabel(candidate) : assignment.evaluator_user_id}
                                         {" — "}
-                                        <span className="text-emerald-400">{typeLabel}</span>
+                                        <span className="text-emerald-700 dark:text-emerald-400">{typeLabel}</span>
                                       </span>
 
                                       {session.status === "setup" && !season.is_closed ? (
@@ -492,7 +492,7 @@ async function AssignmentsContent({
                                             type="submit"
                                             variant="ghost"
                                             size="sm"
-                                            className="h-6 px-2 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                                            className="h-6 px-2 text-xs text-rose-700 dark:text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
                                           >
                                             Remove
                                           </Button>
@@ -503,7 +503,7 @@ async function AssignmentsContent({
                                 })}
                               </ul>
                             ) : (
-                              <p className="text-xs text-slate-500 italic">No evaluators assigned.</p>
+                              <p className="text-xs text-slate-600 dark:text-slate-400 italic">No evaluators assigned.</p>
                             )}
 
                             {session.status === "setup" && !season.is_closed ? (
@@ -566,7 +566,7 @@ async function AssignmentsContent({
                                 </Button>
                               </form>
                             ) : (
-                              <p className="text-[11px] font-mono text-slate-500">
+                              <p className="text-[11px] font-mono text-slate-600 dark:text-slate-400">
                                 Assignments are locked because the session is not in setup or the season is closed.
                               </p>
                             )}
