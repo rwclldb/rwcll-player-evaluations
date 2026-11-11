@@ -21,6 +21,7 @@ export function PeopleImport({ seasonId }: { seasonId: number }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [problem, setProblem] = useState<string | null>(null);
   const [fallback, setFallback] = useState<Role>("coach");
+  const [delivery, setDelivery] = useState<"email" | "link">("email");
   const selected = useMemo(() => rows.filter((r) => r.include), [rows]);
 
   async function onFile(file: File | undefined) {
@@ -70,6 +71,7 @@ export function PeopleImport({ seasonId }: { seasonId: number }) {
       {rows.length > 0 && (
         <form action={invitePeople} className="space-y-3">
           <input type="hidden" name="seasonId" value={seasonId} />
+          <input type="hidden" name="delivery" value={delivery} />
           <input type="hidden" name="rows" value={JSON.stringify(selected.map(({ name, email, role }) => ({ name, email, role })))} />
           <ul className="max-h-96 divide-y divide-border overflow-y-auto rounded-lg border border-border bg-card text-sm">
             {rows.map((r) => (
@@ -88,8 +90,14 @@ export function PeopleImport({ seasonId }: { seasonId: number }) {
             ))}
           </ul>
           <div className="flex flex-wrap items-center justify-end gap-3">
+            <label className="text-xs text-muted-foreground">New accounts
+              <select value={delivery} onChange={(e) => setDelivery(e.target.value as "email" | "link")} className="ml-2 h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground">
+                <option value="email">Email each an invitation</option>
+                <option value="link">Create without email (send Sign-in links yourself)</option>
+              </select>
+            </label>
             <span className="text-sm text-muted-foreground">
-              {selected.length} selected. New emails get an invitation; existing accounts just get the role.
+              {selected.length} selected. Existing accounts just get the role.
             </span>
             <Button type="submit" className="min-h-11" disabled={selected.length === 0}><Upload className="mr-1 h-4 w-4" /> Invite selected</Button>
           </div>

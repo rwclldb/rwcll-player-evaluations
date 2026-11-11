@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type Role = "coach" | "independent_evaluator" | "administrator";
+type Delivery = "email" | "link";
 const ROLES: Role[] = ["coach", "independent_evaluator", "administrator"];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -37,36 +38,47 @@ async function findUserByEmail(admin: SupabaseClient, email: string): Promise<Us
   return undefined;
 }
 
-// Where the invite link lands: the app's own address (Site URL in Supabase must match for hosted).
+// The app's own address, so links work on localhost, previews and the main site.
 async function appOrigin() {
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host");
   const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") || host?.startsWith("127.") ? "http" : "https");
-  return host ? `${proto}://${host}` : undefined;
+  return host ? `${proto}://${host}` : "";
 }
 
-type InviteResult = { status: "invited" | "role_added" | "already" | "error"; message?: string };
+// A one-time link handled by the app's own /auth/confirm route (no email template needed).
+const confirmLink = (origin: string, tokenHash: string, type: "invite" | "recovery") =>
+  `${origin}/auth/confirm?token_hash=${encodeURIComponent(tokenHash)}&type=${type}&next=/auth/update-password`;
+
+type InviteResult = { status: "invited" | "role_added" | "already" | "error"; message?: string; link?: string };
 
 // Invite one person (or, if the email already has an account, just add the role).
-async function invite(supabase: SupabaseClient, name: string, rawEmail: string, role: Role, seasonId: number | null): Promise<InviteResult> {
+// delivery "email": Supabase sends its invite email. "link": no email; the result carries a link to send yourself.
+async function invite(supabase: SupabaseClient, name: string, rawEmail: string, role: Role, seasonId: number | null, delivery: Delivery): Promise<InviteResult> {
   const email = rawEmail.trim().toLowerCase();
   if (!EMAIL.test(email)) return { status: "error", message: `"${rawEmail}" is not an email address.` };
   if (!ROLES.includes(role)) return { status: "error", message: "Unknown role." };
   if (role !== "administrator" && !seasonId) return { status: "error", message: "Choose a season." };
 
   const admin = createAdminClient();
+  const origin = await appOrigin();
   let user = await findUserByEmail(admin, email);
   let status: InviteResult["status"] = "role_added";
+  let link: string | undefined;
   if (!user) {
-    const origin = await appOrigin();
-    const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
-      data: { display_name: name.trim() || undefined },
-      redirectTo: origin ? `${origin}/auth/update-password` : undefined,
-    });
-    if (error) return { status: "error", message: `${email}: ${error.message}` };
-    user = data.user;
+    const data = { display_name: name.trim() || undefined };
+    if (delivery === "email") {
+      const res = await admin.auth.admin.inviteUserByEmail(email, { data, redirectTo: origin ? `${origin}/auth/update-password` : undefined });
+      if (res.error) return { status: "error", message: `${email}: ${res.error.message}` };
+      user = res.data.user;
+    } else {
+      const res = await admin.auth.admin.generateLink({ type: "invite", email, options: { data } });
+      if (res.error) return { status: "error", message: `${email}: ${res.error.message}` };
+      user = res.data.user;
+      link = confirmLink(origin, res.data.properties.hashed_token, "invite");
+    }
     status = "invited";
-    await supabase.rpc("admin_log_account_event", { p_user_id: user.id, p_action: "account_invited", p_detail: { email, role, season_id: seasonId } });
+    await supabase.rpc("admin_log_account_event", { p_user_id: user.id, p_action: "account_invited", p_detail: { email, role, season_id: seasonId, delivery } });
   }
   if (name.trim()) await supabase.rpc("admin_set_display_name", { p_user_id: user.id, p_display_name: name.trim() });
 
@@ -75,23 +87,35 @@ async function invite(supabase: SupabaseClient, name: string, rawEmail: string, 
   const { error } = await supabase.rpc("admin_grant_role", { p_user_id: user.id, p_role: role, p_season_id: role === "administrator" ? null : seasonId });
   if (error) return { status: "error", message: `${email}: ${error.message}` };
   if (status === "role_added" && (before ?? []).length > 0) status = "already";
-  return { status };
+  return { status, link };
 }
 
-export async function invitePerson(formData: FormData) {
+export type FormResult = { ok: boolean; message: string; link?: string } | null;
+
+// Single invite (used with useActionState so a link can be shown without putting it in the address bar).
+export async function invitePerson(_prev: FormResult, formData: FormData): Promise<FormResult> {
   const { supabase } = await requireAdmin();
   const seasonId = Number(formData.get("seasonId")) || null;
-  const result = await invite(supabase, String(formData.get("name") ?? ""), String(formData.get("email") ?? ""),
-    String(formData.get("role") ?? "") as Role, seasonId).catch((e: Error) => ({ status: "error" as const, message: e.message }));
+  const delivery: Delivery = formData.get("delivery") === "link" ? "link" : "email";
+  const email = String(formData.get("email") ?? "");
+  const result = await invite(supabase, String(formData.get("name") ?? ""), email, String(formData.get("role") ?? "") as Role, seasonId, delivery)
+    .catch((e: Error) => ({ status: "error" as const, message: e.message, link: undefined }));
   revalidatePath("/protected/people");
-  if (result.status === "error") go(back(formData), "error", result.message ?? "Could not invite.");
-  go(back(formData), "message", result.status === "invited" ? "Invitation sent." : result.status === "already" ? "That person already has this role." : "That email already has an account; the role was added.");
+  if (result.status === "error") return { ok: false, message: result.message ?? "Could not invite." };
+  if (result.status === "invited") {
+    return delivery === "link"
+      ? { ok: true, message: `Account created for ${email}. Send them this link (it works once and expires; make a new one with "Sign-in link" if needed):`, link: result.link }
+      : { ok: true, message: `Invitation emailed to ${email}.` };
+  }
+  return { ok: true, message: result.status === "already" ? "That person already has this role." : "That email already has an account; the role was added." };
 }
 
 // Bulk: rows come from the CSV preview on the page as JSON [{name, email, role}].
+// With delivery "link" accounts are created without email; use each person's "Sign-in link" afterwards.
 export async function invitePeople(formData: FormData) {
   const { supabase } = await requireAdmin();
   const seasonId = Number(formData.get("seasonId")) || null;
+  const delivery: Delivery = formData.get("delivery") === "link" ? "link" : "email";
   let rows: { name: string; email: string; role: Role }[] = [];
   try { rows = JSON.parse(String(formData.get("rows") ?? "[]")); } catch { go(back(formData), "error", "Could not read the list."); }
   if (!Array.isArray(rows) || rows.length === 0) go(back(formData), "error", "No people selected.");
@@ -100,15 +124,30 @@ export async function invitePeople(formData: FormData) {
   const tally = { invited: 0, role_added: 0, already: 0, error: 0 };
   const problems: string[] = [];
   for (const r of rows) {
-    const res = await invite(supabase, String(r.name ?? ""), String(r.email ?? ""), r.role, seasonId)
+    const res = await invite(supabase, String(r.name ?? ""), String(r.email ?? ""), r.role, seasonId, delivery)
       .catch((e: Error) => ({ status: "error" as const, message: e.message }));
     tally[res.status]++;
     if (res.status === "error" && res.message) problems.push(res.message);
   }
   revalidatePath("/protected/people");
-  const summary = `${tally.invited} invited, ${tally.role_added} existing account(s) given the role, ${tally.already} already set.`;
+  const created = delivery === "link" ? `${tally.invited} account(s) created (no email sent; use Sign-in link for each)` : `${tally.invited} invited by email`;
+  const summary = `${created}, ${tally.role_added} existing account(s) given the role, ${tally.already} already set.`;
   if (problems.length) go(back(formData), "error", `${summary} ${tally.error} problem(s): ${problems.slice(0, 5).join(" ")}${problems.length > 5 ? " ..." : ""}`);
   go(back(formData), "message", summary);
+}
+
+// A fresh one-time sign-in link for someone (first sign-in, expired invite, or forgotten password).
+// Opening it signs them in and asks them to choose a password.
+export async function signInLink(_prev: FormResult, formData: FormData): Promise<FormResult> {
+  const { supabase } = await requireAdmin();
+  const userId = String(formData.get("userId") ?? "");
+  const admin = createAdminClient();
+  const { data, error } = await admin.auth.admin.getUserById(userId);
+  if (error || !data.user?.email) return { ok: false, message: error?.message ?? "Account not found." };
+  const res = await admin.auth.admin.generateLink({ type: "recovery", email: data.user.email });
+  if (res.error) return { ok: false, message: res.error.message };
+  await supabase.rpc("admin_log_account_event", { p_user_id: userId, p_action: "account_invite_resent", p_detail: { email: data.user.email, delivery: "link" } });
+  return { ok: true, message: `Sign-in link for ${data.user.email} (works once; don't share it with anyone else):`, link: confirmLink(await appOrigin(), res.data.properties.hashed_token, "recovery") };
 }
 
 export async function grantRole(formData: FormData) {
@@ -141,12 +180,12 @@ export async function resendInvite(formData: FormData) {
   const admin = createAdminClient();
   const { data, error } = await admin.auth.admin.getUserById(userId);
   if (error || !data.user?.email) go(back(formData), "error", error?.message ?? "Account not found.");
-  if (data.user!.last_sign_in_at) go(back(formData), "error", "This person has already signed in. They can use \"Forgot password\" on the sign-in page.");
+  if (data.user!.last_sign_in_at) go(back(formData), "error", "This person has already signed in. Use Sign-in link, or they can use \"Forgot password\".");
   const origin = await appOrigin();
   const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(data.user!.email!, { redirectTo: origin ? `${origin}/auth/update-password` : undefined });
-  if (inviteError) go(back(formData), "error", inviteError.message);
-  await supabase.rpc("admin_log_account_event", { p_user_id: userId, p_action: "account_invite_resent", p_detail: { email: data.user!.email } });
-  go(back(formData), "message", "Invitation sent again.");
+  if (inviteError) go(back(formData), "error", `${inviteError.message} (Use Sign-in link to send a link yourself.)`);
+  await supabase.rpc("admin_log_account_event", { p_user_id: userId, p_action: "account_invite_resent", p_detail: { email: data.user!.email, delivery: "email" } });
+  go(back(formData), "message", "Invitation emailed again.");
 }
 
 export async function setDisabled(formData: FormData) {

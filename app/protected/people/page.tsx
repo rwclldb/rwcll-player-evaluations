@@ -6,7 +6,8 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, hasAdminKey } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
-import { grantRole, invitePerson, resendInvite, revokeRole, setDisabled } from "./actions";
+import { grantRole, resendInvite, revokeRole, setDisabled } from "./actions";
+import { InviteForm, SignInLinkButton } from "./link-forms";
 import { PeopleImport } from "./people-import";
 
 type SearchParams = Promise<{ season?: string; q?: string; message?: string; error?: string }>;
@@ -70,7 +71,7 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
         </h1>
         <p className="text-sm text-muted-foreground">
           Invite coaches and independent evaluators and give them a role for the season. New people get an email with a link to choose
-          a password. One person who is both a coach and an evaluator needs two accounts with different emails. Assign people to age
+          a password, or you can make the link yourself and send it by email or text (&quot;Sign-in link&quot; also helps with forgotten passwords). One person who is both a coach and an evaluator needs two accounts with different emails. Assign people to age
           groups on the <Link href="/protected/assignments" className="underline">Assignments</Link> page.
         </p>
       </div>
@@ -100,19 +101,7 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="space-y-3 rounded-lg border border-border bg-card p-4">
           <h2 className="text-sm font-semibold text-foreground">Invite one person</h2>
-          <form action={invitePerson} className="grid gap-3 sm:grid-cols-2">
-            <input type="hidden" name="seasonId" value={season?.id ?? ""} />
-            <label className="text-xs text-muted-foreground">Name<input name="name" placeholder="First Last" className={input} /></label>
-            <label className="text-xs text-muted-foreground">Email<input name="email" type="email" required className={input} /></label>
-            <label className="text-xs text-muted-foreground">Role
-              <select name="role" className={input} defaultValue="coach">
-                <option value="coach">Coach ({seasonName})</option>
-                <option value="independent_evaluator">Independent evaluator ({seasonName})</option>
-                <option value="administrator">League admin (all seasons)</option>
-              </select>
-            </label>
-            <div className="flex items-end justify-end"><Button type="submit" disabled={keyMissing} className="h-10">Send invitation</Button></div>
-          </form>
+          <InviteForm seasonId={season?.id ?? null} seasonName={seasonName} disabled={keyMissing} />
         </section>
         <section className="space-y-3 rounded-lg border border-border bg-card p-4">
           <h2 className="text-sm font-semibold text-foreground">Invite from a list</h2>
@@ -162,11 +151,12 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
                   </select>
                   <Button type="submit" variant="outline" size="sm" className="h-8">Add</Button>
                 </form>
+                {!st.disabled && <SignInLinkButton userId={u.id} seasonId={season?.id ?? null} />}
                 {!u.last_sign_in_at && !st.disabled && (
                   <form action={resendInvite}>
                     <input type="hidden" name="userId" value={u.id} />
                     <input type="hidden" name="seasonId" value={season?.id ?? ""} />
-                    <Button type="submit" variant="ghost" size="sm" className="h-8 text-xs">Resend invite</Button>
+                    <Button type="submit" variant="ghost" size="sm" className="h-8 text-xs">Email invite again</Button>
                   </form>
                 )}
                 {u.id !== me?.id && (

@@ -161,7 +161,7 @@ site_url = "http://127.0.0.1:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+additional_redirect_urls = ["https://127.0.0.1:3000", "http://localhost:3000/**", "http://127.0.0.1:3000/**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -246,11 +246,12 @@ otp_expiry = 86400
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Invite email: links to the app's /auth/confirm route, then the set-password page.
-# The hosted project needs the same template (Authentication -> Emails -> Invite user).
-[auth.email.template.invite]
-subject = "Your RWCLL Player Evaluations account"
-content_path = "./supabase/templates/invite.html"
+# Invite email: the app works with Supabase's default template (the link lands with the session in the
+# address and components/auth-hash-handler.tsx finishes sign-in), so local matches a hosted project that
+# can't edit templates. Admins can also skip email and copy a sign-in link from the People page.
+# [auth.email.template.invite]
+# subject = "You have been invited"
+# content_path = "./supabase/templates/invite.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
