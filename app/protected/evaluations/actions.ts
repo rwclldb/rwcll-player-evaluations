@@ -41,9 +41,19 @@ function returnToSession(
   );
 }
 
-export async function saveEvaluationDraft(formData: FormData) {
+const INTENTS = {
+  draft: "Draft saved. It does not count until you submit it.",
+  submitted: "Evaluation submitted. You can still change it until the session is locked.",
+  not_evaluated: "Marked Not Evaluated. Any ratings for this player were cleared.",
+} as const;
+type Intent = keyof typeof INTENTS;
+
+// One form, three buttons: Save draft / Submit / Not evaluated (button name="intent").
+export async function saveEvaluation(formData: FormData) {
   const sessionId = readPositiveId(formData.get("sessionId"));
   const playerSeasonId = readPositiveId(formData.get("playerSeasonId"));
+  const rawIntent = String(formData.get("intent") ?? "draft");
+  const intent: Intent = rawIntent in INTENTS ? (rawIntent as Intent) : "draft";
 
   if (!sessionId || !playerSeasonId) {
     redirect("/protected/evaluations");
@@ -87,22 +97,20 @@ export async function saveEvaluationDraft(formData: FormData) {
     experienceAnswers[code] = answer;
   }
 
-  const { error } = await supabase.rpc("save_evaluation_draft", {
+  // Not Evaluated never carries ratings; the button label tells the evaluator they are cleared.
+  const { error } = await supabase.rpc("save_evaluation", {
     p_session_id: sessionId,
     p_player_season_id: playerSeasonId,
-    p_ratings: ratings,
+    p_ratings: intent === "not_evaluated" ? {} : ratings,
     p_experience_answers: experienceAnswers,
+    p_status: intent,
   });
 
   if (error) {
-    returnToSession(
-      sessionId,
-      "error",
-      `Could not save draft: ${error.message}`,
-    );
+    returnToSession(sessionId, "error", `Could not save: ${error.message}`);
   }
 
   revalidatePath("/protected/evaluations");
 
-  returnToSession(sessionId, "message", "Evaluation draft saved.");
+  returnToSession(sessionId, "message", INTENTS[intent]);
 }

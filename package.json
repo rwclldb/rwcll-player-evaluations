@@ -32,7 +32,8 @@
     "test:session-administration": "node scripts/test-session-administration.cjs",
     "test:historical-rls-runtime": "node scripts/test-historical-rls-runtime.cjs",
     "fixtures:generate": "node scripts/generate-fictional-league.cjs",
-    "fixtures:load": "node scripts/load-fictional-league.cjs"
+    "fixtures:load": "node scripts/load-fictional-league.cjs",
+    "test:evaluation-submit-runtime": "node scripts/test-evaluation-submit-runtime.cjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.1",

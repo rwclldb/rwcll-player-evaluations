@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { saveEvaluationDraft } from "./actions";
+import { saveEvaluation } from "./actions";
 import { RatingInputs } from "./rating-inputs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -394,7 +394,7 @@ async function EvaluatorWorkspaceContent({
                 ) : (
                   <div className="space-y-6">
                     <p className="text-xs text-muted-foreground font-mono">
-                      {registrations.length} eligible player{registrations.length === 1 ? "" : "s"}. Save each player&apos;s evaluation as a draft; saving does not submit it.
+                      {registrations.length} eligible player{registrations.length === 1 ? "" : "s"}. Only <strong>submitted</strong> evaluations count in reports. Drafts are private notes until you submit. You can change a submission until the session is locked.
                     </p>
 
                     {registrations.map((registration) => {
@@ -405,7 +405,7 @@ async function EvaluatorWorkspaceContent({
                       return (
                         <form
                           key={registration.id}
-                          action={saveEvaluationDraft}
+                          action={saveEvaluation}
                           className="space-y-6 rounded-lg border border-border bg-background p-5"
                         >
                           <input type="hidden" name="sessionId" value={selectedSession.id} />
@@ -424,11 +424,25 @@ async function EvaluatorWorkspaceContent({
                                 : "No evaluation number assigned"}
                               {player?.date_of_birth ? ` · DOB ${player.date_of_birth}` : ""}
                             </p>
-                            {evaluation && (
-                              <p className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400">
-                                Existing evaluation status: {evaluation.status}
-                              </p>
-                            )}
+                            <p
+                              className={`inline-block rounded px-2 py-0.5 text-[11px] font-semibold ${
+                                evaluation?.status === "submitted"
+                                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                                  : evaluation?.status === "not_evaluated"
+                                  ? "bg-slate-500/15 text-slate-700 dark:text-slate-300"
+                                  : evaluation?.status === "draft"
+                                  ? "bg-amber-500/15 text-amber-800 dark:text-amber-300"
+                                  : "bg-muted text-muted-foreground"
+                              }`}
+                            >
+                              {evaluation?.status === "submitted"
+                                ? "Submitted"
+                                : evaluation?.status === "not_evaluated"
+                                ? "Not evaluated"
+                                : evaluation?.status === "draft"
+                                ? "Draft — not submitted yet"
+                                : "Not started"}
+                            </p>
                           </div>
 
                           <RatingInputs
@@ -492,13 +506,21 @@ async function EvaluatorWorkspaceContent({
                           </div>
 
                           {/* Submit Action */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-border pt-4">
-                            <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                              Drafts remain editable until the session workflow prevents further changes.
+                          <div className="space-y-3 border-t border-border pt-4">
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              Leave a skill on &quot;Not scored&quot; if you didn&apos;t see it. Blank skills are flagged, never counted as zero. Submit needs at least one core skill.
                             </p>
-                            <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs">
-                              <Save className="h-3.5 w-3.5 mr-1.5" /> Save Draft
-                            </Button>
+                            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+                              <Button type="submit" name="intent" value="not_evaluated" variant="outline" size="sm" className="text-xs">
+                                Not Evaluated (clears ratings)
+                              </Button>
+                              <Button type="submit" name="intent" value="draft" variant="outline" size="sm" className="text-xs">
+                                <Save className="h-3.5 w-3.5 mr-1.5" /> Save Draft
+                              </Button>
+                              <Button type="submit" name="intent" value="submitted" size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs">
+                                {evaluation?.status === "submitted" ? "Update Submission" : "Submit"}
+                              </Button>
+                            </div>
                           </div>
                         </form>
                       );
