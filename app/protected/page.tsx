@@ -239,7 +239,7 @@ async function ProtectedDashboardContent() {
                       variant="outline"
                       className={`text-xs font-mono ${
                         season.is_closed
-                          ? "border-slate-700 bg-slate-800/50 text-muted-foreground"
+                          ? "border-border bg-muted text-muted-foreground"
                           : "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                       }`}
                     >

@@ -289,7 +289,7 @@ async function SessionsContent({
                             </td>
                             <td className="px-4 py-3 text-center">
                               {!session ? (
-                                <Badge variant="outline" className="border-slate-700 bg-slate-800/50 text-muted-foreground text-xs font-mono">
+                                <Badge variant="outline" className="border-border bg-muted text-muted-foreground text-xs font-mono">
                                   Not Created
                                 </Badge>
                               ) : session.status === "setup" ? (

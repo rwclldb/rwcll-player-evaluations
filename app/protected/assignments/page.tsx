@@ -219,7 +219,7 @@ async function AssignmentsContent({
                                 Confirmed
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="border-slate-700 bg-slate-800/50 text-muted-foreground text-xs font-mono">
+                              <Badge variant="outline" className="border-border bg-muted text-muted-foreground text-xs font-mono">
                                 Pending
                               </Badge>
                             )}
@@ -455,7 +455,7 @@ async function AssignmentsContent({
                                     ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                                     : session.status === "setup"
                                     ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                                    : "border-slate-700 bg-slate-800 text-muted-foreground"
+                                    : "border-border bg-muted text-muted-foreground"
                                 }`}
                               >
                                 {session.status}
