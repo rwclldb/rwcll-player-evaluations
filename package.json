@@ -35,7 +35,8 @@
     "fixtures:load": "node scripts/load-fictional-league.cjs",
     "test:evaluation-submit-runtime": "node scripts/test-evaluation-submit-runtime.cjs",
     "test:session-stage-runtime": "node scripts/test-session-stage-runtime.cjs",
-    "test:draft-report-runtime": "node scripts/test-draft-report-runtime.cjs"
+    "test:draft-report-runtime": "node scripts/test-draft-report-runtime.cjs",
+    "e2e:evaluation-navigation": "node scripts/e2e-evaluation-navigation.cjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.1",
@@ -61,6 +62,7 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^9.25.0",
     "eslint-config-next": "16.4.4",
+    "playwright-core": "^1.56.1",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",

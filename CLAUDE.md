@@ -19,6 +19,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - `npx supabase migration list --local`: see which migrations are applied locally. Check this before applying anything.
 - `npm run fixtures:load -- --reset`: wipe local Supabase and load the fictional league (ask first)
 - `npm run fixtures:generate`: rebuild the fixture CSVs from the roster and people files
+- `npm run e2e:evaluation-navigation`: browser test of the scoring screen in phone-sized Chrome. It needs `npm run dev` running and fixtures loaded with `--open-sessions`, cleans up after itself, and is not part of `test:all`. Run it after any change to the evaluation screen.
 
 ## Safety rules (always follow)
 
