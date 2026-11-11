@@ -96,10 +96,17 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - **Evaluation screen:** a player list with bib, name, LL age and status, plus bib search. A one-player scoring page has Previous/Next at top and bottom, Save & Next, and an unsaved-changes warning.
 - **Bibs are unique per season** (index `player_seasons_unique_season_evaluation_number`).
 
+## Built 2026-11-11 (local only; migration not on hosted)
+
+- **Player notes** (migration 20261111120000, test `test:player-notes-runtime`):
+  - Coaches keep **private notes** (`private_notes`, one per coach per registration). Only the author can read them; admins can't, in the app or through the table. Editable anytime, including after lock and after the season closes. Not shown in later seasons.
+  - Independent evaluators write **shared notes** (`evaluator_notes`, one per evaluation). They lock with the session. Admins see them anytime, with the author's name. Coaches see them in the draft report after release, labelled only "Independent evaluator". Notes on drafts are hidden from coaches. Evaluators see only their own.
+  - Reads go through `player_notes(session)` and `my_notes()`. Writes go through `save_private_note` and `save_shared_note`.
+  - Screens: a notes box on the scoring page, a **My Notes** page (`/protected/my-notes`) for coaches and evaluators, and notes in expanded draft report rows (coaches can edit their private note there).
+
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **On-site roster changes:** admins add or change players on evaluation day. Needs design.
-- **Private notes:** coaches and evaluators keep notes on players that only they can see. `evaluator_notes` and `private_notes` tables exist but aren't reviewed. Needs design.
 - **Retire the team-scoped coach report** (`/protected/coach-reports`, `coach_historical_report*`). It's superseded by draft reports and no longer linked from the evaluation screen or the top menu (the pages and functions still exist).
 - **Bib number upload and editing.** CSV upload (by Player Id, or by name plus birthdate) and admin editing in the app, with numbers unique across the season.
 - **Age chart upload.** Admin uploads the official age chart for each season.

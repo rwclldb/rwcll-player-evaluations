@@ -142,8 +142,8 @@ For a submitted evaluation, require all five core categories: Hitting, Throwing,
 
 | Table | Purpose / important fields |
 |---|---|
-| `private_notes` | Coach's private notes, visible only to that coach and administrators. |
-| `shared_notes` | Notes intentionally shared with authorized league users; final visibility rules still need confirmation. |
+| `private_notes` | Coach's private notes, one per coach per player registration. Visible only to the author (not to administrators). See migration 20261111120000. |
+| `evaluator_notes` | Independent evaluators' shared notes, one per evaluation. Admins see them with the author; coaches see them after release without the author. Locked with the session. |
 | `historical_evaluations` | Imported prior-season evaluation records, marked read-only and source/coverage-labeled. |
 | `historical_ratings` | Category-level historical scores; never included in current averages. |
 | `import_batches` | Source file, import date, importing administrator, counts, and batch status. |
@@ -190,7 +190,7 @@ Independent evaluator names/IDs must not appear in coach-facing aggregate respon
 - Deny access by default; grant only the minimum required actions by role and assignment.
 - Enforce coach access to assigned-team and division aggregate outputs without exposing individual score rows.
 - Restrict individual evaluation records and raw ratings to their author where appropriate and to administrators; independent-evaluator identity is not exposed to coaches.
-- Restrict private coach notes to their author and administrators.
+- Restrict private coach notes to their author only (decided 2026-11-11).
 - Lock sessions administratively and reject writes after lock, including direct API/database attempts.
 - Preserve author, creation/submission timestamps, and audit events.
 - Use test accounts for every role and test both allowed and denied operations before importing real children’s data.
