@@ -117,6 +117,19 @@ export async function saveEvaluation(formData: FormData) {
     returnToSession(sessionId, playerSeasonId, "error", `Could not save: ${error.message}`);
   }
 
+  // The notes box: a coach's private note or an independent evaluator's shared note.
+  // The database checks the role either way; noteKind only picks the function.
+  const noteKind = String(formData.get("noteKind") ?? "");
+  if (formData.has("note") && (noteKind === "private" || noteKind === "shared")) {
+    const note = String(formData.get("note") ?? "");
+    const { error: noteError } = noteKind === "private"
+      ? await supabase.rpc("save_private_note", { p_player_season_id: playerSeasonId, p_note_text: note })
+      : await supabase.rpc("save_shared_note", { p_session_id: sessionId, p_player_season_id: playerSeasonId, p_note_text: note });
+    if (noteError) {
+      returnToSession(sessionId, playerSeasonId, "error", `Ratings saved, but the note was not: ${noteError.message}`);
+    }
+  }
+
   revalidatePath("/protected/evaluations");
 
   returnToSession(sessionId, goNext ? nextPlayerSeasonId : playerSeasonId, "message", goNext ? `${INTENTS[intent]} Showing the next player.` : INTENTS[intent]);

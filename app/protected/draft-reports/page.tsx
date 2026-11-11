@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
-import { DraftReportTable, type DraftReportRow } from "./draft-report-table";
+import { DraftReportTable, type DraftReportRow, type ReportNote } from "./draft-report-table";
 
 type ReportSession = {
   session_id: number;
@@ -16,7 +16,7 @@ type ReportSession = {
 export default async function DraftReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ sessionId?: string }>;
+  searchParams: Promise<{ sessionId?: string; message?: string; error?: string }>;
 }) {
   const params = await searchParams;
   const supabase = await createClient();
@@ -31,11 +31,16 @@ export default async function DraftReportsPage({
   const selected = seasonSessions.find((s) => String(s.session_id) === params.sessionId) ?? seasonSessions[0];
 
   let rows: DraftReportRow[] = [];
+  let notes: ReportNote[] = [];
   let reportError: string | null = null;
   if (selected) {
-    const { data, error } = await supabase.rpc("draft_report", { p_session_id: selected.session_id });
-    if (error) reportError = error.message;
-    rows = (data ?? []) as DraftReportRow[];
+    const [report, noteResult] = await Promise.all([
+      supabase.rpc("draft_report", { p_session_id: selected.session_id }),
+      supabase.rpc("player_notes", { p_session_id: selected.session_id }),
+    ]);
+    if (report.error) reportError = report.error.message;
+    rows = (report.data ?? []) as DraftReportRow[];
+    notes = (noteResult.data ?? []) as ReportNote[];
   }
 
   return (
@@ -57,6 +62,9 @@ export default async function DraftReportsPage({
           Could not load age groups: {sessionError.message}
         </div>
       )}
+
+      {params.message && <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300 print:hidden">{params.message}</div>}
+      {params.error && <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-700 dark:text-rose-300 print:hidden">{params.error}</div>}
 
       {!sessionError && sessions.length === 0 && (
         <div className="rounded-lg border border-border bg-card p-6 text-center text-sm text-muted-foreground">
@@ -101,6 +109,9 @@ export default async function DraftReportsPage({
               title={`${selected.season_name} — Age ${selected.league_age} Draft Report`}
               fileName={`draft-report-${selected.season_name.replace(/\s+/g, "-").toLowerCase()}-age-${selected.league_age}.csv`}
               administrator={administrator}
+              notes={notes}
+              canWritePrivate={!administrator}
+              returnTo={`/protected/draft-reports?sessionId=${selected.session_id}`}
             />
           )}
         </>

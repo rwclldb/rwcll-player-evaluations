@@ -11,9 +11,11 @@ export function DirtyTracker({ formId }: { formId: string }) {
     const markDirty = () => { form.dataset.dirty = "true"; };
     const clear = () => { delete form.dataset.dirty; };
     form.addEventListener("change", markDirty);
+    form.addEventListener("input", markDirty); // typing in the notes box
     form.addEventListener("submit", clear);
     return () => {
       form.removeEventListener("change", markDirty);
+      form.removeEventListener("input", markDirty);
       form.removeEventListener("submit", clear);
     };
   }, [formId]);

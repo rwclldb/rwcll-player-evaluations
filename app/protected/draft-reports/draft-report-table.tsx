@@ -1,9 +1,10 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Download, Printer } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, Lock, MessageSquare, Printer, StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { safeCsvCell } from "@/lib/sports-connect-preview";
+import { saveNote } from "@/app/protected/my-notes/actions";
 
 export type DraftReportRow = {
   player_season_id: number;
@@ -26,6 +27,8 @@ export type DraftReportRow = {
   not_evaluated_marks: number;
   drafts_excluded: number;
 };
+
+export type ReportNote = { player_season_id: number; kind: "private" | "shared"; note_text: string; author_label: string; is_mine: boolean };
 
 type SortKey = "evaluator_overall" | "coach_overall" | "prior_overall" | "evaluation_number" | "name" | "pitching" | "catching";
 
@@ -54,7 +57,16 @@ function flags(r: DraftReportRow, administrator: boolean) {
   return out;
 }
 
-export function DraftReportTable({ rows, title, fileName, administrator }: { rows: DraftReportRow[]; title: string; fileName: string; administrator: boolean }) {
+// notes: what the database lets this viewer see (player_notes). canWritePrivate: coaches get a private-note box.
+export function DraftReportTable({ rows, title, fileName, administrator, notes = [], canWritePrivate = false, returnTo }: {
+  rows: DraftReportRow[]; title: string; fileName: string; administrator: boolean;
+  notes?: ReportNote[]; canWritePrivate?: boolean; returnTo: string;
+}) {
+  const notesFor = useMemo(() => {
+    const m = new Map<number, ReportNote[]>();
+    for (const n of notes) m.set(n.player_season_id, [...(m.get(n.player_season_id) ?? []), n]);
+    return m;
+  }, [notes]);
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: "evaluator_overall", desc: true });
   const [open, setOpen] = useState<Set<number>>(new Set());
 
@@ -153,6 +165,7 @@ export function DraftReportTable({ rows, title, fileName, administrator }: { row
                       <button type="button" className="flex items-center gap-1 text-left font-medium text-foreground print:text-black" aria-expanded={expanded} onClick={(e) => { e.stopPropagation(); toggle(); }}>
                         <span className="print:hidden">{expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}</span>
                         {r.last_name}, {r.first_name}
+                        {notesFor.has(r.player_season_id) && <StickyNote className="ml-1 h-3.5 w-3.5 text-amber-600 dark:text-amber-400 print:hidden" aria-label="Has notes" />}
                       </button>
                     </td>
                     {overallCell(num(r.evaluator_overall), r.evaluator_skills_rated, r.evaluator_evaluations, "evaluator")}
@@ -199,6 +212,12 @@ export function DraftReportTable({ rows, title, fileName, administrator }: { row
                             ))}
                           </tbody>
                         </table>
+                        <PlayerNotes
+                          playerSeasonId={r.player_season_id}
+                          notes={notesFor.get(r.player_season_id) ?? []}
+                          canWritePrivate={canWritePrivate}
+                          returnTo={returnTo}
+                        />
                       </td>
                     </tr>
                   )}
@@ -210,5 +229,49 @@ export function DraftReportTable({ rows, title, fileName, administrator }: { row
       </div>
       <p className="hidden text-[9px] print:block">E = independent evaluators, C = coaches. Averages use submitted evaluations only; blank skills are not counted as zero.</p>
     </section>
+  );
+}
+
+function PlayerNotes({ playerSeasonId, notes, canWritePrivate, returnTo }: { playerSeasonId: number; notes: ReportNote[]; canWritePrivate: boolean; returnTo: string }) {
+  const shared = notes.filter((n) => n.kind === "shared");
+  const mine = notes.find((n) => n.kind === "private");
+  if (shared.length === 0 && !canWritePrivate) return null;
+  return (
+    <div className="mt-4 grid gap-4 text-xs md:grid-cols-2">
+      <div className="space-y-2">
+        <h4 className="flex items-center gap-1.5 font-semibold text-foreground"><MessageSquare className="h-3.5 w-3.5" /> Independent evaluator notes</h4>
+        {shared.length === 0 ? (
+          <p className="text-muted-foreground">None.</p>
+        ) : (
+          <ul className="space-y-2">
+            {shared.map((n, i) => (
+              <li key={i} className="rounded border border-border bg-card p-2">
+                <p className="whitespace-pre-wrap text-foreground">{n.note_text}</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">{n.author_label}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      {canWritePrivate && (
+        <form action={saveNote} className="space-y-2">
+          <input type="hidden" name="kind" value="private" />
+          <input type="hidden" name="playerSeasonId" value={playerSeasonId} />
+          <input type="hidden" name="returnTo" value={returnTo} />
+          <label htmlFor={`private-note-${playerSeasonId}`} className="flex items-center gap-1.5 font-semibold text-foreground">
+            <Lock className="h-3.5 w-3.5" /> Your private note <span className="font-normal text-muted-foreground">(only you can see it)</span>
+          </label>
+          <textarea
+            id={`private-note-${playerSeasonId}`}
+            name="note"
+            defaultValue={mine?.note_text ?? ""}
+            maxLength={2000}
+            rows={3}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 sm:text-xs"
+          />
+          <Button type="submit" size="sm">Save note</Button>
+        </form>
+      )}
+    </div>
   );
 }

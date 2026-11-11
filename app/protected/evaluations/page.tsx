@@ -8,7 +8,7 @@ import { DirtyTracker, GuardedLink } from "./unsaved-guard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, ArrowLeft, ShieldAlert, Calendar, Layers, MapPin, Search, ChevronLeft, ChevronRight, History } from "lucide-react";
+import { ClipboardList, ArrowLeft, ShieldAlert, Calendar, Layers, MapPin, Search, ChevronLeft, ChevronRight, History, Lock, MessageSquare, StickyNote } from "lucide-react";
 
 const OLDEST_TO_YOUNGEST = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7];
 
@@ -30,6 +30,7 @@ type EligibleRegistration = {
   players: { first_name: string; last_name: string; date_of_birth: string | null } | null;
 };
 type EvaluationRecord = { id: number; player_season_id: number; status: string };
+type PlayerNote = { player_season_id: number; kind: "private" | "shared"; note_text: string; is_mine: boolean };
 type PriorYear = { player_season_id: number; prior_overall: number | null; prior_skills_rated: number; prior_ratings: number; prior_skills: Record<string, number> };
 
 const EXPERIENCE_QUESTIONS = [
@@ -100,6 +101,8 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
   let registrations: EligibleRegistration[] = [];
   let evaluations: EvaluationRecord[] = [];
   let priorYear: PriorYear[] = [];
+  let notes: PlayerNote[] = [];
+  let evaluatorType: string | null = null;
   let loadError: string | null = null;
 
   if (selectedSession?.status === "open" && selectedSession.league_age !== null) {
@@ -112,16 +115,27 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
       (a, b) => (a.evaluation_number ?? Infinity) - (b.evaluation_number ?? Infinity) || playerName(a).localeCompare(playerName(b)),
     );
 
-    const [evalResult, priorResult] = await Promise.all([
+    const [evalResult, priorResult, assignmentResult, notesResult] = await Promise.all([
       supabase.from("evaluations").select("id, player_season_id, status")
         .eq("evaluation_session_id", selectedSession.id).eq("evaluator_user_id", userId),
       // Empty unless the season's prior-year switch is on.
       supabase.rpc("prior_year_for_session", { p_session_id: selectedSession.id }),
+      supabase.from("evaluator_assignments").select("evaluator_type")
+        .eq("evaluation_session_id", selectedSession.id).eq("evaluator_user_id", userId).maybeSingle(),
+      // Only the viewer's own notes are used on this screen.
+      supabase.rpc("player_notes", { p_session_id: selectedSession.id }),
     ]);
     if (evalResult.error) loadError = `Could not load your evaluations: ${evalResult.error.message}`;
     evaluations = (evalResult.data ?? []) as EvaluationRecord[];
     priorYear = (priorResult.data ?? []) as PriorYear[];
+    evaluatorType = (assignmentResult.data?.evaluator_type as string | undefined) ?? null;
+    if (notesResult.error) loadError = `Could not load your notes: ${notesResult.error.message}`;
+    notes = ((notesResult.data ?? []) as PlayerNote[]).filter((n) => n.is_mine);
   }
+  // Coaches keep private notes; independent evaluators write shared ones.
+  const noteKind: "private" | "shared" | null =
+    evaluatorType === "coach" ? "private" : evaluatorType === "independent_evaluator" ? "shared" : null;
+  const notedPlayers = new Set(notes.filter((n) => n.kind === noteKind).map((n) => n.player_season_id));
 
   const evaluationFor = new Map(evaluations.map((e) => [e.player_season_id, e]));
   const priorFor = new Map(priorYear.map((p) => [p.player_season_id, p]));
@@ -152,6 +166,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
     savedAnswers = Object.fromEntries((answerResult.data ?? []).map((a) => [a.question_code, a.answer]));
   }
   const prior = player ? priorFor.get(player.id) : undefined;
+  const myNote = player && noteKind ? notes.find((n) => n.player_season_id === player.id && n.kind === noteKind)?.note_text ?? "" : "";
   const submittedCount = evaluations.filter((e) => e.status === "submitted" || e.status === "not_evaluated").length;
 
   const navBar = (position: string) => player && (
@@ -230,7 +245,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
             {/* key: rebuild the form for each player and each saved version. Without it, moving between players
                 reuses the previous form, so it shows stale scores (blank after "Previous", or another player's). */}
             <form
-              key={`${player.id}|${myEvaluation?.status ?? "none"}|${JSON.stringify(savedScores)}|${JSON.stringify(savedAnswers)}`}
+              key={`${player.id}|${myEvaluation?.status ?? "none"}|${JSON.stringify(savedScores)}|${JSON.stringify(savedAnswers)}|${myNote}`}
               id="evaluation-form"
               action={saveEvaluation}
               className="space-y-6"
@@ -239,6 +254,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
               <input type="hidden" name="sessionId" value={selectedSession.id} />
               <input type="hidden" name="playerSeasonId" value={player.id} />
               {next && <input type="hidden" name="nextPlayerSeasonId" value={next.id} />}
+              {noteKind && <input type="hidden" name="noteKind" value={noteKind} />}
 
               <RatingInputs categories={categories} initialScores={Object.fromEntries(categories.map((c) => [c.code, savedScores[c.code] ?? null]))} />
 
@@ -262,6 +278,29 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
                   ))}
                 </div>
               </div>
+
+              {noteKind && (
+                <div className="space-y-2 border-t border-border pt-4">
+                  <label htmlFor="player-note" className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
+                    {noteKind === "private" ? <><Lock className="h-3.5 w-3.5" /> Private note</> : <><MessageSquare className="h-3.5 w-3.5" /> Shared note</>}
+                  </label>
+                  <p id="player-note-help" className="text-xs text-muted-foreground">
+                    {noteKind === "private"
+                      ? "Only you can see this note. You can read and change it anytime, including after scoring closes (My Notes)."
+                      : "Coaches see this note after the age group's draft report is released, without your name. Admins see it with your name. It locks with the session."}
+                  </p>
+                  <textarea
+                    id="player-note"
+                    name="note"
+                    defaultValue={myNote}
+                    maxLength={2000}
+                    rows={3}
+                    aria-describedby="player-note-help"
+                    placeholder={noteKind === "private" ? "Anything you want to remember about this player" : "Observations other coaches should know"}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 sm:text-sm"
+                  />
+                </div>
+              )}
 
               <div className="space-y-3 border-t border-border pt-4">
                 <p className="text-xs text-slate-600 dark:text-slate-400">
@@ -347,6 +386,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
                       <Link href={`${sessionUrl}&player=${r.id}`} className="flex min-h-12 items-center gap-3 px-3 py-2 hover:bg-accent">
                         <span className="w-14 shrink-0 font-mono text-base font-bold text-foreground">{r.evaluation_number ?? "—"}</span>
                         <span className="min-w-0 flex-1 truncate text-sm text-foreground">{playerName(r)}</span>
+                        {notedPlayers.has(r.id) && <StickyNote className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-label="Has your note" />}
                         <span className="hidden text-xs text-muted-foreground sm:inline">Age {r.league_age}</span>
                         <StatusChip status={evaluationFor.get(r.id)?.status} />
                       </Link>

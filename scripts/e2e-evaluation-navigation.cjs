@@ -123,12 +123,22 @@ const bibOnPage = (page) => page.locator("p.font-mono.text-3xl").first().textCon
       FROM public.evaluations e JOIN public.ratings r ON r.evaluation_id = e.id JOIN public.rating_categories rc ON rc.id = r.rating_category_id
       WHERE e.player_season_id = ${aId} AND e.evaluator_user_id = (SELECT id FROM auth.users WHERE email = '${EVALUATOR}') GROUP BY e.status;`);
     check(saved === "submitted 4 5 5 2 4", "database matches the screen", saved);
+
+    // Shared note (independent evaluator): saved with the ratings and shown again after the reload.
+    await page.fill("#player-note", "E2E shared note: quick first step");
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await page.waitForSelector("text=Saved. You can still change it");
+    check((await page.inputValue("#player-note")) === "E2E shared note: quick first step", "shared note is shown again after saving");
+    const note = sql(`SELECT n.note_text FROM public.evaluator_notes n JOIN public.evaluations e ON e.id = n.evaluation_id
+      WHERE e.player_season_id = ${aId} AND e.evaluator_user_id = (SELECT id FROM auth.users WHERE email = '${EVALUATOR}');`);
+    check(note === "E2E shared note: quick first step", "shared note is in the database", note);
     check(sql(`SELECT count(*) FROM public.evaluations WHERE player_season_id = ${bId};`) === "0", "the unsaved tap on the next player was not saved");
   } finally {
     await browser.close();
     // Remove what this test created so it can run again (local only; session is open so deletes are allowed).
     // A submitted evaluation must keep a core rating, so move it back to draft before deleting.
-    sql(`UPDATE public.evaluations SET status = 'draft' WHERE player_season_id IN (${aId}, ${bId});
+    sql(`DELETE FROM public.evaluator_notes WHERE evaluation_id IN (SELECT id FROM public.evaluations WHERE player_season_id IN (${aId}, ${bId}));
+         UPDATE public.evaluations SET status = 'draft' WHERE player_season_id IN (${aId}, ${bId});
          DELETE FROM public.ratings WHERE evaluation_id IN (SELECT id FROM public.evaluations WHERE player_season_id IN (${aId}, ${bId}));
          DELETE FROM public.experience_answers WHERE evaluation_id IN (SELECT id FROM public.evaluations WHERE player_season_id IN (${aId}, ${bId}));
          DELETE FROM public.evaluations WHERE player_season_id IN (${aId}, ${bId});`);

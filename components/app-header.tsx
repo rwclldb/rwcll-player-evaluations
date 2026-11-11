@@ -22,6 +22,7 @@ const ADMIN_LINKS: NavLink[] = [
 const EVALUATOR_LINKS: NavLink[] = [
   { href: "/protected/evaluations", label: "Evaluations" },
   { href: "/protected/draft-reports", label: "Draft Reports" },
+  { href: "/protected/my-notes", label: "My Notes" },
 ];
 
 export async function AppHeader({ user }: { user: User }) {
