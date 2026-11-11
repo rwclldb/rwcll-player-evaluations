@@ -5,7 +5,7 @@
 //   npm run fixtures:load -- --reset --scored         same, plus all Spring 2027 evaluations (for draft reports)
 //   npm run fixtures:load                             load into an empty local DB (refuses if players exist)
 //   npm run fixtures:load -- --reset --bare           wipe, then only admin accounts + seasons: walk through setup in the app
-//                                                     (docs/TEST-PLAN-SEASON-SETUP.md)
+//                                                     (docs/TEST-PLAN-SEASON-SETUP.xlsx)
 //
 // Hosted (run it YOURSELF; see docs/FAQ.md "Load test data into hosted Supabase"):
 //   npm run fixtures:load -- --hosted --confirm-project=<ref> [--open-sessions | --scored]
@@ -145,7 +145,7 @@ async function main() {
   if (BARE) {
     log(`
 PASS: bare league loaded: ${Object.keys(userId).length} admin accounts, Spring 2026 (closed) and Spring 2027. No players, coaches, evaluators, bibs, prior-year ratings, or sessions.`);
-    log("Next: follow docs/TEST-PLAN-SEASON-SETUP.md, signed in as admin.jordan@example.com with FIXTURE_PASSWORD.");
+    log("Next: follow docs/TEST-PLAN-SEASON-SETUP.xlsx, signed in as admin.jordan@example.com with FIXTURE_PASSWORD.");
     return;
   }
 

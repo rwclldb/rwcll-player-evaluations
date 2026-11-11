@@ -407,9 +407,10 @@ The People page creates accounts with the Supabase **secret key** and Supabase s
 
 1. **Migrations.** Apply every migration up to `20261111170000_people_admin.sql` to the hosted database (`npx supabase db push`, or the wipe-and-load steps above).
 2. **Secret key on Vercel.** Project -> Settings -> Environment Variables: add `SUPABASE_SECRET_KEY` (Supabase -> Project Settings -> API Keys -> secret key) for Production and Preview. Never prefix it with `NEXT_PUBLIC_`.
-3. **Site URL.** Supabase -> Authentication -> URL Configuration: set Site URL to the Vercel address and add it (and `https://*-<your-team>.vercel.app/**` for previews) to Redirect URLs.
-4. **Invite email template.** Supabase -> Authentication -> Emails -> Invite user: paste the body of `supabase/templates/invite.html`. It links to `/auth/confirm?token_hash=...&type=invite&next=/auth/update-password`.
-5. **Email provider.** Supabase's built-in email sends only a few messages per hour. Before inviting 30-50 people, set up custom SMTP (Authentication -> Emails -> SMTP settings), for example a league Google Workspace account or a service such as Resend.
-6. **Link lifetime (optional).** Authentication -> Emails: set the email OTP expiry to 86400 seconds (24 hours) so invitations don't expire after an hour.
+3. **Site URL and Redirect URLs.** Supabase -> Authentication -> URL Configuration: set Site URL to the Vercel address, and add `https://<vercel address>/**` (and `https://*-<your-team>.vercel.app/**` for previews) to Redirect URLs.
+4. **No email template change is needed.** The app works with Supabase's default invite and reset emails (`components/auth-hash-handler.tsx` finishes sign-in from the link).
+5. **Getting people in without email.** On People, choose "Give me a link to send myself" (or "Create without email" for a list), and use the **Sign-in link** button on any account. Paste the link into your own email or a text. This needs no email setup and also fixes forgotten passwords.
+6. **Email provider (only to have the app send the emails).** Supabase's built-in email only delivers to members of your Supabase organization, a few per hour. To email 30-50 coaches from the app, set up custom SMTP (Authentication -> Emails -> SMTP settings), for example a league Google Workspace account or Resend.
+7. **Link lifetime (optional).** Authentication -> Sign In / Providers -> Email: set the email OTP expiration to 86400 seconds (24 hours) so links don't expire after an hour.
 
 Locally, invitation emails land in Mailpit at http://127.0.0.1:54324.
