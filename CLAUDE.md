@@ -23,7 +23,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - **Never touch hosted Supabase** (no `db push`, `link`, remote SQL, or remote migrations) unless the user explicitly approves that specific operation in the current session.
 - Confirm `.env.local` points at local Supabase before any database work.
 - Never commit or print `.env`, `.env.local`, service-role keys, passwords, JWT secrets, or anything in `supabase/.temp/`.
-- Do not reset, truncate, or delete data (including synthetic test data) without explaining the effect and getting approval.
+- Do not reset, truncate, or delete data without asking first. Until live testing begins, all data in both local and hosted Supabase is disposable test data (user, 2026-11-10). Wiping it is fine once the user says yes, and nothing needs to be backed up. The hosted deny rules still apply: hosted operations need explicit approval.
 - Do not discard uncommitted work. Check `git status` before starting.
 - Do not commit staged import rows unless the user approves those specific rows.
 - Say what was actually run and verified. Do not report something as passing unless the test ran in this session.
@@ -77,11 +77,16 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
   - One report per age group. Default sort is overall average; other sorts where practical.
   - Coach averages, independent evaluator averages, and prior-year coach ratings in separate columns.
   - CSV first; PDF is a nice-to-have.
-  - Coaches see reports only after the admin locks the session (lock = release, assumption to confirm). Admins see them anytime.
+  - Two steps: the admin **locks** the session (scoring stops), then **releases** reports to coaches. Both steps can be undone (unrelease, unlock). Each admin page must state clearly what each step does and what undoing it does. Coaches see reports only after release. Admins see them anytime.
 - **Evaluation-day roster printout.** Per age group, no ratings, sortable by bib number or last name, first name.
-- **Prior-year ratings for all players.** Coaches can see prior-year ratings for every rated player (data will be sparse). Always shown in draft reports. During live evaluations, an admin on/off setting controls it (default off).
+- **Prior-year ratings for all players.** Coaches can see prior-year ratings for every rated player (data will be sparse). Always shown in draft reports. During live evaluations, one on/off switch **per season** controls it (default off). The Little League board decides go or no-go.
 - **Age chart upload.** Admin uploads the official age chart for each season.
 - **Possible-duplicate player flag.** Flag players with the same name and birthdate for admin review and merge.
+- **Shared test server (not urgent).** A hosted deployment built from GitHub so other league members can test, and so the app can be tested on phones. Needs a hosting choice (for example Vercel plus the hosted Supabase project) and the user's approval for every hosted step.
+
+## Working preferences
+
+- UI suggestions are welcome. The user isn't attached to the current design. Propose changes that make screens cleaner and easier to use, especially for admins and for scoring on phones.
 
 ## Known issues and open decisions
 
