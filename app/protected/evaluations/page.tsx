@@ -227,7 +227,14 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
               </section>
             )}
 
-            <form id="evaluation-form" action={saveEvaluation} className="space-y-6">
+            {/* key: rebuild the form for each player and each saved version. Without it, moving between players
+                reuses the previous form, so it shows stale scores (blank after "Previous", or another player's). */}
+            <form
+              key={`${player.id}|${myEvaluation?.status ?? "none"}|${JSON.stringify(savedScores)}|${JSON.stringify(savedAnswers)}`}
+              id="evaluation-form"
+              action={saveEvaluation}
+              className="space-y-6"
+            >
               <DirtyTracker formId="evaluation-form" />
               <input type="hidden" name="sessionId" value={selectedSession.id} />
               <input type="hidden" name="playerSeasonId" value={player.id} />
