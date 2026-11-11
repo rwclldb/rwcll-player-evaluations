@@ -37,6 +37,7 @@
     "test:session-stage-runtime": "node scripts/test-session-stage-runtime.cjs",
     "test:draft-report-runtime": "node scripts/test-draft-report-runtime.cjs",
     "test:player-notes-runtime": "node scripts/test-player-notes-runtime.cjs",
+    "test:season-setup-runtime": "node scripts/test-season-setup-runtime.cjs",
     "e2e:evaluation-navigation": "node scripts/e2e-evaluation-navigation.cjs"
   },
   "dependencies": {
