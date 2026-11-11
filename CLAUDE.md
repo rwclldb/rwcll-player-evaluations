@@ -55,7 +55,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - Five required core skills: hitting, throwing, grounders, fly balls, running/awareness.
 - Pitching and catching categories are available for all ages, optional, and never gated by division.
 - `Not Evaluated` and blank optional ratings are not zero and are excluded from averages.
-- Evaluators can save drafts and edit their own submissions until the session is locked. Admin decides completion. Missing ratings are flagged, not blocking: evaluators can submit with some core skills blank. Evaluators choose Save Draft, Submit, or Not Evaluated (`save_evaluation`, migration 20261110200000). Submitting requires at least one core skill. Only submitted evaluations count in reports. Admin corrections after lock need a reason and audit entry.
+- Evaluators can edit their own saved ratings until the session is locked. Admin decides completion. Missing ratings are flagged, not blocking: evaluators can save with some core skills blank. The scoring screen offers Save & Next, Save, and Not Evaluated (`save_evaluation`, migration 20261110200000). Save stores status `submitted` and needs at least one core skill. Save Draft was removed from the screen (2026-11-11); the database still accepts `draft`, and older drafts show as "Draft (not counted)". Only submitted evaluations count in reports. Admin corrections after lock need a reason and audit entry.
 - **Only players are rated. Coaches are never rated by anyone.** Names like `historical_coach_evaluation_*` mean ratings of players made by coaches.
 - End-of-season coach ratings use the same form: 5 core skills plus optional pitching and catching.
 
@@ -93,14 +93,14 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - **Lock and release** (migration 20261110210000): Sessions page with confirmations and an explainer.
 - **Evaluation-day roster** (`/protected/roster`, admin): blank Check-in and Notes columns, bib or name sort, and "All ages" prints one age group per page.
 - **Prior-year switch**, one per season, on the Sessions page. When on, coaches and evaluators see prior-year ratings while scoring (`prior_year_for_session`). Draft reports always include prior-year ratings.
-- **Evaluation screen:** a player list with bib, name, LL age and status, plus bib search. A one-player scoring page has Previous/Next at top and bottom, Submit & Next, and an unsaved-changes warning.
+- **Evaluation screen:** a player list with bib, name, LL age and status, plus bib search. A one-player scoring page has Previous/Next at top and bottom, Save & Next, and an unsaved-changes warning.
 - **Bibs are unique per season** (index `player_seasons_unique_season_evaluation_number`).
 
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **On-site roster changes:** admins add or change players on evaluation day. Needs design.
 - **Private notes:** coaches and evaluators keep notes on players that only they can see. `evaluator_notes` and `private_notes` tables exist but aren't reviewed. Needs design.
-- **Retire the team-scoped coach report** (`/protected/coach-reports`, `coach_historical_report*`). It's superseded by draft reports and no longer linked from the evaluation screen.
+- **Retire the team-scoped coach report** (`/protected/coach-reports`, `coach_historical_report*`). It's superseded by draft reports and no longer linked from the evaluation screen or the top menu (the pages and functions still exist).
 - **Bib number upload and editing.** CSV upload (by Player Id, or by name plus birthdate) and admin editing in the app, with numbers unique across the season.
 - **Age chart upload.** Admin uploads the official age chart for each season.
 - **Possible-duplicate player flag.** Flag players with the same name and birthdate for admin review and merge.
@@ -114,6 +114,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 
 - **Coach access to historical ratings is scoped to current team assignment** (`coach_historical_report_roster`, `coach_historical_report`). Decided 2026-11-10: replace with access to all rated players, as described under Tracked additions. Not yet built.
 - **One registration per Sports Connect Player Id per season** (`player_seasons_season_external_player_id_uidx`). Decided 2026-11-10: keep this rule. Repeated Ids are data errors, so the app flags them and holds later rows in import review.
+- **Top menu can't tell coaches from evaluators.** `user_roles` is admin-only, so coaches and independent evaluators both see Evaluations and Draft Reports. An evaluator who opens Draft Reports gets "No draft reports have been released yet." Hiding the link needs a small role-lookup function (migration).
 - No in-app way to invite or disable users. Public sign-up is off, so accounts are created in Supabase Studio or through the admin API for now.
 - Documentation drift: some docs still describe implemented migrations as proposed, describe division-based evaluation, or say pitching/catching is AAA-and-up only. Reconcile against actual code.
 - Remaining security checks: confirm admin reports and CSV export still work.

@@ -45,13 +45,14 @@ function returnToSession(
 }
 
 const INTENTS = {
-  draft: "Draft saved. It does not count until you submit it.",
-  submitted: "Evaluation submitted. You can still change it until the session is locked.",
+  draft: "Draft saved. It does not count in reports until you choose Save.",
+  submitted: "Saved. You can still change it until the session is locked.",
   not_evaluated: "Marked Not Evaluated. Any ratings for this player were cleared.",
 } as const;
 type Intent = keyof typeof INTENTS;
 
-// One form, several buttons (button name="intent"): Save draft / Submit / Submit & Next / Not evaluated.
+// One form, several buttons (button name="intent"): Save (submitted) / Save & Next / Not evaluated.
+// "draft" is still accepted for older drafts, but the screen no longer offers it (decided 2026-11-11).
 export async function saveEvaluation(formData: FormData) {
   const sessionId = readPositiveId(formData.get("sessionId"));
   const playerSeasonId = readPositiveId(formData.get("playerSeasonId"));

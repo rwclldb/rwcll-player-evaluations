@@ -8,7 +8,7 @@ import { DirtyTracker, GuardedLink } from "./unsaved-guard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, ArrowLeft, ShieldAlert, Calendar, Save, Layers, MapPin, Search, ChevronLeft, ChevronRight, History } from "lucide-react";
+import { ClipboardList, ArrowLeft, ShieldAlert, Calendar, Layers, MapPin, Search, ChevronLeft, ChevronRight, History } from "lucide-react";
 
 const OLDEST_TO_YOUNGEST = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7];
 
@@ -45,8 +45,8 @@ const PRIOR_SKILLS: [string, string][] = [
 ];
 
 const STATUS_STYLE: Record<string, { label: string; className: string }> = {
-  submitted: { label: "Submitted", className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
-  draft: { label: "Draft", className: "bg-amber-500/15 text-amber-800 dark:text-amber-300" },
+  submitted: { label: "Saved", className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
+  draft: { label: "Draft (not counted)", className: "bg-amber-500/15 text-amber-800 dark:text-amber-300" },
   not_evaluated: { label: "Not evaluated", className: "bg-slate-500/15 text-slate-700 dark:text-slate-300" },
   none: { label: "Not started", className: "bg-muted text-muted-foreground" },
 };
@@ -265,19 +265,16 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
 
               <div className="space-y-3 border-t border-border pt-4">
                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Leave a skill on &quot;Not scored&quot; if you didn&apos;t see it. Blank skills are flagged, never counted as zero. Submitting needs at least one core skill. Only submitted evaluations count, and you can change yours until the session is locked.
+                  Leave a skill on &quot;Not scored&quot; if you didn&apos;t see it. Blank skills are flagged, never counted as zero. Saving needs at least one core skill. Your ratings count in reports as soon as you save, and you can change them until the session is locked.
                 </p>
                 <div className="grid gap-2 sm:flex sm:flex-row-reverse sm:flex-wrap">
                   {next && (
                     <Button type="submit" name="intent" value="submitted_next" className="min-h-11 bg-emerald-600 text-white hover:bg-emerald-500">
-                      Submit &amp; Next ({bibLabel(next)})
+                      Save &amp; Next ({bibLabel(next)})
                     </Button>
                   )}
                   <Button type="submit" name="intent" value="submitted" variant={next ? "outline" : "default"} className={`min-h-11 ${next ? "" : "bg-emerald-600 text-white hover:bg-emerald-500"}`}>
-                    {myEvaluation?.status === "submitted" ? "Update Submission" : "Submit"}
-                  </Button>
-                  <Button type="submit" name="intent" value="draft" variant="outline" className="min-h-11">
-                    <Save className="mr-1.5 h-4 w-4" /> Save Draft
+                    Save
                   </Button>
                   <Button type="submit" name="intent" value="not_evaluated" variant="outline" className="min-h-11 text-muted-foreground">
                     Not Evaluated (clears ratings)
@@ -341,7 +338,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
                   <Button type="submit" className="min-h-11"><Search className="mr-1 h-4 w-4" /> Go</Button>
                 </form>
                 <p className="text-xs text-muted-foreground">
-                  {submittedCount} of {registrations.length} players done (submitted or not evaluated). Only <strong>submitted</strong> evaluations count in reports.
+                  {submittedCount} of {registrations.length} players done (saved or not evaluated). A player marked &quot;Draft (not counted)&quot; stays out of reports until you open it and save.
                   {priorYear.length > 0 && " Prior-year ratings are shown on each player's page."}
                 </p>
                 <ul className="divide-y divide-border rounded-lg border border-border">

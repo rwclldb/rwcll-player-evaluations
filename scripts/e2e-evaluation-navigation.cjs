@@ -93,16 +93,16 @@ const bibOnPage = (page) => page.locator("p.font-mono.text-3xl").first().textCon
     await page.fill("#bib-search", aBib);
     await page.getByRole("button", { name: "Go" }).click();
     await page.waitForURL(new RegExp(`player=${aId}`));
-    await page.waitForSelector("text=Submit & Next");
+    await page.waitForSelector("text=Save & Next");
     check((await bibOnPage(page)) === `#${aBib}`, `bib search opens #${aBib}`);
     check((await shown(page)) === "- - - - -", "unscored player starts blank", await shown(page));
 
     const scores = [4, 3, 5, 2, 4];
     for (let i = 0; i < CORE.length; i++) await page.locator(`input[name="rating_${CORE[i]}"][value="${scores[i]}"]`).locator("xpath=..").click();
-    await page.getByRole("button", { name: /Submit & Next/ }).click();
+    await page.getByRole("button", { name: /Save & Next/ }).click();
     await page.waitForURL(new RegExp(`player=${bId}`));
     await page.waitForSelector("text=Showing the next player");
-    check((await bibOnPage(page)) === `#${bBib}`, `Submit & Next moves to #${bBib}`);
+    check((await bibOnPage(page)) === `#${bBib}`, `Save & Next moves to #${bBib}`);
     check((await shown(page)) === "- - - - -", "next player starts blank (nothing carried over)", await shown(page));
 
     await page.locator('input[name="rating_hitting"][value="1"]').locator("xpath=..").click();
@@ -110,14 +110,14 @@ const bibOnPage = (page) => page.locator("p.font-mono.text-3xl").first().textCon
 
     await page.getByRole("link", { name: new RegExp(`#${aBib}`) }).first().click();
     await page.waitForURL(new RegExp(`player=${aId}(&|$)`));
-    await page.waitForSelector("text=Update Submission");
+    await page.waitForSelector('input[name="rating_hitting"][value="4"]:checked', { state: "attached" });
     check(dialogs === 1, "leaving with an unsaved tap asks for confirmation");
     check((await shown(page)) === "4 3 5 2 4", `going back to #${aBib} shows the saved scores`, await shown(page));
 
     await page.locator('input[name="rating_throwing"][value="5"]').locator("xpath=..").click();
-    await page.getByRole("button", { name: "Update Submission" }).click();
-    await page.waitForSelector("text=Evaluation submitted");
-    check((await shown(page)) === "4 5 5 2 4", "Update Submission keeps showing the updated scores", await shown(page));
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await page.waitForSelector("text=Saved. You can still change it");
+    check((await shown(page)) === "4 5 5 2 4", "Save keeps showing the updated scores", await shown(page));
 
     const saved = sql(`SELECT e.status || ' ' || string_agg(r.score::text, ' ' ORDER BY rc.sort_order)
       FROM public.evaluations e JOIN public.ratings r ON r.evaluation_id = e.id JOIN public.rating_categories rc ON rc.id = r.rating_category_id
