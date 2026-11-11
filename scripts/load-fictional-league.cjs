@@ -266,36 +266,33 @@ async function main() {
   }
   log(`REAL scoring: ${saved} evaluations saved through save_evaluation by ${Object.keys(byEvaluator).length} evaluator accounts; sessions left Open`);
 
-  // Verify: recompute coach and evaluator overall averages from the database and compare to the expected report.
-  const dbEvals = [];
-  for (let from = 0; ; from += 1000) {
-    const page = await must(svc.from("evaluations").select("player_season_id, evaluator_type, status, ratings(score, rating_categories(code, category_group))").range(from, from + 999), "read evaluations");
-    dbEvals.push(...page);
-    if (page.length < 1000) break;
+  // Verify: the app's draft_report function (as admin) must reproduce expected-draft-report.csv.
+  const report = new Map();
+  for (const sessionId of Object.values(sessionByAge)) {
+    for (const row of await must(admin.rpc("draft_report", { p_session_id: sessionId }), `draft_report session ${sessionId}`)) report.set(row.player_season_id, row);
   }
-  const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
-  const overall = (evs) => {
-    const skills = ["hitting", "throwing", "grounders", "fly_balls", "running_awareness"].map((code) =>
-      mean(evs.flatMap((e) => e.ratings.filter((x) => x.rating_categories.code === code).map((x) => x.score))));
-    const avail = skills.filter((v) => v !== null);
-    return avail.length ? mean(avail) : null;
-  };
-  let mismatches = 0;
+  const checks = [
+    ["Coach Overall", "coach_overall"], ["Evaluator Overall", "evaluator_overall"], ["Prior-Year Overall", "prior_overall"],
+    ["Coach Evaluations", "coach_evaluations"], ["Evaluator Evaluations", "evaluator_evaluations"], ["Prior-Year Ratings", "prior_ratings"],
+    ["Blank Core Skills (submitted)", "blank_core_skills"], ["Not Evaluated Marks", "not_evaluated_marks"], ["Drafts Excluded", "drafts_excluded"],
+  ];
+  let mismatches = 0, compared = 0;
   for (const exp of readCsv(path.join(gen, "scored/expected-draft-report.csv"))) {
-    const reg = refToReg(exp["Fixture Key"]);
-    const mine = dbEvals.filter((e) => e.player_season_id === reg.id && e.status === "submitted");
-    for (const [type, col] of [["coach", "Coach Overall"], ["independent_evaluator", "Evaluator Overall"]]) {
-      const got = overall(mine.filter((e) => e.evaluator_type === type));
+    const row = report.get(refToReg(exp["Fixture Key"]).id);
+    if (!row) { mismatches++; log(`  missing from draft_report: ${exp["Fixture Key"]}`); continue; }
+    for (const [col, field] of checks) {
       const want = exp[col] === "" ? null : Number(exp[col]);
+      const got = row[field] === null ? null : Number(row[field]);
+      compared++;
       if ((got === null) !== (want === null) || (got !== null && Math.abs(got - want) > 0.005)) {
         mismatches++;
-        if (mismatches <= 5) log(`  mismatch ${exp["Fixture Key"]} ${col}: database ${got?.toFixed(2) ?? "blank"}, expected ${exp[col] || "blank"}`);
+        if (mismatches <= 8) log(`  mismatch ${exp["Fixture Key"]} ${col}: draft_report ${got ?? "blank"}, expected ${exp[col] || "blank"}`);
       }
     }
   }
-  const counts = dbEvals.reduce((m, e) => ({ ...m, [e.status]: (m[e.status] ?? 0) + 1 }), {});
-  log(`Verify: ${dbEvals.length} evaluations in database (${Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(", ")}); ${mismatches} average mismatches against expected-draft-report.csv`);
-  if (dbEvals.length !== evalRows.length || mismatches) fail("scored dataset does not match the fixture files");
+  const { count: evalCount } = await svc.from("evaluations").select("id", { count: "exact", head: true });
+  log(`Verify: ${evalCount} evaluations in database; draft_report checked ${compared} values for ${report.size} players: ${mismatches} mismatches`);
+  if (evalCount !== evalRows.length || mismatches || report.size !== readCsv(path.join(gen, "scored/expected-draft-report.csv")).length) fail("draft_report does not match the fixture files");
   log("\nPASS: scored dataset loaded. Sessions are Open; lock and release them in the app to test reports.");
 }
 
