@@ -1,24 +1,40 @@
 import Link from "next/link";
 import Image from "next/image";
-import { AuthButton } from "@/components/auth-button";
-import { TopbarClock } from "@/components/topbar-clock";
 import { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { signOutAction } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { TopbarClock } from "@/components/topbar-clock";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { DesktopNav, MobileMenu, type NavLink } from "@/components/app-nav";
+
+const ADMIN_LINKS: NavLink[] = [
+  { href: "/protected/sessions", label: "Sessions" },
+  { href: "/protected/assignments", label: "Assignments" },
+  { href: "/protected/import-batches", label: "Imports" },
+  { href: "/protected/evaluation-review", label: "Data Review" },
+  { href: "/protected/draft-reports", label: "Draft Reports" },
+  { href: "/protected/reports", label: "Reports" },
+];
+
+// Coaches and independent evaluators. The database decides what each may open on Draft Reports
+// (coaches: released age groups; evaluators: none).
+const EVALUATOR_LINKS: NavLink[] = [
+  { href: "/protected/evaluations", label: "Evaluations" },
+  { href: "/protected/draft-reports", label: "Draft Reports" },
+];
 
 export async function AppHeader({ user }: { user: User }) {
   const supabase = await createClient();
-
-  // Check administrator role via RPC
   const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
-  const administrator = !roleError && isAdmin === true;
+  const links = !roleError && isAdmin === true ? ADMIN_LINKS : EVALUATOR_LINKS;
+  const email = user.email ?? "";
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-card/95 backdrop-blur shadow-md">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-6">
-          {/* Brand Logo & Name */}
-          <Link href="/protected" className="flex items-center gap-3 group">
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-card/95 shadow-sm backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 items-center gap-4">
+          <Link href="/protected" className="group flex shrink-0 items-center gap-2">
             <Image
               src="/rwcll-logo32.png"
               alt="RWCLL Logo"
@@ -27,87 +43,28 @@ export async function AppHeader({ user }: { user: User }) {
               className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
               priority
             />
-            <span className="font-bold text-lg tracking-tight text-foreground">
-              RWCLL <span className="text-emerald-700 dark:text-emerald-400 font-normal">Evaluations</span>
+            <span className="text-lg font-bold tracking-tight text-foreground">
+              RWCLL <span className="font-normal text-emerald-700 dark:text-emerald-400">Evaluations</span>
             </span>
           </Link>
-
-          {/* Role-Based Navigation Links */}
-          <nav className="flex items-center gap-4 text-sm font-medium text-slate-700 dark:text-slate-300">
-            {administrator ? (
-              /* Administrator Navigation Links */
-              <>
-                <Link
-                  href="/protected/sessions"
-                  className="hover:text-emerald-400 transition-colors"
-                >
-                  Sessions
-                </Link>
-                <Link
-                  href="/protected/assignments"
-                  className="hover:text-emerald-400 transition-colors"
-                >
-                  Assignments
-                </Link>
-                <Link
-                  href="/protected/import-batches"
-                  className="hover:text-emerald-400 transition-colors"
-                >
-                  Imports
-                </Link>
-                <Link
-                  href="/protected/evaluation-review"
-                  className="hover:text-emerald-400 transition-colors"
-                >
-                  Data Review
-                </Link>
-                <Link
-                  href="/protected/reports"
-                  className="hover:text-emerald-400 transition-colors"
-                >
-                  Reports
-                </Link>
-              </>
-            ) : (
-              /* Non-Admin Coach/Evaluator Navigation Links */
-              <>
-                <Link
-                  href="/protected/evaluations"
-                  className="hover:text-emerald-400 transition-colors"
-                >
-                  Evaluations
-                </Link>
-                <Link
-                  href="/protected/coach-reports"
-                  className="hover:text-emerald-400 transition-colors"
-                >
-                  Coach Reports
-                </Link>
-                <Link
-                  href="/protected/assignments"
-                  className="hover:text-emerald-400 transition-colors"
-                >
-                  Assignments
-                </Link>
-                <Link
-                  href="/protected/sessions"
-                  className="hover:text-emerald-400 transition-colors"
-                >
-                  Sessions
-                </Link>
-              </>
-            )}
-          </nav>
+          <DesktopNav links={links} />
         </div>
 
-        {/* Right Side Controls: Live Clock + Auth Button */}
-        <div className="flex items-center gap-4">
+        {/* Desktop: clock, account, sign out, theme. Below lg these move into the menu button. */}
+        <div className="hidden items-center gap-3 lg:flex">
           <TopbarClock />
-          <AuthButton />
+          <span className="hidden max-w-[16rem] truncate rounded border border-border bg-background px-2.5 py-1 font-mono text-xs text-muted-foreground xl:inline">
+            {email}
+          </span>
+          <form action={signOutAction}>
+            <Button variant="outline" size="sm" type="submit">
+              Sign Out
+            </Button>
+          </form>
           <ThemeSwitcher />
         </div>
+        <MobileMenu links={links} email={email} />
       </div>
     </header>
   );
 }
-
