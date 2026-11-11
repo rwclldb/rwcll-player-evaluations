@@ -373,3 +373,30 @@ The date and time shown by default (`2027-02-20`, `09:00`–`13:00`) are example
 ## How do I return an Open session to Setup to edit its schedule?
 
 An administrator can choose **Return to Setup** for an Open session. The action accepts the Setup destination status and is allowed only when the session has no evaluation records. Existing event schedules and evaluator assignments are retained. If evaluation records exist, the action is refused and no evaluation work is deleted. Locked sessions cannot be reopened.
+
+## Load test data into hosted Supabase (you run this, not Claude Code)
+
+Use this to test on phones with the fictional league. Hosted data is disposable until live testing. Claude Code is blocked from hosted Supabase, so run these steps yourself in PowerShell from the project folder.
+
+1. **Wipe and rebuild the hosted database.** This applies every migration and `supabase/seed.sql` (the rating categories):
+   ```
+   npx supabase login
+   npx supabase link --project-ref <your project ref>
+   npx supabase db reset --linked
+   ```
+2. **Create `.env.hosted.local`** in the project folder. Git ignores it through the `.env*.local` rule. Never commit it or paste it anywhere.
+   ```
+   HOSTED_SUPABASE_URL=https://<your project ref>.supabase.co
+   HOSTED_SUPABASE_PUBLISHABLE_KEY=<Project Settings -> API Keys -> publishable key>
+   HOSTED_SUPABASE_SECRET_KEY=<Project Settings -> API Keys -> secret key>
+   FIXTURE_PASSWORD=<a strong password for all test accounts>
+   ```
+   The secret key bypasses all security rules. Keep it only in this file, never in Vercel, and delete the file when you're done.
+3. **Load the data**, with every age group already open for scoring:
+   ```
+   npm run fixtures:load -- --hosted --confirm-project=<your project ref> --open-sessions
+   ```
+   Use `--scored` instead of `--open-sessions` to also load all 1,230 Spring 2027 evaluations for testing draft reports. The loader refuses to run if the hosted database already has players.
+4. **Sign in on your phone** with any fixture account, for example `coach.avery@example.com` or `eval.kendall@example.com`, using the `FIXTURE_PASSWORD` you chose. Each account's age groups are listed in `rwcll-fictional-test-league/README.md`.
+
+To start over, repeat step 1, then step 3.

@@ -109,7 +109,7 @@ export function DraftReportTable({ rows, title, fileName, administrator }: { row
       <div className="font-mono text-sm font-bold">{fmt(value)}</div>
       {raters > 0 && (
         <div className={`text-[10px] ${skills < 5 ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground"} print:text-black`}>
-          {skills < 5 ? `${skills} of 5 skills · ` : ""}{raters} {who}{raters === 1 ? "" : "s"}
+          {skills < 5 ? `${skills} of 5 skills · ` : ""}{raters} {raters === 1 ? who : who === "coach" ? "coaches" : `${who}s`}
         </div>
       )}
     </td>

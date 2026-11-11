@@ -1,11 +1,16 @@
-// Loads the RWCLL fictional test league into the LOCAL Supabase database.
+// Loads the RWCLL fictional test league into Supabase (local by default).
 //
-//   npm run fixtures:load -- --reset            wipe local DB, then load the pre-evaluation dataset
-//   npm run fixtures:load -- --reset --scored   same, plus all Spring 2027 evaluations (for draft reports)
-//   npm run fixtures:load                       load into an empty local DB (refuses if players exist)
+//   npm run fixtures:load -- --reset                  wipe local DB, then load the pre-evaluation dataset
+//   npm run fixtures:load -- --reset --open-sessions  same, with every age group already Open for scoring
+//   npm run fixtures:load -- --reset --scored         same, plus all Spring 2027 evaluations (for draft reports)
+//   npm run fixtures:load                             load into an empty local DB (refuses if players exist)
 //
-// Requires FIXTURE_PASSWORD (env var or .env.local): the password given to every test account.
-// Local only: refuses to run unless both .env.local and `supabase status` point at 127.0.0.1.
+// Hosted (run it YOURSELF; see docs/FAQ.md "Load test data into hosted Supabase"):
+//   npm run fixtures:load -- --hosted --confirm-project=<ref> [--open-sessions | --scored]
+//   Reads HOSTED_SUPABASE_URL / _SECRET_KEY / _PUBLISHABLE_KEY from .env.hosted.local. Never wipes hosted.
+//
+// Requires FIXTURE_PASSWORD: the password given to every test account.
+// Local mode refuses to run unless both .env.local and `supabase status` point at 127.0.0.1.
 //
 // Uses the app's real code paths where they exist:
 //   - CSV parsing: lib/sports-connect-preview.ts (same parser as the import screen)
@@ -21,9 +26,14 @@ const { createClient } = require("@supabase/supabase-js");
 const root = path.resolve(__dirname, "..");
 const pack = path.join(root, "rwcll-fictional-test-league");
 const gen = path.join(pack, "generated");
-const args = new Set(process.argv.slice(2));
+const argv = process.argv.slice(2);
+const args = new Set(argv);
 const RESET = args.has("--reset");
 const SCORED = args.has("--scored");
+const OPEN_SESSIONS = args.has("--open-sessions");
+// HOSTED mode is meant to be run by the user, never by Claude Code (hosted Supabase is off limits to it).
+const HOSTED = args.has("--hosted");
+const confirmProject = (argv.find((a) => a.startsWith("--confirm-project=")) ?? "").split("=")[1];
 
 const log = (msg) => console.log(msg);
 const fail = (msg) => { console.error(`\nFAIL: ${msg}`); process.exit(1); };
@@ -34,19 +44,36 @@ function readEnvFile(file) {
   return Object.fromEntries(fs.readFileSync(file, "utf8").split(/\r?\n/).map((l) => l.match(/^([A-Z0-9_]+)=(.*)$/)).filter(Boolean).map((m) => [m[1], m[2].trim().replace(/^"|"$/g, "")]));
 }
 const envLocal = readEnvFile(path.join(root, ".env.local"));
-const appUrl = envLocal.NEXT_PUBLIC_SUPABASE_URL;
 const isLocal = (u) => /^http:\/\/(127\.0\.0\.1|localhost):54321\/?$/.test(u ?? "");
-if (!isLocal(appUrl)) fail(`.env.local NEXT_PUBLIC_SUPABASE_URL must be the local API (http://127.0.0.1:54321). Found: ${appUrl ?? "(missing)"}`);
-const password = process.env.FIXTURE_PASSWORD || envLocal.FIXTURE_PASSWORD;
-if (!password || password.length < 8) fail("Set FIXTURE_PASSWORD (8+ characters) in .env.local or the environment. It becomes the password for every test account.");
 
 function supabaseStatus() {
   const r = spawnSync("npx", ["supabase", "status", "-o", "env"], { cwd: root, encoding: "utf8", shell: true });
   if (r.status !== 0) fail("`npx supabase status` failed. Is local Supabase running? (npx supabase start)");
   return Object.fromEntries(r.stdout.split(/\r?\n/).map((l) => l.match(/^([A-Z0-9_]+)="?(.*?)"?$/)).filter(Boolean).map((m) => [m[1], m[2]]));
 }
-let status = supabaseStatus();
-if (!isLocal(status.API_URL)) fail(`supabase status API_URL is not local: ${status.API_URL}`);
+
+let status;
+let password;
+if (HOSTED) {
+  // Keys come from .env.hosted.local (git-ignored by the .env*.local rule) or the environment.
+  const envHosted = { ...readEnvFile(path.join(root, ".env.hosted.local")), ...process.env };
+  const url = (envHosted.HOSTED_SUPABASE_URL ?? "").replace(/\/$/, "");
+  const ref = (url.match(/^https:\/\/([a-z0-9]+)\.supabase\.co$/) ?? [])[1];
+  if (!ref) fail("Set HOSTED_SUPABASE_URL (https://<project-ref>.supabase.co) in .env.hosted.local.");
+  if (confirmProject !== ref) fail(`Hosted load needs --confirm-project=${ref} to prove you mean this project.`);
+  if (RESET) fail("--reset is local only. Wipe the hosted database yourself first (npx supabase db reset --linked).");
+  status = { API_URL: url, SERVICE_ROLE_KEY: envHosted.HOSTED_SUPABASE_SECRET_KEY, PUBLISHABLE_KEY: envHosted.HOSTED_SUPABASE_PUBLISHABLE_KEY };
+  if (!status.SERVICE_ROLE_KEY || !status.PUBLISHABLE_KEY) fail("Set HOSTED_SUPABASE_SECRET_KEY and HOSTED_SUPABASE_PUBLISHABLE_KEY in .env.hosted.local.");
+  password = envHosted.FIXTURE_PASSWORD || envLocal.FIXTURE_PASSWORD;
+  log(`HOSTED load into project ${ref}.`);
+} else {
+  const appUrl = envLocal.NEXT_PUBLIC_SUPABASE_URL;
+  if (!isLocal(appUrl)) fail(`.env.local NEXT_PUBLIC_SUPABASE_URL must be the local API (http://127.0.0.1:54321). Found: ${appUrl ?? "(missing)"}`);
+  status = supabaseStatus();
+  if (!isLocal(status.API_URL)) fail(`supabase status API_URL is not local: ${status.API_URL}`);
+  password = process.env.FIXTURE_PASSWORD || envLocal.FIXTURE_PASSWORD;
+}
+if (!password || password.length < 8) fail("Set FIXTURE_PASSWORD (8+ characters). It becomes the password for every test account.");
 
 // ---------- CSV helper (fixture files are simple RFC 4180) ----------
 const jiti = require("jiti")(__filename);
@@ -84,7 +111,9 @@ async function main() {
     await new Promise((r) => setTimeout(r, 1000));
   }
   const { count: existing } = await svc.from("players").select("id", { count: "exact", head: true });
-  if (existing > 0) fail(`local database already has ${existing} players. Re-run with --reset to wipe it first.`);
+  if (existing > 0) fail(`database already has ${existing} players. ${HOSTED ? "Wipe it first (npx supabase db reset --linked)." : "Re-run with --reset to wipe it first."}`);
+  const { count: categoryCount } = await svc.from("rating_categories").select("id", { count: "exact", head: true });
+  if (categoryCount !== 11) fail(`expected 11 rating categories, found ${categoryCount}. Apply migrations and supabase/seed.sql first.`);
 
   // ---------- accounts & roles (SIMULATED: no in-app invite workflow yet) ----------
   const people = readCsv(path.join(pack, "fictional_people.csv"));
@@ -240,7 +269,12 @@ async function main() {
   log(`\nVerify: ${pool} registrations in ages 7-16 (expected ${expectedPool}); ${bibCount} with bibs (expected ${expectedBibs})`);
   if (pool !== expectedPool || bibCount !== expectedBibs) fail("loaded counts do not match the fixture files");
   if (!SCORED) {
-    log("\nPASS: pre-evaluation dataset loaded. Sign in as any fixture account (e.g. admin.jordan@example.com) with FIXTURE_PASSWORD.");
+    if (OPEN_SESSIONS) {
+      // SIMULATED admin "Open Session" for every age group, so scoring can start right away.
+      await must(svc.from("evaluation_sessions").update({ status: "open" }).eq("season_id", s2027.id), "open sessions");
+      log("SIMULATED: all 10 age groups opened for scoring");
+    }
+    log(`\nPASS: pre-evaluation dataset loaded${OPEN_SESSIONS ? " (sessions Open)" : " (sessions in Setup)"}. Sign in as any fixture account (e.g. admin.jordan@example.com) with FIXTURE_PASSWORD.`);
     return;
   }
 
