@@ -87,7 +87,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 
 - **Draft reports** (`/protected/draft-reports`, migration 20261110220000):
   - All averages come from `private.session_player_summary`, through `draft_report` and `draft_report_sessions`.
-  - Admins see every age group anytime. Coaches see an age group only after it is released. Independent evaluators can't open reports.
+  - Admins see every age group anytime. Coaches and independent evaluators see an age group only after it is released (evaluators added 2026-11-11, migration 20261111130000).
   - Default sort is evaluator overall. Columns sort on click, and rows expand to per-skill detail and the viewer's own ratings.
   - CSV and print are built. PDF is still a nice-to-have.
 - **Lock and release** (migration 20261110210000): Sessions page with confirmations and an explainer.
@@ -100,7 +100,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 
 - **Player notes** (migration 20261111120000, test `test:player-notes-runtime`):
   - Coaches keep **private notes** (`private_notes`, one per coach per registration). Only the author can read them; admins can't, in the app or through the table. Editable anytime, including after lock and after the season closes. Not shown in later seasons.
-  - Independent evaluators write **shared notes** (`evaluator_notes`, one per evaluation). They lock with the session. Admins see them anytime, with the author's name. Coaches see them in the draft report after release, labelled only "Independent evaluator". Notes on drafts are hidden from coaches. Evaluators see only their own.
+  - Independent evaluators write **shared notes** (`evaluator_notes`, one per evaluation). They lock with the session. Admins see them anytime, with the author's name. Coaches and evaluators see them in the draft report after release, labelled only "Independent evaluator". Notes on drafts are hidden from coaches. Evaluators see only their own.
   - Reads go through `player_notes(session)` and `my_notes()`. Writes go through `save_private_note` and `save_shared_note`.
   - Screens: a notes box on the scoring page, a **My Notes** page (`/protected/my-notes`) for coaches and evaluators, and notes in expanded draft report rows (coaches can edit their private note there).
 
@@ -121,7 +121,6 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 
 - **Coach access to historical ratings is scoped to current team assignment** (`coach_historical_report_roster`, `coach_historical_report`). Decided 2026-11-10: replace with access to all rated players, as described under Tracked additions. Not yet built.
 - **One registration per Sports Connect Player Id per season** (`player_seasons_season_external_player_id_uidx`). Decided 2026-11-10: keep this rule. Repeated Ids are data errors, so the app flags them and holds later rows in import review.
-- **Top menu can't tell coaches from evaluators.** `user_roles` is admin-only, so coaches and independent evaluators both see Evaluations and Draft Reports. An evaluator who opens Draft Reports gets "No draft reports have been released yet." Hiding the link needs a small role-lookup function (migration).
 - No in-app way to invite or disable users. Public sign-up is off, so accounts are created in Supabase Studio or through the admin API for now.
 - Documentation drift: some docs still describe implemented migrations as proposed, describe division-based evaluation, or say pitching/catching is AAA-and-up only. Reconcile against actual code.
 - Remaining security checks: confirm admin reports and CSV export still work.

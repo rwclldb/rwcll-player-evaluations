@@ -18,7 +18,7 @@ const ADMIN_LINKS: NavLink[] = [
 ];
 
 // Coaches and independent evaluators. The database decides what each may open on Draft Reports
-// (coaches: released age groups; evaluators: none).
+// (released age groups for this season's coaches and independent evaluators).
 const EVALUATOR_LINKS: NavLink[] = [
   { href: "/protected/evaluations", label: "Evaluations" },
   { href: "/protected/draft-reports", label: "Draft Reports" },

@@ -37,8 +37,8 @@ if (result.status !== 0) {
 }
 
 const passes = notices.filter((line) => line.includes("PASS:")).length;
-if (passes < 19) {
-  console.error(`FAIL: expected 19 PASS lines, saw ${passes}`);
+if (passes < 20) {
+  console.error(`FAIL: expected 20 PASS lines, saw ${passes}`);
   process.exit(1);
 }
 console.log("PASS: draft report access, values, prior-year switch, and bib rules hold at runtime (local database)");
