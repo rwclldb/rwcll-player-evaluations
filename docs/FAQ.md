@@ -170,7 +170,34 @@ Do not run `npx supabase db pull`, `npx supabase db push`, or `npx supabase db r
 The `evaluation_number` is stored with the player's season roster record, shown to coaches/evaluators on the evaluation screen, and must be unique within that season division when assigned. It is a new value for each season. For imports, `player_id` is generated internally and remains stable across seasons; name and birthdate are matching clues only, and an administrator must confirm a match before records are linked. The schema document describes intended tables and relationships; the initial tables, helper/trigger functions, triggers, and RLS policies have now been created directly in the hosted Supabase project, but they are not yet fully reconciled with this design or tested end-to-end. Secure database-side aggregate functions/views are still required; frontend hiding alone is not sufficient. Test access with separate coach accounts assigned to different teams, as well as independent evaluator and administrator accounts. Do not import real league data until these checks pass.
 
 ## Authentication and roles
-The starter includes sign-up UI. The intended RWCLL app uses administrator-managed invitations, not public registration. A Supabase-authenticated user is not automatically an RWCLL administrator; application roles and permissions must be implemented separately. Enforce access with database RLS, not just frontend visibility.
+Public sign-up is turned off (`enable_signup = false`). Accounts are created by an administrator. Signing in does not give anyone access by itself. Access comes from a row in `public.user_roles`, and the database enforces it with RLS.
+
+### How do I create a user and make them an administrator?
+
+**Local** (Studio at http://127.0.0.1:54323):
+
+1. **Authentication → Users → Add user → Create new user.** Enter the email and a password. Leave **Auto Confirm User** checked.
+2. **SQL Editor → New query**, paste the following, change the email, and click **Run**:
+
+   ```sql
+   INSERT INTO public.user_roles (user_id, role_name, season_id)
+   SELECT id, 'administrator', NULL
+   FROM auth.users
+   WHERE email = 'you@example.org';
+   ```
+
+   It should say `INSERT 0 1`. `INSERT 0 0` means the email didn't match a user.
+3. Sign out of the app and sign back in.
+
+Administrators have `season_id` = NULL; the database requires that. Coaches and independent evaluators instead get one row per season, for example `role_name = 'coach'` with `season_id` set to that season's id (`SELECT id, name FROM public.seasons;`).
+
+To check: `SELECT u.email, r.role_name, r.season_id FROM public.user_roles r JOIN auth.users u ON u.id = r.user_id;`
+
+To remove admin access: `DELETE FROM public.user_roles WHERE role_name = 'administrator' AND user_id = (SELECT id FROM auth.users WHERE email = 'you@example.org');`
+
+**Hosted:** do the same steps in the hosted project's dashboard (Authentication → Users, then SQL Editor). This is a change to the hosted database, so do it deliberately.
+
+After the local database is wiped, every account is gone, including yours. Repeat these steps, or load the fictional league (`npm run fixtures:load`), which creates `admin.jordan@example.com` and the other test accounts.
 
 ## Troubleshooting
 **App will not start:** confirm the terminal is in the folder containing `package.json`, run `npm run dev`, and inspect the first terminal error.

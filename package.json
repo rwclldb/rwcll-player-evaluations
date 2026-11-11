@@ -30,7 +30,9 @@
     "test:coach-historical-reports": "node scripts/test-coach-historical-reports.cjs",
     "manual:import-duplicate-player-id-resolution": "node scripts/test-import-duplicate-player-id-resolution.cjs",
     "test:session-administration": "node scripts/test-session-administration.cjs",
-    "test:historical-rls-runtime": "node scripts/test-historical-rls-runtime.cjs"
+    "test:historical-rls-runtime": "node scripts/test-historical-rls-runtime.cjs",
+    "fixtures:generate": "node scripts/generate-fictional-league.cjs",
+    "fixtures:load": "node scripts/load-fictional-league.cjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.1",
