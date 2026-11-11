@@ -107,11 +107,19 @@ async function ImportBatchesContent() {
             Administrator-only, read-only review of Sports Connect staging batches.
           </p>
         </div>
-        <Button asChild className="bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs">
-          <Link href="/protected/import-preview">
-            <UploadCloud className="h-4 w-4 mr-2" /> Open Import Preview &rarr;
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" className="text-xs">
+            <Link href="/protected/prior-year">Prior-year ratings &rarr;</Link>
+          </Button>
+          <Button asChild variant="outline" className="text-xs">
+            <Link href="/protected/players/bibs">Bib numbers &rarr;</Link>
+          </Button>
+          <Button asChild className="text-xs">
+            <Link href="/protected/import-preview">
+              <UploadCloud className="h-4 w-4 mr-2" /> Sports Connect import &rarr;
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Audit Banner */}

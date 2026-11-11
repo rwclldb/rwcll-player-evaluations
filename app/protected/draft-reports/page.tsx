@@ -32,12 +32,16 @@ export default async function DraftReportsPage({
 
   let rows: DraftReportRow[] = [];
   let notes: ReportNote[] = [];
+  let isCoach = false;
   let reportError: string | null = null;
   if (selected) {
-    const [report, noteResult] = await Promise.all([
+    const [report, noteResult, roleResult] = await Promise.all([
       supabase.rpc("draft_report", { p_session_id: selected.session_id }),
       supabase.rpc("player_notes", { p_session_id: selected.session_id }),
+      supabase.rpc("my_season_roles"),
     ]);
+    isCoach = ((roleResult.data ?? []) as { role_name: string; season_id: number }[])
+      .some((r) => r.role_name === "coach" && r.season_id === selected.season_id);
     if (report.error) reportError = report.error.message;
     rows = (report.data ?? []) as DraftReportRow[];
     notes = (noteResult.data ?? []) as ReportNote[];
@@ -110,7 +114,7 @@ export default async function DraftReportsPage({
               fileName={`draft-report-${selected.season_name.replace(/\s+/g, "-").toLowerCase()}-age-${selected.league_age}.csv`}
               administrator={administrator}
               notes={notes}
-              canWritePrivate={!administrator}
+              canWritePrivate={isCoach}
               returnTo={`/protected/draft-reports?sessionId=${selected.session_id}`}
             />
           )}

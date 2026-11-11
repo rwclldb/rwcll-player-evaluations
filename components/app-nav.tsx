@@ -22,11 +22,11 @@ function isCurrent(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-// Desktop (lg and up): links in a row inside the top bar.
+// Desktop (xl and up): links in a row inside the top bar.
 export function DesktopNav({ links }: { links: NavLink[] }) {
   const pathname = usePathname();
   return (
-    <nav aria-label="Main" className="hidden items-center gap-1 text-sm font-medium lg:flex">
+    <nav aria-label="Main" className="hidden items-center gap-1 text-sm font-medium xl:flex">
       {links.map((l) => (
         <Link
           key={l.href}
@@ -46,7 +46,7 @@ export function DesktopNav({ links }: { links: NavLink[] }) {
   );
 }
 
-// Phones and tablets (below lg): one menu button holding the links, account, theme and sign out.
+// Phones, tablets and small laptops (below xl): one menu button holding the links, account, theme and sign out.
 export function MobileMenu({ links, email }: { links: NavLink[]; email: string }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
@@ -59,7 +59,7 @@ export function MobileMenu({ links, email }: { links: NavLink[]; email: string }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-10 w-10 lg:hidden" aria-label="Open menu">
+        <Button variant="ghost" size="icon" className="h-10 w-10 xl:hidden" aria-label="Open menu">
           <Menu className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>

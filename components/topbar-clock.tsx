@@ -25,7 +25,7 @@ export function TopbarClock() {
   if (!timeStr) return null;
 
   return (
-    <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded bg-background border border-border text-xs font-mono text-emerald-700 dark:text-emerald-400">
+    <div className="hidden 2xl:flex items-center gap-2 px-3 py-1 rounded bg-background border border-border text-xs font-mono text-emerald-700 dark:text-emerald-400">
       <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
       {timeStr}
     </div>

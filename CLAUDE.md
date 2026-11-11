@@ -20,6 +20,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - `npx supabase migration list --local`: see which migrations are applied locally. Check this before applying anything.
 - `npm run fixtures:load -- --reset`: wipe local Supabase and load the fictional league (ask first)
 - `npm run fixtures:generate`: rebuild the fixture CSVs from the roster and people files
+- `npm run fixtures:load -- --reset --bare`: wipe local Supabase and create only the two admin accounts and seasons, for walking through setup in the app (`docs/TEST-PLAN-SEASON-SETUP.md`) (ask first)
 - `npm run e2e:evaluation-navigation`: browser test of the scoring screen in phone-sized Chrome. It needs `npm run dev` running and fixtures loaded with `--open-sessions`, cleans up after itself, and is not part of `test:all`. Run it after any change to the evaluation screen.
 
 ## Safety rules (always follow)
@@ -87,7 +88,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 
 - **Draft reports** (`/protected/draft-reports`, migration 20261110220000):
   - All averages come from `private.session_player_summary`, through `draft_report` and `draft_report_sessions`.
-  - Admins see every age group anytime. Coaches see an age group only after it is released. Independent evaluators can't open reports.
+  - Admins see every age group anytime. Coaches and independent evaluators see an age group only after it is released (evaluators added 2026-11-11, migration 20261111130000).
   - Default sort is evaluator overall. Columns sort on click, and rows expand to per-skill detail and the viewer's own ratings.
   - CSV and print are built. PDF is still a nice-to-have.
 - **Lock and release** (migration 20261110210000): Sessions page with confirmations and an explainer.
@@ -96,22 +97,29 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - **Evaluation screen:** a player list with bib, name, LL age and status, plus bib search. A one-player scoring page has Previous/Next at top and bottom, Save & Next, and an unsaved-changes warning.
 - **Bibs are unique per season** (index `player_seasons_unique_season_evaluation_number`).
 
-## Built 2026-11-11 (local only; migration not on hosted)
+## Built 2026-11-11 (local only; migrations not on hosted)
 
 - **Player notes** (migration 20261111120000, test `test:player-notes-runtime`):
   - Coaches keep **private notes** (`private_notes`, one per coach per registration). Only the author can read them; admins can't, in the app or through the table. Editable anytime, including after lock and after the season closes. Not shown in later seasons.
-  - Independent evaluators write **shared notes** (`evaluator_notes`, one per evaluation). They lock with the session. Admins see them anytime, with the author's name. Coaches see them in the draft report after release, labelled only "Independent evaluator". Notes on drafts are hidden from coaches. Evaluators see only their own.
+  - Independent evaluators write **shared notes** (`evaluator_notes`, one per evaluation). They lock with the session. Admins see them anytime, with the author's name. Coaches and evaluators see them in the draft report after release, labelled only "Independent evaluator". Notes on drafts are hidden from coaches. Evaluators see only their own.
   - Reads go through `player_notes(session)` and `my_notes()`. Writes go through `save_private_note` and `save_shared_note`.
   - Screens: a notes box on the scoring page, a **My Notes** page (`/protected/my-notes`) for coaches and evaluators, and notes in expanded draft report rows (coaches can edit their private note there).
 
+- **Evaluators see released draft reports** (migration 20261111130000), like coaches. `my_season_roles()` lets pages tell coaches from evaluators.
+- **Players page** (`/protected/players`, admin; migration 20261111140000): search and filter the season's registrations (no bib, no age group, on site). Edit page fixes name, birthdate, age group and bib through `admin_save_registration` (audited; reason required for name, birthdate or age changes; age locked once the player has evaluations). Age set by hand is marked `league_age_source = 'admin'`.
+- **On-site players** (`admin_add_onsite_registration`): walk-ups get `registration_source = 'on_site'`. When Sports Connect later lists them and the admin approves the match in import review, `commit_sports_connect_import_row` links the existing registration (keeps bib and age) instead of failing.
+- **Bib upload** (`/protected/players/bibs`, migration 20261111150000): CSV keyed by Player Id or name + birthdate. Preview groups rows into new, change (admin ticks which to accept), conflict, same, held (no match yet; re-checkable), rejected. Never creates players. Matching lives in `private.match_registration`.
+- **Prior-year upload** (`/protected/prior-year`, migration 20261111160000): rows matched to the chosen season's registrations as matched / review / held / invalid. Admin imports matched rows and confirms review rows; held rows can be re-checked or dismissed. Duplicate ratings are rejected. Never creates players.
+- **People page** (`/protected/people`, migration 20261111170000): invite by email (single or CSV list), add or remove season roles, resend invites, disable or enable accounts. Uses `SUPABASE_SECRET_KEY` on the server only (`lib/supabase/admin.ts`). A trigger blocks coach + evaluator roles on one account in one season. Invite email template: `supabase/templates/invite.html` (hosted needs the same template, Site URL, and an SMTP provider).
+- **Bulk import review** (migration 20261111180000): on an import batch, admins ignore all out-of-scope rows and approve-and-commit all clean rows (active division, age set, no warnings except payment, no same-name player, unused Player Id) in two clicks. The rest stay for row review.
+- Test: `test:season-setup-runtime` (29 checks). Walkthrough: `docs/TEST-PLAN-SEASON-SETUP.md`.
+
 ## Tracked additions (confirmed requirements, not yet built)
 
-- **On-site roster changes:** admins add or change players on evaluation day. Needs design.
 - **Retire the team-scoped coach report** (`/protected/coach-reports`, `coach_historical_report*`). It's superseded by draft reports and no longer linked from the evaluation screen or the top menu (the pages and functions still exist).
-- **Bib number upload and editing.** CSV upload (by Player Id, or by name plus birthdate) and admin editing in the app, with numbers unique across the season.
-- **Age chart upload.** Admin uploads the official age chart for each season.
+- **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)
 - **Possible-duplicate player flag.** Flag players with the same name and birthdate for admin review and merge.
-- **Shared test server (not urgent).** A hosted deployment built from GitHub so other league members can test, and so the app can be tested on phones. Needs a hosting choice (for example Vercel plus the hosted Supabase project) and the user's approval for every hosted step.
+- **Shared test server.** Vercel + hosted Supabase is running. Hosted needs every 2026-11-11 migration, the invite email template, Site URL, an SMTP provider, and `SUPABASE_SECRET_KEY` as a server-only Vercel variable (user-run steps; see docs/FAQ.md).
 
 ## Working preferences
 
@@ -121,8 +129,6 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 
 - **Coach access to historical ratings is scoped to current team assignment** (`coach_historical_report_roster`, `coach_historical_report`). Decided 2026-11-10: replace with access to all rated players, as described under Tracked additions. Not yet built.
 - **One registration per Sports Connect Player Id per season** (`player_seasons_season_external_player_id_uidx`). Decided 2026-11-10: keep this rule. Repeated Ids are data errors, so the app flags them and holds later rows in import review.
-- **Top menu can't tell coaches from evaluators.** `user_roles` is admin-only, so coaches and independent evaluators both see Evaluations and Draft Reports. An evaluator who opens Draft Reports gets "No draft reports have been released yet." Hiding the link needs a small role-lookup function (migration).
-- No in-app way to invite or disable users. Public sign-up is off, so accounts are created in Supabase Studio or through the admin API for now.
 - Documentation drift: some docs still describe implemented migrations as proposed, describe division-based evaluation, or say pitching/catching is AAA-and-up only. Reconcile against actual code.
 - Remaining security checks: confirm admin reports and CSV export still work.
 - `.claude/settings.json` denies Supabase CLI commands that reach the hosted project. A hosted deployment is a step the user runs or explicitly approves.

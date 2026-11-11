@@ -72,6 +72,12 @@ export function normalizeDate(value: string): { iso: string; year: number; month
   return { iso: `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`, year, month };
 }
 
+// League age from the 2027 age chart (by birth year and month), or null when the chart has no entry.
+export function leagueAgeForBirthDate(value: string | null | undefined): number | null {
+  const date = value ? normalizeDate(value) : null;
+  return date ? chartByBirthMonth.get(`${date.year}-${date.month}`) ?? null : null;
+}
+
 export function makePreview(text: string): { rows: PreviewRow[]; missingHeaders: string[] } {
   const parsed = parseCsv(text);
   if (parsed.length < 2) throw new Error("The file must include a header row and at least one registration.");

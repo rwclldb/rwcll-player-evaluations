@@ -69,7 +69,7 @@ SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000dc001');
 SELECT pg_temp.expect_error(format('SELECT * FROM public.draft_report(%s)', (SELECT session_id FROM ctx)), 'not been released', 'coach cannot open the report before release');
 SELECT pg_temp.check((SELECT count(*) FROM public.draft_report_sessions() WHERE session_id = (SELECT session_id FROM ctx)) = 0, 'unreleased age group is not listed for coaches');
 SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000de001');
-SELECT pg_temp.expect_error(format('SELECT * FROM public.draft_report(%s)', (SELECT session_id FROM ctx)), 'coaches and administrators only', 'independent evaluator cannot open draft reports');
+SELECT pg_temp.expect_error(format('SELECT * FROM public.draft_report(%s)', (SELECT session_id FROM ctx)), 'not been released', 'independent evaluator cannot open the report before release');
 SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000da001');
 SELECT pg_temp.check((SELECT count(*) FROM public.draft_report((SELECT session_id FROM ctx))) = 2, 'admin can open the report before release (2 players)');
 SELECT pg_temp.check((SELECT coach_overall = 4 AND evaluator_overall = 2 AND evaluator_skills_rated = 1 AND blank_core_skills = 4 AND prior_overall = 3 AND prior_ratings = 1
@@ -91,8 +91,10 @@ SELECT pg_temp.check((SELECT bool_and(position('0000000de001' IN row_to_json(r):
   'report never contains the evaluator''s identity');
 SELECT pg_temp.check((SELECT bool_and(position('"hitting": 2' IN COALESCE(my_evaluation::text, '')) = 0) FROM public.draft_report((SELECT session_id FROM ctx)) r),
   'coach does not see another rater''s individual ratings');
+SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000de001');
+SELECT pg_temp.check((SELECT count(*) = 2 FROM public.draft_report((SELECT session_id FROM ctx))), 'after release: independent evaluator can open the report');
 SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000dc002');
-SELECT pg_temp.expect_error(format('SELECT * FROM public.draft_report(%s)', (SELECT session_id FROM ctx)), 'coaches and administrators only', 'coach from another season cannot open the report');
+SELECT pg_temp.expect_error(format('SELECT * FROM public.draft_report(%s)', (SELECT session_id FROM ctx)), 'administrators only', 'coach from another season cannot open the report');
 
 -- Prior-year switch for the evaluation screen
 SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000de001');

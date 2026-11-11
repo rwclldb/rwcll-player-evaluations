@@ -9,7 +9,9 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 import { DesktopNav, MobileMenu, type NavLink } from "@/components/app-nav";
 
 const ADMIN_LINKS: NavLink[] = [
+  { href: "/protected/players", label: "Players" },
   { href: "/protected/sessions", label: "Sessions" },
+  { href: "/protected/people", label: "People" },
   { href: "/protected/assignments", label: "Assignments" },
   { href: "/protected/import-batches", label: "Imports" },
   { href: "/protected/evaluation-review", label: "Data Review" },
@@ -18,7 +20,7 @@ const ADMIN_LINKS: NavLink[] = [
 ];
 
 // Coaches and independent evaluators. The database decides what each may open on Draft Reports
-// (coaches: released age groups; evaluators: none).
+// (released age groups for this season's coaches and independent evaluators).
 const EVALUATOR_LINKS: NavLink[] = [
   { href: "/protected/evaluations", label: "Evaluations" },
   { href: "/protected/draft-reports", label: "Draft Reports" },
@@ -51,10 +53,10 @@ export async function AppHeader({ user }: { user: User }) {
           <DesktopNav links={links} />
         </div>
 
-        {/* Desktop: clock, account, sign out, theme. Below lg these move into the menu button. */}
-        <div className="hidden items-center gap-3 lg:flex">
+        {/* Desktop: clock, account, sign out, theme. Below xl these move into the menu button. */}
+        <div className="hidden items-center gap-3 xl:flex">
           <TopbarClock />
-          <span className="hidden max-w-[16rem] truncate rounded border border-border bg-background px-2.5 py-1 font-mono text-xs text-muted-foreground xl:inline">
+          <span className="hidden max-w-[16rem] truncate rounded border border-border bg-background px-2.5 py-1 font-mono text-xs text-muted-foreground 2xl:inline">
             {email}
           </span>
           <form action={signOutAction}>
