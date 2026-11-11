@@ -7,6 +7,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 ## Stack and environment
 
 - Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, npm
+  - Next.js 16 differs from older versions (for example, `proxy.ts` replaces `middleware.ts`). Before writing Next.js code, check the docs bundled at `node_modules/next/dist/docs/` and heed deprecation notices. `AGENTS.md` carries the same advice for other AI tools. `next dev` writes and maintains it, so keep it committed and don't hand-edit it.
 - Supabase (PostgreSQL + Auth), run **locally** during development
 - Windows, PowerShell, VS Code
 - Local Supabase: Studio http://127.0.0.1:54323, API http://127.0.0.1:54321, Mailpit http://127.0.0.1:54324
