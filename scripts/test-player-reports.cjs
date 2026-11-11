@@ -15,12 +15,13 @@ assert.match(exportRoute, /supabase\.rpc\("is_admin"\)/, "CSV export must enforc
 assert.match(reportsPage, /Export Season CSV/i, "report index must provide CSV export");
 assert.match(playerPage, /Current-Season Evaluator Submissions/, "player report must separate current-season submissions");
 assert.match(playerPage, /Current Age-Group Benchmark Ratings/, "player report must show current age-group benchmarks");
-assert.match(playerPage, /Historical Coach Evaluations/, "player report must have a separate historical section");
+assert.match(playerPage, /Historical Player Evaluations/, "player report must have a separate historical section");
 assert.match(playerPage, /They do not alter current-season averages/, "historical ratings must not affect current-season averages");
 assert.match(playerPage, /from\("historical_evaluations"\)/, "admin player report must load historical evaluation metadata");
 assert.match(playerPage, /from\("historical_ratings"\)/, "admin player report must load historical rating details");
 assert.match(exportRoute, /"CURRENT"/, "CSV must label current evaluation rows");
-assert.match(exportRoute, /"HISTORICAL_COACH"/, "CSV must label historical coach rows separately");
+assert.match(exportRoute, /"HISTORICAL_PLAYER"/, "CSV must label historical player rows separately");
+assert.match(exportRoute, /"source_coach"/, "CSV must identify the source coach separately from the player being evaluated");
 assert.match(exportRoute, /CURRENT_GROUP_SUMMARY/, "CSV must include separate age-group summary rows");
 assert.match(exportRoute, /rating_count/, "CSV must include rating counts");
 assert.match(exportRoute, /source_season_label/, "CSV must preserve historical source season");

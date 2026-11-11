@@ -238,9 +238,11 @@ These requirements refine the proposed schema and policies. They remain design-o
 - Any changes to submitted data, player-season data, absence status, coach-child designation, or generated-roster constraints should be authorized and audited appropriately.
 
 
-## Historical coach evaluations and import matching (design finalized 2026-11-07; migration applied locally, behavior validation in progress)
+## Historical player evaluations and import matching (design finalized 2026-11-07; migration applied locally, behavior validation in progress)
 
-Historical coach evaluations are records created by coaches at the end of a season. They use the same 1–5 category scales as spring evaluations but are a separate historical source. They are read-only context in later spring reports and never contribute to current-season evaluator completion, counts, or averages.
+Historical player evaluations are ratings of players recorded by coaches in a prior season. The player is the subject of the evaluation; the coach is the evaluator/source. They use the same 1–5 category scales as spring evaluations but are a separate historical source. They are read-only context in later spring reports and never contribute to current-season evaluator completion, counts, or averages.
+
+Final reports may show historical player ratings next to current spring group results, but in distinct labeled sections with the source season and coach/source context where available. Reports must not imply the historical rating was collected during the current spring evaluation. A missing historical record is “no historical rating available,” not zero. Partial historical coverage must be disclosed.
 
 ### Existing tables and migration approach
 
@@ -257,7 +259,7 @@ The initial schema already contains `historical_evaluations` and `historical_rat
 7. **Preserve historical source context:** source season label and optional linked season ID, source division/team labels, coach name and optional linked account, import batch/row, and original source data. A missing coach account must not prevent retaining the source coach's name.
 8. **Use the existing rating scale and categories.** Map historical rating categories to `rating_categories` when a reliable mapping exists; preserve the source category label/code for auditability. Scores remain 1–5. Missing categories remain absent, never zero.
 9. **Keep history separate from current evaluations.** Historical ratings do not satisfy current evaluation requirements, affect current progress, or enter current spring averages.
-10. **Access stays administrator-only at the raw table level initially.** Any coach-facing historical display must be through a specifically authorized server-side query/RPC that limits records to players the coach is allowed to see. Do not grant coaches broad read access to historical tables. Final-report presentation must clearly distinguish historical coach ratings from current spring group ratings.
+10. **Access stays administrator-only at the raw table level initially.** Any coach-facing historical display must be through a specifically authorized server-side query/RPC that limits records to players the coach is allowed to see. Do not grant coaches broad read access to historical tables. Final-report presentation must clearly distinguish historical player ratings from current spring group ratings.
 
 ### New staging entity
 
@@ -265,7 +267,7 @@ The initial schema already contains `historical_evaluations` and `historical_rat
 
 ### Report requirements
 
-Final reports may show historical coach ratings next to current spring group results, but in distinct labeled sections with the source season and coach/source context where available. Reports must not imply the historical rating was collected during the current spring evaluation. A missing historical record is “no historical rating available,” not zero. Partial historical coverage must be disclosed.
+Final reports may show historical player ratings next to current spring group results, but in distinct labeled sections with the source season and coach/source context where available. Reports must not imply the historical rating was collected during the current spring evaluation. A missing historical record is “no historical rating available,” not zero. Partial historical coverage must be disclosed.
 
 ### Implementation status
 
@@ -286,8 +288,8 @@ Final reports may show historical coach ratings next to current spring group res
 Migration 20261107030000_scoped_coach_historical_reports.sql defines two narrow SECURITY DEFINER RPCs:
 
 - coach_historical_report_roster(p_season_id) returns player registrations only when their current-season team is assigned to auth.uid(); administrators can inspect the full selected season.
-- coach_historical_report(p_player_season_id) verifies the player's current-season team assignment before returning that player's identity and historical coach ratings. An unauthorized or unassigned player request raises a permission error.
+- coach_historical_report(p_player_season_id) verifies the player's current-season team assignment before returning that player's identity and historical player ratings. An unauthorized or unassigned player request raises a permission error.
 
 Both functions use a fixed search_path; execution is revoked from PUBLIC and anon and granted to authenticated. Historical table RLS policies remain administrator-only. The coach UI must call these RPCs and must not query historical_evaluations or historical_ratings directly. The player-facing coach report contains historical ratings only, not individual current-season evaluations.
 
-Status: migration and UI implementation are on feature/admin-evaluation-review; local database application and runtime authorization tests are still pending. No hosted migration has been applied.
+Status: migration and UI implementation are on feature/admin-evaluation-review. The migration is applied locally. Static regression tests pass, and initial runtime checks confirmed that an assigned coach can access a player's historical ratings while an unassigned coach is denied. Additional runtime checks remain for cross-team access, roster scope, direct table RLS, and administrator report/export regression. No hosted migration has been applied.

@@ -356,7 +356,7 @@ infer local/remote parity.
     `season_division_id` was null for these registrations immediately
     after commit.
 
-## 6. Historical coach ratings --- schema, source review, and three test links
+## 6. Historical player ratings --- schema, source review, and three test links
 
 ### Source workbook review
 
@@ -410,12 +410,12 @@ infer local/remote parity.
     -   `app/protected/reports/player/[playerSeasonId]/page.tsx`
     -   Reads current evaluations/current ratings separately from
         historical evaluations/ratings.
-    -   Historical section is labeled "Historical coach evaluations".
+    -   Historical section is labeled "Historical player evaluations".
     -   Clearly states prior-season source ratings are context only and
         do not affect current ratings, averages, or completion counts.
 -   Coach report:
     -   `app/protected/coach-reports/player/[playerSeasonId]/page.tsx`
-    -   Uses the scoped RPC and displays historical coach ratings only.
+    -   Uses the scoped RPC and displays historical player ratings only.
     -   Coach roster page uses the roster RPC.
     -   Evaluator workspace links to coach report list.
 -   Coach-facing historical report access is based on current team
@@ -598,9 +598,9 @@ On `feature/admin-evaluation-review`: -
 `app/protected/reports/page.tsx`: administrator-only season
 selection/player report list. -
 `app/protected/reports/player/[playerSeasonId]/page.tsx`: individual
-report with current-season evaluations separate from historical coach
+report with current-season evaluations separate from historical player
 ratings. - `app/protected/reports/export/route.ts`: admin-checked CSV
-export. `CURRENT`, `CURRENT_GROUP_SUMMARY`, and `HISTORICAL_COACH` rows
+export. `CURRENT`, `CURRENT_GROUP_SUMMARY`, and `HISTORICAL_PLAYER` rows
 are distinct; rating counts and historical source metadata/coverage
 notes are retained where available. - Workspace link added to
 `app/protected/page.tsx`. - `scripts/test-player-reports.cjs`,

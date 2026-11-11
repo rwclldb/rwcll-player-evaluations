@@ -25,7 +25,7 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [x] Sports Connect IDs are season-specific external identifiers/matching clues, not permanent child IDs.
 - [x] Import all registrations, including Pending and unpaid statuses; app does not process payments.
 - [x] Final division/team assignment is post-draft; requested Sports Connect division is not treated as final assignment.
-- [x] Historical coach ratings are separate from current spring evaluations and require explicit matching.
+- [x] Historical player ratings are separate from current spring evaluations and require explicit matching.
 - [x] Coach access to historical reports is restricted to players on teams assigned to that coach in the current season.
 
 ## 2. Development foundation
@@ -79,9 +79,9 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [ ] Implement admin-approved exemptions with explicit scope, reason, approver, and timestamp.
 - [ ] Test permissions with separate admin, coach, and evaluator accounts, including coaches assigned to multiple teams.
 
-## 5. Historical coach evaluations and reporting
+## 5. Historical player evaluations and reporting
 
-- [x] Confirm historical coach ratings are prior-season context, separate from current spring evaluator submissions.
+- [x] Confirm historical player ratings are prior-season context, separate from current spring evaluator submissions.
 - [x] Extend existing `historical_evaluations` and `historical_ratings` rather than duplicating them.
 - [x] Add source season/coach/import metadata, match provenance, category mapping, protected staging, RLS, and idempotency constraints.
 - [x] Apply historical schema migration to local Supabase and verify structure, RLS enabled, constraints, indexes, and administrator policies.
@@ -163,9 +163,9 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 ### Player reports and CSV export
 
 - [x] Add administrator-only season report index and per-registration report links.
-- [x] Add individual player reports with current evaluations and separate historical coach ratings.
+- [x] Add individual player reports with current evaluations and separate historical player ratings.
 - [x] Display registration payment status on reports.
-- [x] Add administrator-checked CSV export with distinct `CURRENT`, `CURRENT_GROUP_SUMMARY`, and `HISTORICAL_COACH` row types.
+- [x] Add administrator-checked CSV export with distinct `CURRENT`, `CURRENT_GROUP_SUMMARY`, and `HISTORICAL_PLAYER` row types.
 - [x] Preserve historical source season, coach, division, team, and coverage metadata where available.
 - [x] Add focused static regression test.
 - [ ] Re-run focused tests and full `npm run test:all`.

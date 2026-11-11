@@ -118,7 +118,7 @@ async function CoachPlayerReportContent({ params }: Props) {
               {playerName}
             </h1>
             <p className="text-xs text-muted-foreground">
-              Prior-Season Historical Coach Ratings
+              Prior-Season Historical Player Ratings
             </p>
           </div>
         </div>
@@ -133,7 +133,7 @@ async function CoachPlayerReportContent({ params }: Props) {
         <CardContent className="p-4 flex items-center gap-3 text-xs text-slate-700 dark:text-slate-300">
           <History className="h-5 w-5 text-emerald-700 dark:text-emerald-400 shrink-0" />
           <span>
-            These ratings show prior-season coach evaluations for context only. They are read-only and are not combined with current-season evaluation averages.
+            These are prior-season ratings of this player, with the source coach identified where available. They are read-only and are not combined with current-season evaluation averages.
           </span>
         </CardContent>
       </Card>
@@ -145,7 +145,7 @@ async function CoachPlayerReportContent({ params }: Props) {
             <ShieldAlert className="h-8 w-8 text-amber-700 dark:text-amber-400 mx-auto" />
             <p className="text-sm font-semibold text-foreground">No Historical Ratings Available</p>
             <p className="text-xs text-muted-foreground">
-              No matched historical coach evaluations were found for this player.
+              No historical player ratings were found for this player.
             </p>
           </Card>
         ) : (

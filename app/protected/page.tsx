@@ -58,7 +58,7 @@ async function ProtectedDashboardContent() {
   // Resolve active season
   const seasonList = seasons || [];
   const activeSeason = seasonList.find((s) => !s.is_closed) || seasonList[0];
-  const activeSeasonName = activeSeason ? activeSeason.name : "Spring 2027";
+  const activeSeasonName = activeSeason ? activeSeason.name : "No active season";
 
   return (
     <div className="space-y-8">
@@ -168,7 +168,7 @@ async function ProtectedDashboardContent() {
                     id="name"
                     name="name"
                     required
-                    placeholder="Spring 2027"
+                    placeholder="e.g., Spring 2027"
                     className="bg-background border-border text-foreground text-xs placeholder:text-slate-500"
                   />
                 </div>
@@ -223,7 +223,7 @@ async function ProtectedDashboardContent() {
               <p className="text-xs text-rose-700 dark:text-rose-400">Could not load seasons: {seasonsError.message}</p>
             ) : seasonList.length === 0 ? (
               <div className="py-4 text-center">
-                <p className="text-xs text-muted-foreground">Default Active Season: <span className="font-mono text-emerald-700 dark:text-emerald-400 font-semibold">Spring 2027</span></p>
+                <p className="text-xs text-muted-foreground">Active Season: <span className="font-mono text-emerald-700 dark:text-emerald-400 font-semibold">e.g. Spring 2027</span></p>
               </div>
             ) : (
               <div className="divide-y divide-border">

@@ -415,22 +415,22 @@ async function PlayerReportContent({ params }: Props) {
         </CardContent>
       </Card>
 
-      {/* 3. Historical Coach Evaluations */}
+      {/* 3. Historical Player Evaluations */}
       <Card className="border-border bg-card">
         <CardHeader className="py-4 border-b border-border/50">
           <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
             <History className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
-            Historical Coach Evaluations
+            Historical Player Evaluations
           </CardTitle>
           <CardDescription className="text-xs text-muted-foreground">
-            Prior-season source ratings for reference only. They do not alter current-season averages.
+            Prior-season player ratings for reference only. The source coach is identified where available. They do not alter current-season averages.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="p-4 space-y-4">
           {historical.length === 0 ? (
             <div className="p-6 text-center text-xs text-slate-600 dark:text-slate-400 italic">
-              No matched historical coach evaluations found.
+              No matched historical player evaluations found.
             </div>
           ) : (
             historical.map((item) => {

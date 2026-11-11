@@ -278,38 +278,42 @@ The administrator workspace links to **Review evaluations** at `/protected/evalu
 This dashboard is currently a development feature. Run `npm run test:evaluation-review-ui` for static UI regression checks, then validate it against local synthetic data and test both administrator and non-administrator access before relying on its counts.
 
 
-## Historical end-of-season coach evaluations
+## Historical player evaluations and imports
 
-The database already has basic `historical_evaluations` and `historical_ratings` tables. They do not yet provide the full import/matching workflow. The feature branch contains migration `20261107020000_historical_coach_evaluation_schema.sql`, which extends those tables and adds `historical_evaluation_import_rows` for staging and administrator review. The user confirmed it applied locally. Static regression checks passed, and local queries verified the three tables, RLS enabled, expected constraints/indexes, and administrator-only policy expressions. Runtime access behavior for a non-admin account and import transaction behavior still need testing.
+Historical player evaluations are ratings of players from prior seasons. The coach is the evaluator/source; the player is the subject of the evaluation. These records are separate from current-season spring evaluations and never contribute to current-season evaluation completion, counts, or averages.
 
-Matching rules:
-- Prefer an exact permanent RWCLL Player ID when supplied, but flag conflicts with other identifying information.
-- If the ID is absent, suggest possible matches using normalized names and available date of birth, source season, team, and division.
-- Never link automatically on name alone. Ambiguous/no-match rows remain in review.
-- Historical import rows never create a new player automatically. An administrator must confirm the player link or reject the row.
-- Preserve original row data, source season/team/division/coach, match method, reviewer, and import lineage.
-- Historical scores use the same 1–5 categories where mapped, but stay separate from current spring ratings and never affect current completion counts or averages.
+The existing `historical_evaluations` and `historical_ratings` tables store ratings of players. Migration `20261107020000_historical_coach_evaluation_schema.sql` extends those tables and adds `historical_evaluation_import_rows` for protected staging and administrator review. The migration filename is retained for compatibility; it does not mean these tables store evaluations of coaches.
 
-Apply only to local Supabase after reviewing the migration and current local migration status. Do not run hosted migrations or `db push` without explicit approval. Coach access to historical player ratings must later be implemented through scoped server-side report access, not broad table permissions.
+The import workflow stages source rows before linking them to players. It prefers an exact permanent RWCLL Player ID, but conflicting identity details must be reviewed. Other identifying details can help find candidate matches, but a name alone must never cause an automatic match. Administrators review and approve or reject proposed matches. The workflow preserves source information and match provenance.
+
+**Implementation status:** The migration is applied locally. Static regression checks pass, and local database checks verified the expected tables, RLS, constraints, indexes, and administrator policies. Runtime non-admin access and import transaction behavior still require additional testing. No hosted migration has been applied.
 
 
 ## Player reports and CSV export
 
-Administrators can open **Player reports** from the workspace at `/protected/reports`, choose a season, open an individual player report, or export a season CSV.
+Administrator player reports distinguish current-season evaluation submissions and ratings from historical player evaluations. Historical player ratings appear in their own clearly labeled section and retain source season, source coach, division, team, and coverage information where available. Historical ratings are read-only context and do not affect current-season averages or evaluation completion.
 
-- Current-season evaluations and historical coach evaluations are shown in separate sections. Historical scores are prior-season context only; they are never combined into current averages or completion counts.
-- Reports display registration payment status, including Pending/Unknown values; payment status is not displayed in the evaluator rating UI.
-- The individual report also shows current age-group averages for the five core skills, split between coach and independent-evaluator ratings. The season CSV labels rows as `CURRENT`, `CURRENT_GROUP_SUMMARY`, or `HISTORICAL_COACH`, includes the number of ratings behind scores/averages, and preserves historical source season, coach, division, team, and coverage note where available.
-- Reports and exports are administrator-only in this first version because the historical tables are protected by administrator-only RLS. Do not expose historical ratings to coaches until scoped server-side authorization for their assigned players is implemented.
-- Missing ratings remain absent rather than being written as zero. Players with no evaluation record are still represented in the CSV.
-- Validate locally with `npm run test:player-reports`, `npm run test:all`, lint, TypeScript, and a production build. Then check a report with no current evaluations, a report with incomplete ratings, and a player with historical ratings.
+The season CSV export is administrator-only. It includes current evaluation records and separate historical player records. Historical rows use the record type `HISTORICAL_PLAYER`; the `source_coach` column identifies the coach who supplied the historical player evaluation. The legacy evaluator type `historical_coach` remains an evaluator/source classification, not an indication that the subject is a coach.
+
+- Reports display registration payment status, including Pending/Unknown values. Payment status is not displayed in the evaluator rating UI.
+- Individual player reports show current age-group averages for the five core skills, split between coach and independent-evaluator ratings.
+- The season CSV includes a `rating_count` column to show how many ratings support each score or average. Players without evaluation records should still be represented in the export.
+
+Players without historical evaluations remain represented in the export through their other applicable records. Missing historical rating categories are left absent or blank, never treated as zero. Coverage notes and source information should be retained so that incomplete historical data is not mistaken for a complete evaluation.
 
 
 ## Coach reports: historical ratings access
 
-Coaches can use “View my players’ historical ratings” from the evaluator workspace. The list is limited to players whose current-season teams have an assignment for that coach. Opening a player report returns prior-season coach ratings only; it does not expose individual current-season evaluations or combine historical scores with current averages.
+Coaches can access historical player ratings for players on teams assigned to them for the selected current season. The coach-facing report displays prior-season ratings of the selected player, with the source coach identified where available. It does not expose other coaches' player reports or individual current-season evaluation details.
 
-This access is enforced by Supabase RPCs that validate the signed-in user's team assignment. Historical tables remain administrator-only for direct table access. Do not weaken their RLS policies to make the coach UI work; use the scoped RPCs instead.
+Access is enforced through scoped server-side Supabase RPCs defined in migration `20261107030000_scoped_coach_historical_reports.sql`:
+
+- `coach_historical_report_roster(p_season_id)` returns only player registrations whose current-season teams are assigned to the signed-in coach. Administrators can inspect the full selected season.
+- `coach_historical_report(p_player_season_id)` verifies the player's current-season team assignment before returning that player's identity and historical player ratings.
+
+The RPCs validate the signed-in user's authorization. Coaches must not gain access by guessing or changing a URL. The underlying historical tables remain administrator-only under direct table-level RLS; coach-facing pages use the scoped RPCs instead.
+
+**Implementation status:** The migration and coach-facing UI are implemented locally. Static regression tests pass. Initial runtime checks confirmed that an assigned coach can access a player's historical ratings and an unassigned coach is denied. Additional runtime checks remain for cross-team access, roster scope, direct table RLS, and administrator report/export regression.
 
 ### Local migration and validation
 
