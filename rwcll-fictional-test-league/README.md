@@ -28,14 +28,14 @@ Generated (in `generated/`, rebuild with `node scripts/generate-fictional-league
 | File | What it is |
 |---|---|
 | `sports-connect-spring-2027-scenarios.csv` | The 45 scenario players in exact Sports Connect format. Small, every edge case. |
-| `sports-connect-spring-2027-full.csv` | The 45 scenario players plus the 323-row fake sample (368 rows, 291 in the evaluation pool). Realistic size. |
+| `sports-connect-spring-2027-full.csv` | The 45 scenario players plus the 323-row fake sample (368 rows, 290 in the evaluation pool). Realistic size. |
 | `scenario-notes.csv` | For each scenario player: tags and the expected import result. |
-| `bib-numbers-by-player-id.csv` | Bib upload keyed by Sports Connect Player Id. Player Id `77100077` appears twice (PLY-007 and PLY-008), so those rows must be flagged for review. |
-| `bib-numbers-by-name-and-birthdate.csv` | The same bibs keyed by name plus birthdate. This resolves the duplicate-ID pair. |
+| `bib-numbers-by-player-id.csv` | Bib upload keyed by Sports Connect Player Id. |
+| `bib-numbers-by-name-and-birthdate.csv` | The same bibs keyed by name plus birthdate. |
 | `bib-numbers-with-errors.csv` | Bad uploads (duplicate bib, non-numeric, blank, unknown player, out-of-scope player, one player listed twice). The `Expected Result` column says what should happen. |
 | `spring-2026-coach-ratings.csv` | Prior-year end-of-season coach ratings of players, on the same form as evaluations (5 core skills plus optional pitching and catching). Sparse, as real data will be. |
 | `spring-2026-expected-matches.csv` | For each prior-year row: the player it should match and the admin action (confirm, review then confirm, or keep unmatched). |
-| `scored/spring-2027-evaluations.csv` | 1,234 Spring 2027 evaluations (submitted, draft, not evaluated) by coaches and independent evaluators. |
+| `scored/spring-2027-evaluations.csv` | 1,230 Spring 2027 evaluations (submitted, draft, not evaluated) by coaches and independent evaluators. |
 | `scored/expected-draft-report.csv` | The coach and evaluator averages, per-skill averages, prior-year averages, and flags the draft report should show. |
 
 ## Rules baked into the expected report
@@ -53,7 +53,7 @@ Generated (in `generated/`, rebuild with `node scripts/generate-fictional-league
 | Players | Scenario |
 |---|---|
 | PLY-001, 002 | Identical scores (tie for sort tests) |
-| PLY-007, 008 | Same Sports Connect Player Id; two separate players, never merged |
+| PLY-007, 008 | Same Sports Connect Player Id. In real data this shouldn't happen, so the app flags it. PLY-007 commits; PLY-008 is held in import review until the Id is fixed, and isn't in the pool. |
 | PLY-009, 010, 033 | No bib number; flagged, never invented |
 | PLY-011, 043 | Injured: partial scores; PLY-043 marked "not evaluated" by evaluators |
 | PLY-013, 014, 044 | Absent or exempt: no evaluations at all |

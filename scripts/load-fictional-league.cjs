@@ -1,6 +1,7 @@
 // Loads the RWCLL fictional test league into the LOCAL Supabase database.
 //
 //   npm run fixtures:load -- --reset            wipe local DB, then load the pre-evaluation dataset
+//   npm run fixtures:load -- --reset --scored   same, plus all Spring 2027 evaluations (for draft reports)
 //   npm run fixtures:load                       load into an empty local DB (refuses if players exist)
 //
 // Requires FIXTURE_PASSWORD (env var or .env.local): the password given to every test account.
@@ -22,6 +23,7 @@ const pack = path.join(root, "rwcll-fictional-test-league");
 const gen = path.join(pack, "generated");
 const args = new Set(process.argv.slice(2));
 const RESET = args.has("--reset");
+const SCORED = args.has("--scored");
 
 const log = (msg) => console.log(msg);
 const fail = (msg) => { console.error(`\nFAIL: ${msg}`); process.exit(1); };
@@ -215,8 +217,10 @@ async function main() {
   const COACHES = { 7: ["COA-01", "COA-02", "COA-03"], 8: ["COA-01", "COA-02", "COA-03"], 9: ["COA-03", "COA-04", "COA-05"], 10: ["COA-03", "COA-04", "COA-05"], 11: ["COA-05", "COA-06", "COA-08"], 12: ["COA-05", "COA-06", "COA-08"], 13: ["COA-08", "COA-09", "COA-10"], 14: ["COA-08", "COA-09", "COA-10"], 15: ["COA-09", "COA-10", "COA-01"], 16: ["COA-09", "COA-10", "COA-01"] };
   const IES = (a) => [a <= 9 && "EVA-01", a >= 10 && a <= 12 && "EVA-02", a >= 13 && "EVA-03", a >= 11 && a <= 13 && "EVA-04", a >= 14 && "EVA-06"].filter(Boolean);
   let assignments = 0;
+  const sessionByAge = {};
   for (let age = 7; age <= 16; age++) {
     const session = await must(svc.from("evaluation_sessions").insert({ season_id: s2027.id, league_age: age, status: "setup", created_by: adminId }).select("id").single(), `session age ${age}`);
+    sessionByAge[age] = session.id;
     await must(svc.from("evaluation_session_events").insert([
       { evaluation_session_id: session.id, event_type: "primary", event_date: "2027-01-23", start_time: SLOTS[age][0], end_time: SLOTS[age][1], location: "Fixture Park, Field 1", created_by: adminId },
       { evaluation_session_id: session.id, event_type: "makeup", event_date: "2027-01-30", start_time: "10:00", end_time: "12:00", location: "Fixture Park, Field 2", notes: "Makeup for all ages", created_by: adminId },
@@ -229,13 +233,70 @@ async function main() {
 
   // ---------- verify ----------
   const pool = regs.filter((r) => r.league_age >= 7 && r.league_age <= 16).length;
-  const held = tally.leftForReview.length; // players still in import review have no registration or bib
-  const expectedPool = readCsv(path.join(gen, "scored/expected-draft-report.csv")).length - held;
-  const expectedBibs = 288 - held;
+  // The fixture files already exclude players held in import review (duplicate Player Id).
+  const expectedPool = readCsv(path.join(gen, "scored/expected-draft-report.csv")).length;
+  const expectedBibs = readCsv(path.join(gen, "bib-numbers-by-player-id.csv")).length;
   const { count: bibCount } = await svc.from("player_seasons").select("id", { count: "exact", head: true }).eq("season_id", s2027.id).not("evaluation_number", "is", null);
   log(`\nVerify: ${pool} registrations in ages 7-16 (expected ${expectedPool}); ${bibCount} with bibs (expected ${expectedBibs})`);
   if (pool !== expectedPool || bibCount !== expectedBibs) fail("loaded counts do not match the fixture files");
-  log("\nPASS: pre-evaluation dataset loaded. Sign in as any fixture account (e.g. admin.jordan@example.com) with FIXTURE_PASSWORD.");
+  if (!SCORED) {
+    log("\nPASS: pre-evaluation dataset loaded. Sign in as any fixture account (e.g. admin.jordan@example.com) with FIXTURE_PASSWORD.");
+    return;
+  }
+
+  // ---------- scored dataset: Spring 2027 evaluations (REAL: save_evaluation as each evaluator) ----------
+  // SIMULATED: open every session (admin "Open session" action) so scoring is allowed.
+  await must(svc.from("evaluation_sessions").update({ status: "open" }).eq("season_id", s2027.id), "open sessions");
+  const evalRows = readCsv(path.join(gen, "scored/spring-2027-evaluations.csv"));
+  const CODES = categories.map((c) => c.code);
+  const byEvaluator = evalRows.reduce((m, r) => ((m[r["Evaluator Key"]] ??= []).push(r), m), {});
+  let saved = 0;
+  for (const [key, rows] of Object.entries(byEvaluator)) {
+    const client = createClient(status.API_URL, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    await must(client.auth.signInWithPassword({ email: rows[0]["Evaluator Email"], password }), `sign in as ${key}`);
+    for (const r of rows) {
+      const reg = refToReg(r["Fixture Key"]);
+      if (!reg) fail(`evaluation for ${r["Fixture Key"]} has no registration`);
+      const ratings = Object.fromEntries(CODES.filter((c) => r[c] !== "").map((c) => [c, Number(r[c])]));
+      await must(client.rpc("save_evaluation", { p_session_id: sessionByAge[reg.league_age], p_player_season_id: reg.id, p_ratings: ratings, p_experience_answers: {}, p_status: r.Status }),
+        `${key} ${r.Status} for ${r["Fixture Key"]}`);
+      saved++;
+    }
+    await client.auth.signOut();
+  }
+  log(`REAL scoring: ${saved} evaluations saved through save_evaluation by ${Object.keys(byEvaluator).length} evaluator accounts; sessions left Open`);
+
+  // Verify: recompute coach and evaluator overall averages from the database and compare to the expected report.
+  const dbEvals = [];
+  for (let from = 0; ; from += 1000) {
+    const page = await must(svc.from("evaluations").select("player_season_id, evaluator_type, status, ratings(score, rating_categories(code, category_group))").range(from, from + 999), "read evaluations");
+    dbEvals.push(...page);
+    if (page.length < 1000) break;
+  }
+  const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+  const overall = (evs) => {
+    const skills = ["hitting", "throwing", "grounders", "fly_balls", "running_awareness"].map((code) =>
+      mean(evs.flatMap((e) => e.ratings.filter((x) => x.rating_categories.code === code).map((x) => x.score))));
+    const avail = skills.filter((v) => v !== null);
+    return avail.length ? mean(avail) : null;
+  };
+  let mismatches = 0;
+  for (const exp of readCsv(path.join(gen, "scored/expected-draft-report.csv"))) {
+    const reg = refToReg(exp["Fixture Key"]);
+    const mine = dbEvals.filter((e) => e.player_season_id === reg.id && e.status === "submitted");
+    for (const [type, col] of [["coach", "Coach Overall"], ["independent_evaluator", "Evaluator Overall"]]) {
+      const got = overall(mine.filter((e) => e.evaluator_type === type));
+      const want = exp[col] === "" ? null : Number(exp[col]);
+      if ((got === null) !== (want === null) || (got !== null && Math.abs(got - want) > 0.005)) {
+        mismatches++;
+        if (mismatches <= 5) log(`  mismatch ${exp["Fixture Key"]} ${col}: database ${got?.toFixed(2) ?? "blank"}, expected ${exp[col] || "blank"}`);
+      }
+    }
+  }
+  const counts = dbEvals.reduce((m, e) => ({ ...m, [e.status]: (m[e.status] ?? 0) + 1 }), {});
+  log(`Verify: ${dbEvals.length} evaluations in database (${Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(", ")}); ${mismatches} average mismatches against expected-draft-report.csv`);
+  if (dbEvals.length !== evalRows.length || mismatches) fail("scored dataset does not match the fixture files");
+  log("\nPASS: scored dataset loaded. Sessions are Open; lock and release them in the app to test reports.");
 }
 
 main().catch((e) => fail(e.stack || e.message));

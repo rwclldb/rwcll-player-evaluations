@@ -4,7 +4,7 @@ Player Id,Player First Name,Player Last Name,Player Birth Date,Evaluation Number
 77100003,Cameron,Oak,10/22/2019,A12,Rejected: bib is not a whole number
 77100004,Dakota,Vale,01/02/2019,,Rejected: bib is blank
 99999999,Nobody,Known,01/01/2015,990,Rejected: no registered player matches
-77100077,,,,991,"Needs review: Player Id 77100077 belongs to two players (PLY-007, PLY-008)"
+77100077,,,,991,Needs review: no name given and Player Id 77100077 appeared twice in the registration file (PLY-008 is held in import review)
 84084076,Hugo,Long,11/23/2019,992,Rejected: player is not in the evaluation pool (A)
 77100005,Elliot,Carter,04/09/2019,205,Accepted
 77100005,Elliot,Carter,04/09/2019,993,Rejected: same player listed twice with different bibs

@@ -114,6 +114,14 @@ sample.forEach((r, i) => {
     inPool: ACTIVE.has(r["Division Name"].toUpperCase()) && inPoolAge(age), sc: r,
   });
 });
+// A repeated Sports Connect Player Id is a data error (decision 2026-11-10): the app flags it, the first
+// row commits, and later rows are held in import review until the Id is corrected. Held players are
+// not in the evaluation pool, have no bib, and get no scores.
+const seenIds = new Set();
+for (const p of players) {
+  if (seenIds.has(p.playerId)) { p.inPool = false; p.heldDuplicate = true; }
+  seenIds.add(p.playerId);
+}
 // Out-of-scope players never get bibs (they are not evaluated).
 for (const p of players) if (!p.inPool) p.bib = "";
 // Sample bibs: league-style blocks after the scenario bibs (201-245): 301+ ordered by age, last, first.
@@ -133,7 +141,8 @@ function expectedImport(p) {
   const out = [];
   if (!ACTIVE.has(p.division.toUpperCase())) out.push("Division needs review; out of scope; keep out of evaluation pool");
   if (!p.dob) out.push("Birthdate missing; admin must review before the player has an age group");
-  if (idCounts.get(p.playerId) > 1) out.push("Duplicate Player Id in file; treat as two separate players, never merge");
+  if (p.heldDuplicate) out.push("Duplicate Player Id: held in import review (cannot commit) until the Id is corrected in Sports Connect; not in evaluation pool");
+  else if (idCounts.get(p.playerId) > 1) out.push("Duplicate Player Id in file: flagged; admin resolves the warning and commits this first row");
   if (p.payment === "") out.push("Blank payment status is flagged for review, stored as UNKNOWN, and still eligible");
   if (!p.bib && p.inPool) out.push("No evaluation number supplied; flag, do not invent one");
   return out.length ? out.join(" | ") : "Commit as new player";
@@ -156,7 +165,7 @@ writeCsv("bib-numbers-with-errors.csv", ["Player Id", "Player First Name", "Play
   { "Player Id": "77100003", "Player First Name": "Cameron", "Player Last Name": "Oak", "Player Birth Date": isoToUs(byRef["PLY-003"].dob), "Evaluation Number": "A12", "Expected Result": "Rejected: bib is not a whole number" },
   { "Player Id": "77100004", "Player First Name": "Dakota", "Player Last Name": "Vale", "Player Birth Date": isoToUs(byRef["PLY-004"].dob), "Evaluation Number": "", "Expected Result": "Rejected: bib is blank" },
   { "Player Id": "99999999", "Player First Name": "Nobody", "Player Last Name": "Known", "Player Birth Date": "01/01/2015", "Evaluation Number": "990", "Expected Result": "Rejected: no registered player matches" },
-  { "Player Id": "77100077", "Player First Name": "", "Player Last Name": "", "Player Birth Date": "", "Evaluation Number": "991", "Expected Result": "Needs review: Player Id 77100077 belongs to two players (PLY-007, PLY-008)" },
+  { "Player Id": "77100077", "Player First Name": "", "Player Last Name": "", "Player Birth Date": "", "Evaluation Number": "991", "Expected Result": "Needs review: no name given and Player Id 77100077 appeared twice in the registration file (PLY-008 is held in import review)" },
   { "Player Id": outOfScope.playerId, "Player First Name": outOfScope.first, "Player Last Name": outOfScope.last, "Player Birth Date": isoToUs(outOfScope.dob), "Evaluation Number": "992", "Expected Result": `Rejected: player is not in the evaluation pool (${outOfScope.division})` },
   { "Player Id": "77100005", "Player First Name": "Elliot", "Player Last Name": "Carter", "Player Birth Date": isoToUs(byRef["PLY-005"].dob), "Evaluation Number": "205", "Expected Result": "Accepted" },
   { "Player Id": "77100005", "Player First Name": "Elliot", "Player Last Name": "Carter", "Player Birth Date": isoToUs(byRef["PLY-005"].dob), "Evaluation Number": "993", "Expected Result": "Rejected: same player listed twice with different bibs" },

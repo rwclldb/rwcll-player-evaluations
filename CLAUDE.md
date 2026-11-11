@@ -53,7 +53,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - Five required core skills: hitting, throwing, grounders, fly balls, running/awareness.
 - Pitching and catching categories are available for all ages, optional, and never gated by division.
 - `Not Evaluated` and blank optional ratings are not zero and are excluded from averages.
-- Evaluators can save drafts and edit their own submissions until the session is locked. Admin decides completion. Missing ratings are flagged, not blocking: evaluators can submit with some core skills blank. (The current database trigger still requires all 5; this must change.) Only submitted evaluations count in reports. Admin corrections after lock need a reason and audit entry.
+- Evaluators can save drafts and edit their own submissions until the session is locked. Admin decides completion. Missing ratings are flagged, not blocking: evaluators can submit with some core skills blank. Evaluators choose Save Draft, Submit, or Not Evaluated (`save_evaluation`, migration 20261110200000). Submitting requires at least one core skill. Only submitted evaluations count in reports. Admin corrections after lock need a reason and audit entry.
 - **Only players are rated. Coaches are never rated by anyone.** Names like `historical_coach_evaluation_*` mean ratings of players made by coaches.
 - End-of-season coach ratings use the same form: 5 core skills plus optional pitching and catching.
 
@@ -92,7 +92,6 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - **Evaluation-day roster printout.** Per age group, no ratings, sortable by bib number or last name, first name.
 - **Prior-year ratings for all players.** Coaches can see prior-year ratings for every rated player (data will be sparse). Always shown in draft reports. During live evaluations, one on/off switch **per season** controls it (default off). The Little League board decides go or no-go.
 - **Bib number upload and editing.** CSV upload (by Player Id, or by name plus birthdate) and admin editing in the app, with numbers unique across the season.
-- **Partial submissions.** Allow submitting with blank core skills, and flag the blanks.
 - **Age chart upload.** Admin uploads the official age chart for each season.
 - **Possible-duplicate player flag.** Flag players with the same name and birthdate for admin review and merge.
 - **Shared test server (not urgent).** A hosted deployment built from GitHub so other league members can test, and so the app can be tested on phones. Needs a hosting choice (for example Vercel plus the hosted Supabase project) and the user's approval for every hosted step.
@@ -104,8 +103,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 ## Known issues and open decisions
 
 - **Coach access to historical ratings is scoped to current team assignment** (`coach_historical_report_roster`, `coach_historical_report`). Decided 2026-11-10: replace with access to all rated players, as described under Tracked additions. Not yet built.
-- **Evaluators can't submit.** The only evaluator write path is `save_evaluation_draft`. There is no submit or "not evaluated" action, and evaluators have no update permission on `evaluations`. Reports count only submitted evaluations, so this blocks draft reports and the scored fixture.
-- **One registration per Sports Connect Player Id per season** (`player_seasons_season_external_player_id_uidx`). Two children sharing an Id can't both be committed. Needs a product decision.
+- **One registration per Sports Connect Player Id per season** (`player_seasons_season_external_player_id_uidx`). Decided 2026-11-10: keep this rule. Repeated Ids are data errors, so the app flags them and holds later rows in import review.
 - `evaluation_sessions` already has `published_at` and `published_by`, which require `status = 'locked'`. Reuse these for the "release" step.
 - No in-app way to invite or disable users. Public sign-up is off, so accounts are created in Supabase Studio or through the admin API for now.
 - Documentation drift: some docs still describe implemented migrations as proposed, describe division-based evaluation, or say pitching/catching is AAA-and-up only. Reconcile against actual code.
@@ -121,7 +119,7 @@ All local data is disposable. Rebuild it with `npm run fixtures:load -- --reset`
 - 36 prior-year coach ratings of players (2 rows left pending), 10 age-group sessions in Setup with events and assignments.
 - 18 accounts: `admin.jordan@example.com`, `coach.avery@example.com`, `eval.kendall@example.com`, and so on. The password is `FIXTURE_PASSWORD` in `.env.local`. Never print it.
 - Fixtures are regenerated with `npm run fixtures:generate`. Never hand-edit `generated/`.
-- The **scored** dataset (Spring 2027 evaluations) can't load yet. Evaluators have no submit path; see Known issues.
+- `npm run fixtures:load -- --reset --scored` also enters all 1,230 Spring 2027 evaluations through `save_evaluation`, signed in as each evaluator. It then checks the database averages against `scored/expected-draft-report.csv`. Sessions are left Open.
 
 ## Reference docs
 
