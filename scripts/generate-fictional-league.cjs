@@ -134,7 +134,7 @@ function expectedImport(p) {
   if (!ACTIVE.has(p.division.toUpperCase())) out.push("Division needs review; out of scope; keep out of evaluation pool");
   if (!p.dob) out.push("Birthdate missing; admin must review before the player has an age group");
   if (idCounts.get(p.playerId) > 1) out.push("Duplicate Player Id in file; treat as two separate players, never merge");
-  if (p.payment === "") out.push("Blank payment status stored as UNKNOWN; still eligible");
+  if (p.payment === "") out.push("Blank payment status is flagged for review, stored as UNKNOWN, and still eligible");
   if (!p.bib && p.inPool) out.push("No evaluation number supplied; flag, do not invent one");
   return out.length ? out.join(" | ") : "Commit as new player";
 }

@@ -17,6 +17,8 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - `npm run test:all`: runs every `test:*` script plus lint, TypeScript check, and production build. Reports go to `test-results/`.
 - `npx supabase status` / `npx supabase start`: check or start local Supabase
 - `npx supabase migration list --local`: see which migrations are applied locally. Check this before applying anything.
+- `npm run fixtures:load -- --reset`: wipe local Supabase and load the fictional league (ask first)
+- `npm run fixtures:generate`: rebuild the fixture CSVs from the roster and people files
 
 ## Safety rules (always follow)
 
@@ -102,18 +104,24 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 ## Known issues and open decisions
 
 - **Coach access to historical ratings is scoped to current team assignment** (`coach_historical_report_roster`, `coach_historical_report`). Decided 2026-11-10: replace with access to all rated players, as described under Tracked additions. Not yet built.
+- **Evaluators can't submit.** The only evaluator write path is `save_evaluation_draft`. There is no submit or "not evaluated" action, and evaluators have no update permission on `evaluations`. Reports count only submitted evaluations, so this blocks draft reports and the scored fixture.
+- **One registration per Sports Connect Player Id per season** (`player_seasons_season_external_player_id_uidx`). Two children sharing an Id can't both be committed. Needs a product decision.
+- `evaluation_sessions` already has `published_at` and `published_by`, which require `status = 'locked'`. Reuse these for the "release" step.
 - No in-app way to invite or disable users. Public sign-up is off, so accounts are created in Supabase Studio or through the admin API for now.
 - Documentation drift: some docs still describe implemented migrations as proposed, describe division-based evaluation, or say pitching/catching is AAA-and-up only. Reconcile against actual code.
 - Remaining security checks: confirm admin reports and CSV export still work.
 - `.claude/settings.json` denies Supabase CLI commands that reach the hosted project. A hosted deployment is a step the user runs or explicitly approves.
 
-## Synthetic test data to preserve (local)
+## Test data (local)
 
-> **As of 2026-11-10 this data no longer exists locally.** The local database was rebuilt that day. It holds only season 1 (Spring 2027), the 5 divisions, rating categories, and one admin user. Fixtures for rebuilding it are in `rwcll-fictional-test-league/`. The list below describes what used to be there.
+All local data is disposable. Rebuild it with `npm run fixtures:load -- --reset`, which wipes local Supabase and loads the **pre-evaluation** fictional league. Ask the user before wiping. Details are in `rwcll-fictional-test-league/README.md`.
 
-- Season Spring 2027 = season ID 1. Import batches #1, #6, and #8 are test data. Batch #8 has 3 committed rows (players 8, 9, 10) and 42 rows intentionally left in `needs_review`.
-- Three test-only historical links (Drew Willow10, Avery Sandbox08, Morgan Pebble06). These are not real identity matches.
-- Test team `TEST - AAA Coach Report` with Drew Willow10 and `coach-a-test@example.com` as head coach. `coach-b-test@example.com` is the unassigned coach. Passwords aren't documented; use the local reset flow through Mailpit.
+- Season Spring 2026 (id 1, closed) and Spring 2027 (id 2).
+- 290 registrations ages 7–16, 287 with bibs. Harper Oak (PLY-008) stays in import review because of the duplicate Player Id.
+- 36 prior-year coach ratings of players (2 rows left pending), 10 age-group sessions in Setup with events and assignments.
+- 18 accounts: `admin.jordan@example.com`, `coach.avery@example.com`, `eval.kendall@example.com`, and so on. The password is `FIXTURE_PASSWORD` in `.env.local`. Never print it.
+- Fixtures are regenerated with `npm run fixtures:generate`. Never hand-edit `generated/`.
+- The **scored** dataset (Spring 2027 evaluations) can't load yet. Evaluators have no submit path; see Known issues.
 
 ## Reference docs
 
