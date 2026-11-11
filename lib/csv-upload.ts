@@ -28,7 +28,7 @@ export const COLUMN_ALIASES = {
   division: ["Division", "Division Name"],
   team: ["Team", "Team Name"],
   coachName: ["Coach Name", "Coach"],
-  email: ["Email", "Email Address", "Volunteer Email", "Account Email"],
+  email: ["Email", "Email Address", "Volunteer Email", "Volunteer Email Address", "Account Email"],
   role: ["Role", "Volunteer Role"],
 };
 

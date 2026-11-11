@@ -20,6 +20,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - `npx supabase migration list --local`: see which migrations are applied locally. Check this before applying anything.
 - `npm run fixtures:load -- --reset`: wipe local Supabase and load the fictional league (ask first)
 - `npm run fixtures:generate`: rebuild the fixture CSVs from the roster and people files
+- `npm run fixtures:load -- --reset --bare`: wipe local Supabase and create only the two admin accounts and seasons, for walking through setup in the app (`docs/TEST-PLAN-SEASON-SETUP.md`) (ask first)
 - `npm run e2e:evaluation-navigation`: browser test of the scoring screen in phone-sized Chrome. It needs `npm run dev` running and fixtures loaded with `--open-sessions`, cleans up after itself, and is not part of `test:all`. Run it after any change to the evaluation screen.
 
 ## Safety rules (always follow)
@@ -110,14 +111,14 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - **Bib upload** (`/protected/players/bibs`, migration 20261111150000): CSV keyed by Player Id or name + birthdate. Preview groups rows into new, change (admin ticks which to accept), conflict, same, held (no match yet; re-checkable), rejected. Never creates players. Matching lives in `private.match_registration`.
 - **Prior-year upload** (`/protected/prior-year`, migration 20261111160000): rows matched to the chosen season's registrations as matched / review / held / invalid. Admin imports matched rows and confirms review rows; held rows can be re-checked or dismissed. Duplicate ratings are rejected. Never creates players.
 - **People page** (`/protected/people`, migration 20261111170000): invite by email (single or CSV list), add or remove season roles, resend invites, disable or enable accounts. Uses `SUPABASE_SECRET_KEY` on the server only (`lib/supabase/admin.ts`). A trigger blocks coach + evaluator roles on one account in one season. Invite email template: `supabase/templates/invite.html` (hosted needs the same template, Site URL, and an SMTP provider).
-- Test: `test:season-setup-runtime` (27 checks).
+- **Bulk import review** (migration 20261111180000): on an import batch, admins ignore all out-of-scope rows and approve-and-commit all clean rows (active division, age set, no warnings except payment, no same-name player, unused Player Id) in two clicks. The rest stay for row review.
+- Test: `test:season-setup-runtime` (29 checks). Walkthrough: `docs/TEST-PLAN-SEASON-SETUP.md`.
 
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Retire the team-scoped coach report** (`/protected/coach-reports`, `coach_historical_report*`). It's superseded by draft reports and no longer linked from the evaluation screen or the top menu (the pages and functions still exist).
 - **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)
 - **Possible-duplicate player flag.** Flag players with the same name and birthdate for admin review and merge.
-- **Sports Connect coach export format.** The People CSV import accepts any file with an email column (plus names and an optional role column). Confirm against a real Sports Connect volunteer export.
 - **Shared test server.** Vercel + hosted Supabase is running. Hosted needs every 2026-11-11 migration, the invite email template, Site URL, an SMTP provider, and `SUPABASE_SECRET_KEY` as a server-only Vercel variable (user-run steps; see docs/FAQ.md).
 
 ## Working preferences

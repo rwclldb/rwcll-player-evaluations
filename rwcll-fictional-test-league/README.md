@@ -20,6 +20,8 @@ Hand-edited inputs (in this folder):
 | File | What it is |
 |---|---|
 | `fictional_player_roster.csv` | 45 scenario players. Each has scenario tags and notes. Birthdates match the 2027 age chart. |
+| `sports-connect-volunteers-spring-2027.csv` | The 9 coaches with accounts, in the Sports Connect volunteer report format (Finley Moss listed twice). For the People page import. |
+| `independent-evaluators-spring-2027.csv` | The 6 independent evaluators with a Role column, for the People page import. |
 | `fictional_people.csv` | 2 admins, 10 coaches (one not returning, so no account), 6 independent evaluators, 1 account with no role. Emails are the login names. COA-10 and EVA-06 are the same person with two accounts. |
 | `SCENARIO-MATRIX.md` / `.csv` | Lifecycle acceptance scenarios. |
 

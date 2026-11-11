@@ -4,6 +4,8 @@
 //   npm run fixtures:load -- --reset --open-sessions  same, with every age group already Open for scoring
 //   npm run fixtures:load -- --reset --scored         same, plus all Spring 2027 evaluations (for draft reports)
 //   npm run fixtures:load                             load into an empty local DB (refuses if players exist)
+//   npm run fixtures:load -- --reset --bare           wipe, then only admin accounts + seasons: walk through setup in the app
+//                                                     (docs/TEST-PLAN-SEASON-SETUP.md)
 //
 // Hosted (run it YOURSELF; see docs/FAQ.md "Load test data into hosted Supabase"):
 //   npm run fixtures:load -- --hosted --confirm-project=<ref> [--open-sessions | --scored]
@@ -31,6 +33,8 @@ const args = new Set(argv);
 const RESET = args.has("--reset");
 const SCORED = args.has("--scored");
 const OPEN_SESSIONS = args.has("--open-sessions");
+// BARE: admin accounts and seasons only; everything else is done by hand in the app.
+const BARE = args.has("--bare");
 // HOSTED mode is meant to be run by the user, never by Claude Code (hosted Supabase is off limits to it).
 const HOSTED = args.has("--hosted");
 const confirmProject = (argv.find((a) => a.startsWith("--confirm-project=")) ?? "").split("=")[1];
@@ -119,7 +123,7 @@ async function main() {
   const people = readCsv(path.join(pack, "fictional_people.csv"));
   const userId = {};
   const { data: existingUsers } = await svc.auth.admin.listUsers({ perPage: 1000 });
-  for (const p of people.filter((p) => p.email)) {
+  for (const p of people.filter((p) => p.email && (!BARE || p.role_spring_2027 === "administrator"))) {
     const found = existingUsers?.users?.find((u) => u.email === p.email);
     if (found) { userId[p.fictional_person_key] = found.id; continue; }
     const data = await must(svc.auth.admin.createUser({ email: p.email, password, email_confirm: true }), `create user ${p.email}`);
@@ -138,6 +142,12 @@ async function main() {
   await must(svc.from("user_roles").insert(roleRows), "assign roles");
   const { count: divCount } = await svc.from("season_divisions").select("id", { count: "exact", head: true }).eq("season_id", s2027.id);
   log(`SIMULATED seasons: Spring 2026 (id ${s2026.id}, closed), Spring 2027 (id ${s2027.id}, ${divCount} divisions attached); ${roleRows.length} roles`);
+  if (BARE) {
+    log(`
+PASS: bare league loaded: ${Object.keys(userId).length} admin accounts, Spring 2026 (closed) and Spring 2027. No players, coaches, evaluators, bibs, prior-year ratings, or sessions.`);
+    log("Next: follow docs/TEST-PLAN-SEASON-SETUP.md, signed in as admin.jordan@example.com with FIXTURE_PASSWORD.");
+    return;
+  }
 
   // ---------- registration import (REAL: same parser and RPCs as the import screen) ----------
   const admin = createClient(status.API_URL, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });

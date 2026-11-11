@@ -33,6 +33,7 @@ export function PeopleImport({ seasonId }: { seasonId: number }) {
       last: findHeader(table.headers, ["Volunteer Last Name", ...COLUMN_ALIASES.lastName.filter((a) => !a.startsWith("Player"))]),
       name: findHeader(table.headers, ["Name", "Full Name", "Volunteer Name"]),
       role: findHeader(table.headers, COLUMN_ALIASES.role),
+      division: findHeader(table.headers, ["Division Name", "Division"]),
     };
     if (!h.email) { setProblem("No email column found (looked for \"Email\", \"Email Address\", \"Volunteer Email\")."); return; }
     const seen = new Set<string>();
@@ -44,7 +45,8 @@ export function PeopleImport({ seasonId }: { seasonId: number }) {
       const role = roleFrom(h.role ? r[h.role] ?? "" : "", fallback);
       const dup = seen.has(email);
       seen.add(email);
-      out.push({ key: `${out.length}`, name, email, role, include: !dup, note: dup ? "Listed more than once; only the first is used." : h.role ? r[h.role] ?? "" : "" });
+      const detail = [h.role ? r[h.role] : "", h.division ? r[h.division] : ""].filter(Boolean).join(", ");
+      out.push({ key: `${out.length}`, name, email, role, include: !dup, note: dup ? `Listed more than once (${detail}); only the first row is used.` : detail });
     }
     if (out.length === 0) setProblem("No rows with an email address.");
     setRows(out);
