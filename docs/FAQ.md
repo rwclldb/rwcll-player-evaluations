@@ -414,3 +414,24 @@ The People page creates accounts with the Supabase **secret key** and Supabase s
 7. **Link lifetime (optional).** Authentication -> Sign In / Providers -> Email: set the email OTP expiration to 86400 seconds (24 hours) so links don't expire after an hour.
 
 Locally, invitation emails land in Mailpit at http://127.0.0.1:54324.
+
+## Set up Google Workspace Email
+
+This lets the app send invitations and "forgot password" emails to anyone.
+
+In the hosted Supabase project, go to **Authentication → Emails → SMTP Settings** and turn on custom SMTP:
+
+|**Setting**|**Value**|
+|-----------|---------|
+|Host|`smtp.gmail.com`|
+|Port|`465`|
+|Username|the full Workspace address that sends the mail (for example a `noreply@rwcll.org` account, or the one your other app uses)|
+|Password|a Google **app password** for that account (Google Account → Security → 2-Step Verification → App passwords), not the normal password|
+|Sender email|the same address|
+|Sender name|`RWCLL Player Evaluations`|
+
+Then two related settings:
+
+- **Authentication → Rate Limits**: raise "emails per hour" to around 100. With custom SMTP it starts at 30, which is tight when inviting 30–50 coaches at once. Gmail's own limit (about 2,000 a day for Workspace) won't be an issue.
+- **Authentication → Sign In / Providers → Email**: set the email link lifetime to 86400 seconds (24 hours), so invitations don't expire after an hour.
+Nothing changes in the app. Once SMTP is on, choosing "Email them an invitation" on People sends from your Google account.
