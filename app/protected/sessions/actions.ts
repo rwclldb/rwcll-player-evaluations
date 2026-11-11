@@ -125,7 +125,7 @@ export async function advanceEvaluationSessionStatus(formData: FormData) {
   if (
     !Number.isSafeInteger(sessionId) ||
     sessionId < 1 ||
-    !["open", "locked", "setup"].includes(requestedStatus)
+    !["open", "setup"].includes(requestedStatus)
   ) {
     redirect("/protected/sessions?error=Invalid%20session%20or%20status.");
   }
@@ -150,14 +150,14 @@ export async function advanceEvaluationSessionStatus(formData: FormData) {
     redirect("/protected/sessions?error=Session%20not%20found.");
   }
 
+  // Lock, unlock, release, and unrelease go through changeSessionStage (audited).
   const allowed =
     (session.status === "setup" && requestedStatus === "open") ||
-    (session.status === "open" && requestedStatus === "locked") ||
     (session.status === "open" && requestedStatus === "setup");
 
   if (!allowed) {
     redirect(
-      "/protected/sessions?error=Only%20setup%20to%20open%2C%20open%20to%20setup%2C%20and%20open%20to%20locked%20transitions%20are%20allowed.",
+      "/protected/sessions?error=Only%20setup%20to%20open%20and%20open%20to%20setup%20use%20this%20action.",
     );
   }
 
@@ -242,6 +242,45 @@ export async function advanceEvaluationSessionStatus(formData: FormData) {
       `Session status updated to ${requestedStatus}.`,
     )}`,
   );
+}
+
+const STAGE_MESSAGES = {
+  lock: "Session locked. Scoring has stopped. Coaches still cannot see reports.",
+  unlock: "Session unlocked. Evaluators can change scores again.",
+  release: "Reports released. Coaches can now see this age group's draft report.",
+  unrelease: "Reports unreleased. Coaches can no longer see this age group's draft report.",
+} as const;
+
+// Lock / unlock / release / unrelease. The database function checks the admin role, the
+// allowed transitions, and the reason for stepping back, and writes the audit log.
+export async function changeSessionStage(formData: FormData) {
+  const sessionId = Number(formData.get("sessionId"));
+  const action = String(formData.get("stageAction") ?? "") as keyof typeof STAGE_MESSAGES;
+  const reason = String(formData.get("reason") ?? "").trim();
+
+  if (!Number.isSafeInteger(sessionId) || sessionId < 1 || !(action in STAGE_MESSAGES)) {
+    redirect("/protected/sessions?error=Invalid%20session%20or%20action.");
+  }
+
+  const auth = await getAdministratorClient();
+  if ("error" in auth && auth.error) {
+    redirect(`/protected/sessions?error=${encodeURIComponent(auth.error)}`);
+  }
+  const { supabase } = auth;
+
+  const { error } = await supabase.rpc("change_evaluation_session_stage", {
+    p_session_id: sessionId,
+    p_action: action,
+    p_reason: reason || null,
+  });
+
+  if (error) {
+    redirect(`/protected/sessions?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/protected/sessions");
+  revalidatePath("/protected");
+  redirect(`/protected/sessions?message=${encodeURIComponent(STAGE_MESSAGES[action])}`);
 }
 
 export async function applyGlobalPrimaryEventSchedule(formData: FormData) {

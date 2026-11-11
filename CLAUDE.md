@@ -88,7 +88,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
   - Extra detail is viewable: per-skill averages, pitching, catching, and the viewer's own ratings.
   - Admins see a list of unsubmitted drafts before locking.
   - CSV first; PDF is a nice-to-have.
-  - Two steps: the admin **locks** the session (scoring stops), then **releases** reports to coaches. Both steps can be undone (unrelease, unlock). Each admin page must state clearly what each step does and what undoing it does. Coaches see reports only after release. Admins see them anytime.
+  - Two steps: the admin **locks** the session (scoring stops), then **releases** reports to coaches. Both steps can be undone (unrelease, unlock). Each admin page must state clearly what each step does and what undoing it does. Coaches see reports only after release. Admins see them anytime. **Built** (migration 20261110210000): `change_evaluation_session_stage` is audited, "released" = `published_at` set, and the Sessions page has the confirmations and an explainer. The draft report itself still needs building.
 - **Evaluation-day roster printout.** Per age group, no ratings, sortable by bib number or last name, first name.
 - **Prior-year ratings for all players.** Coaches can see prior-year ratings for every rated player (data will be sparse). Always shown in draft reports. During live evaluations, one on/off switch **per season** controls it (default off). The Little League board decides go or no-go.
 - **Bib number upload and editing.** CSV upload (by Player Id, or by name plus birthdate) and admin editing in the app, with numbers unique across the season.
@@ -104,7 +104,6 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 
 - **Coach access to historical ratings is scoped to current team assignment** (`coach_historical_report_roster`, `coach_historical_report`). Decided 2026-11-10: replace with access to all rated players, as described under Tracked additions. Not yet built.
 - **One registration per Sports Connect Player Id per season** (`player_seasons_season_external_player_id_uidx`). Decided 2026-11-10: keep this rule. Repeated Ids are data errors, so the app flags them and holds later rows in import review.
-- `evaluation_sessions` already has `published_at` and `published_by`, which require `status = 'locked'`. Reuse these for the "release" step.
 - No in-app way to invite or disable users. Public sign-up is off, so accounts are created in Supabase Studio or through the admin API for now.
 - Documentation drift: some docs still describe implemented migrations as proposed, describe division-based evaluation, or say pitching/catching is AAA-and-up only. Reconcile against actual code.
 - Remaining security checks: confirm admin reports and CSV export still work.

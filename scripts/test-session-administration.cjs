@@ -33,7 +33,8 @@ assert.match(sessionsActions, /saveEvaluationSessionEvent/, "server actions must
 assert.match(sessionsActions, /deleteEvaluationSessionEvent/, "server actions must remove scheduled events");
 assert.match(sessionsActions, /applyGlobalPrimaryEventSchedule/, "server action must apply a global primary schedule");
 assert.match(sessionsActions, /applyGlobalMakeupEventSchedule/, "server action must apply a global makeup schedule");
-assert.match(sessionsActions, /\["open", "locked", "setup"\]/, "status action must accept Setup as a requested destination so open sessions can return to Setup");
+assert.match(sessionsActions, /\["open", "setup"\]/, "status action must accept Setup as a requested destination so open sessions can return to Setup");
+assert.match(sessionsActions, /rpc\("change_evaluation_session_stage"/, "lock, unlock, release, and unrelease must go through the audited stage function");
 assert.match(globalMakeupSchedule, /Global makeup event schedule/, "sessions page must offer a global makeup schedule");
 assert.match(sessionsActions, /event_type: "makeup"/, "global makeup schedule must create makeup events");
 assert.match(globalMakeupSchedule, /primarySessionIds/, "global makeup schedule must require an existing primary event");
@@ -49,7 +50,8 @@ assert.match(sessionsActions, /evaluation%20records.%20It%20cannot%20return%20to
 assert.match(sessionActions, /Return to Setup/, "admin UI must offer a return-to-setup action for open sessions");
 assert.match(sessionsActions, /requestedStatus === "open"[\s\S]*?evaluation_session_events/, "opening must check for a primary event");
 assert.match(sessionsActions, /Assign%20at%20least%20one%20evaluator/, "opening must require an evaluator assignment");
-assert.match(sessionActionsComponent, /disabled={!hasPrimaryEvent \|\| !hasEvaluator}/, "UI must disable opening until prerequisites are met");
+assert.match(sessionActionsComponent, /actionButton\("open", "Open Session", [^\n]*, !hasPrimaryEvent \|\| !hasEvaluator\)/, "UI must disable opening until prerequisites are met");
+assert.match(sessionActionsComponent, /Step 1 of 2[\s\S]*Undo:[\s\S]*Step 2 of 2[\s\S]*Undo:/, "lock and release confirmations must explain both steps and how to undo them");
 assert.match(eventManager, /type="date"/, "event form must collect a date");
 assert.match(eventManager, /type="time"/g, "event form must collect start and end times");
 assert.match(eventManager, /name="location"/, "event form must collect a location");

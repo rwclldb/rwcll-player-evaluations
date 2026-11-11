@@ -75,7 +75,7 @@ async function SessionsContent({
   // Fetch evaluation sessions matching actual schema
   const { data: sessions, error: sessionsError } = await supabase
     .from("evaluation_sessions")
-    .select("id, season_id, league_age, season_division_id, status, created_at")
+    .select("id, season_id, league_age, season_division_id, status, published_at, created_at")
     .is("season_division_id", null)
     .order("season_id", { ascending: false })
     .order("league_age", { ascending: false });
@@ -89,6 +89,24 @@ async function SessionsContent({
   const { data: evaluatorAssignments, error: assignmentsError } = await supabase
     .from("evaluator_assignments")
     .select("evaluation_session_id");
+
+  // Submitted / draft counts per session, shown in the Lock confirmation. Paged past the API row cap.
+  const evaluationCounts = new Map<number, { submitted: number; draft: number }>();
+  for (let from = 0; ; from += 1000) {
+    const { data: page, error } = await supabase
+      .from("evaluations")
+      .select("evaluation_session_id, status")
+      .order("id")
+      .range(from, from + 999);
+    if (error || !page) break;
+    for (const row of page) {
+      const c = evaluationCounts.get(row.evaluation_session_id) ?? { submitted: 0, draft: 0 };
+      if (row.status === "submitted") c.submitted++;
+      if (row.status === "draft") c.draft++;
+      evaluationCounts.set(row.evaluation_session_id, c);
+    }
+    if (page.length < 1000) break;
+  }
 
   return (
     <div className="space-y-8">
@@ -215,6 +233,16 @@ async function SessionsContent({
                   sessions={seasonSessions.filter((session) => session.league_age !== null && LEAGUE_AGES.includes(session.league_age))}
                   events={(sessionEvents ?? []).filter((event) => seasonSessions.some((session) => session.id === event.evaluation_session_id)).map((event) => ({ evaluation_session_id: event.evaluation_session_id, event_type: event.event_type }))}
                 />
+                <details className="rounded-lg border border-border bg-background p-3 text-xs" open>
+                  <summary className="cursor-pointer font-semibold text-foreground">How each age group moves through evaluations</summary>
+                  <ol className="mt-2 grid gap-2 sm:grid-cols-4">
+                    <li className="rounded border border-border p-2"><strong className="text-amber-700 dark:text-amber-400">1. Setup</strong><br />Schedule events and assign evaluators. Nobody can score yet.</li>
+                    <li className="rounded border border-border p-2"><strong className="text-emerald-700 dark:text-emerald-400">2. Open</strong><br />Coaches and evaluators score. Each person sees only their own scores.</li>
+                    <li className="rounded border border-border p-2"><strong className="text-slate-700 dark:text-slate-300">3. Locked</strong><br />Scoring stops. Only submitted scores count. Coaches still can&apos;t see reports.</li>
+                    <li className="rounded border border-border p-2"><strong className="text-sky-700 dark:text-sky-300">4. Released</strong><br />Coaches can see this age group&apos;s draft report.</li>
+                  </ol>
+                  <p className="mt-2 text-muted-foreground">Every step can be undone: Unrelease (back to Locked), Unlock (back to Open), or Return to Setup (only before any scoring). Undoing a lock or a release needs a reason and is recorded in the audit log.</p>
+                </details>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead className="bg-background text-xs font-mono uppercase tracking-wider text-muted-foreground border-b border-border">
@@ -254,8 +282,12 @@ async function SessionsContent({
                                 <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-mono gap-1">
                                   <CheckCircle2 className="h-3 w-3" /> Open
                                 </Badge>
+                              ) : session.published_at ? (
+                                <Badge variant="outline" className="border-sky-500/40 bg-sky-500/10 text-sky-700 dark:text-sky-300 text-xs font-mono gap-1">
+                                  <Lock className="h-3 w-3" /> Released
+                                </Badge>
                               ) : (
-                                <Badge variant="outline" className="border-slate-700 bg-slate-800/50 text-muted-foreground text-xs font-mono gap-1">
+                                <Badge variant="outline" className="border-slate-500/40 bg-slate-500/10 text-slate-700 dark:text-slate-300 text-xs font-mono gap-1">
                                   <Lock className="h-3 w-3" /> Locked
                                 </Badge>
                               )}
@@ -264,10 +296,13 @@ async function SessionsContent({
                               {session ? (
                                 <SessionActions
                                   session={session}
+                                  released={Boolean(session.published_at)}
                                   seasonClosed={season.is_closed}
                                   age={age}
                                   hasPrimaryEvent={hasPrimaryEvent}
                                   hasEvaluator={hasEvaluator}
+                                  submittedCount={evaluationCounts.get(session.id)?.submitted ?? 0}
+                                  draftCount={evaluationCounts.get(session.id)?.draft ?? 0}
                                 />
                               ) : (
                                 <span className="text-xs font-mono text-slate-600 dark:text-slate-400">—</span>
@@ -310,7 +345,7 @@ async function SessionsContent({
         })}
 
       <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
-        Note: Sessions cover ages 7–16. Configure a primary event and assign at least one evaluator before opening. Makeup events are optional and can be added as needed. A locked session cannot be reopened.
+        Note: Sessions cover ages 7–16. Configure a primary event and assign at least one evaluator before opening. Makeup events are optional and can be added as needed. Locking and releasing can be undone (see &quot;How each age group moves through evaluations&quot; above).
       </p>
     </div>
   );
