@@ -21,6 +21,9 @@ assert.match(rosterPage, /coach_historical_report_roster/, "coach roster page mu
 assert.match(playerPage, /coach_historical_report"/, "coach report page must use the scoped history RPC");
 assert.doesNotMatch(playerPage, /from\("historical_evaluations"\)|from\("historical_ratings"\)/, "coach UI must not directly query admin-only historical tables");
 assert.match(playerPage, /if \(result\.error\) \{\s*notFound\(\);\s*\}/, "unauthorized player report requests must not disclose report data");
-assert.match(evaluatorPage, /\/protected\/coach-reports/, "coach workspace must link to historical reports");
+// Decision 2026-11-10: prior-year ratings for all players live in the draft report (and on the
+// evaluation screen when the season switch is on), replacing the team-scoped coach report link.
+assert.match(evaluatorPage, /\/protected\/draft-reports/, "coach workspace must link to draft reports, which include prior-year ratings");
+assert.match(evaluatorPage, /prior_year_for_session/, "evaluation screen must use the switch-controlled prior-year function");
 
 console.log("PASS: scoped coach historical report authorization source checks");

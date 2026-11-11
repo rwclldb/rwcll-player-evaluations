@@ -81,16 +81,24 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - Use supplied registration and evaluation numbers. Never invent numbers during import.
 - Out-of-scope programs (A, Tee Ball, Wiffle Ball, etc.) can be staged but are flagged and kept out of the evaluation pool.
 
+## Built 2026-11-10 (local only; migrations not on hosted)
+
+- **Draft reports** (`/protected/draft-reports`, migration 20261110220000):
+  - All averages come from `private.session_player_summary`, through `draft_report` and `draft_report_sessions`.
+  - Admins see every age group anytime. Coaches see an age group only after it is released. Independent evaluators can't open reports.
+  - Default sort is evaluator overall. Columns sort on click, and rows expand to per-skill detail and the viewer's own ratings.
+  - CSV and print are built. PDF is still a nice-to-have.
+- **Lock and release** (migration 20261110210000): Sessions page with confirmations and an explainer.
+- **Evaluation-day roster** (`/protected/roster`, admin): blank Check-in and Notes columns, bib or name sort, and "All ages" prints one age group per page.
+- **Prior-year switch**, one per season, on the Sessions page. When on, coaches and evaluators see prior-year ratings while scoring (`prior_year_for_session`). Draft reports always include prior-year ratings.
+- **Evaluation screen:** a player list with bib, name, LL age and status, plus bib search. A one-player scoring page has Previous/Next at top and bottom, Submit & Next, and an unsaved-changes warning.
+- **Bibs are unique per season** (index `player_seasons_unique_season_evaluation_number`).
+
 ## Tracked additions (confirmed requirements, not yet built)
 
-- **Draft reports for coaches (top priority).** Decided 2026-11-10 (see `docs/DECISIONS.md`):
-  - One report per age group, with separate **coach overall** and **evaluator overall** columns. Each is the average of the 5 core skills only, and viewers can sort by either. Prior-year coach ratings get their own column.
-  - Extra detail is viewable: per-skill averages, pitching, catching, and the viewer's own ratings.
-  - Admins see a list of unsubmitted drafts before locking.
-  - CSV first; PDF is a nice-to-have.
-  - Two steps: the admin **locks** the session (scoring stops), then **releases** reports to coaches. Both steps can be undone (unrelease, unlock). Each admin page must state clearly what each step does and what undoing it does. Coaches see reports only after release. Admins see them anytime. **Built** (migration 20261110210000): `change_evaluation_session_stage` is audited, "released" = `published_at` set, and the Sessions page has the confirmations and an explainer. The draft report itself still needs building.
-- **Evaluation-day roster printout.** Per age group, no ratings, sortable by bib number or last name, first name.
-- **Prior-year ratings for all players.** Coaches can see prior-year ratings for every rated player (data will be sparse). Always shown in draft reports. During live evaluations, one on/off switch **per season** controls it (default off). The Little League board decides go or no-go.
+- **On-site roster changes:** admins add or change players on evaluation day. Needs design.
+- **Private notes:** coaches and evaluators keep notes on players that only they can see. `evaluator_notes` and `private_notes` tables exist but aren't reviewed. Needs design.
+- **Retire the team-scoped coach report** (`/protected/coach-reports`, `coach_historical_report*`). It's superseded by draft reports and no longer linked from the evaluation screen.
 - **Bib number upload and editing.** CSV upload (by Player Id, or by name plus birthdate) and admin editing in the app, with numbers unique across the season.
 - **Age chart upload.** Admin uploads the official age chart for each season.
 - **Possible-duplicate player flag.** Flag players with the same name and birthdate for admin review and merge.

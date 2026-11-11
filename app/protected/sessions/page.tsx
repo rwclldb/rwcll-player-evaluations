@@ -2,7 +2,7 @@ import { Fragment, Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createMissingAgeSessions } from "./actions";
+import { createMissingAgeSessions, setPriorYearVisibility } from "./actions";
 import { SessionActions } from "./SessionActions";
 import { SessionEventManager } from "./SessionEventManager";
 import { GlobalPrimarySchedule } from "./GlobalPrimarySchedule";
@@ -69,7 +69,7 @@ async function SessionsContent({
   // Fetch all seasons
   const { data: seasons, error: seasonsError } = await supabase
     .from("seasons")
-    .select("id, name, start_date, end_date, is_closed")
+    .select("id, name, start_date, end_date, is_closed, show_prior_year_during_evaluations")
     .order("start_date", { ascending: false });
 
   // Fetch evaluation sessions matching actual schema
@@ -219,6 +219,24 @@ async function SessionsContent({
               </CardHeader>
 
               <CardContent className="p-4">
+                <form action={setPriorYearVisibility} className="mb-4 flex flex-col gap-2 rounded-lg border border-border bg-background p-3 text-xs sm:flex-row sm:items-center sm:justify-between">
+                  <input type="hidden" name="seasonId" value={season.id} />
+                  <input type="hidden" name="visible" value={season.show_prior_year_during_evaluations ? "false" : "true"} />
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      Prior-year ratings while scoring:{" "}
+                      <span className={season.show_prior_year_during_evaluations ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground"}>
+                        {season.show_prior_year_during_evaluations ? "Shown" : "Hidden"}
+                      </span>
+                    </p>
+                    <p className="text-muted-foreground">
+                      League board decision. When shown, coaches and evaluators see last season&apos;s coach ratings next to each player while they score. Draft reports always include them.
+                    </p>
+                  </div>
+                  <Button type="submit" size="sm" variant="outline" disabled={season.is_closed} className="shrink-0 text-xs">
+                    {season.show_prior_year_during_evaluations ? "Hide while scoring" : "Show while scoring"}
+                  </Button>
+                </form>
                 <GlobalPrimarySchedule
                   seasonId={season.id}
                   seasonName={season.name}

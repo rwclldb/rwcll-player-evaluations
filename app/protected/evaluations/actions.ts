@@ -31,13 +31,16 @@ function readPositiveId(value: FormDataEntryValue | null): number {
   return Number.isSafeInteger(id) && id > 0 ? id : 0;
 }
 
+// Back to a player's scoring page (or the list when playerSeasonId is 0).
 function returnToSession(
   sessionId: number,
+  playerSeasonId: number,
   parameter: "message" | "error",
   value: string,
 ): never {
+  const player = playerSeasonId ? `&player=${playerSeasonId}` : "";
   redirect(
-    `/protected/evaluations?sessionId=${sessionId}&${parameter}=${encodeURIComponent(value)}`,
+    `/protected/evaluations?sessionId=${sessionId}${player}&${parameter}=${encodeURIComponent(value)}`,
   );
 }
 
@@ -48,12 +51,15 @@ const INTENTS = {
 } as const;
 type Intent = keyof typeof INTENTS;
 
-// One form, three buttons: Save draft / Submit / Not evaluated (button name="intent").
+// One form, several buttons (button name="intent"): Save draft / Submit / Submit & Next / Not evaluated.
 export async function saveEvaluation(formData: FormData) {
   const sessionId = readPositiveId(formData.get("sessionId"));
   const playerSeasonId = readPositiveId(formData.get("playerSeasonId"));
+  const nextPlayerSeasonId = readPositiveId(formData.get("nextPlayerSeasonId"));
   const rawIntent = String(formData.get("intent") ?? "draft");
-  const intent: Intent = rawIntent in INTENTS ? (rawIntent as Intent) : "draft";
+  const goNext = rawIntent === "submitted_next" && nextPlayerSeasonId > 0;
+  const normalized = rawIntent === "submitted_next" ? "submitted" : rawIntent;
+  const intent: Intent = normalized in INTENTS ? (normalized as Intent) : "draft";
 
   if (!sessionId || !playerSeasonId) {
     redirect("/protected/evaluations");
@@ -79,7 +85,7 @@ export async function saveEvaluation(formData: FormData) {
     const score = Number(rawValue);
 
     if (!Number.isInteger(score) || score < 1 || score > 5) {
-      returnToSession(sessionId, "error", "Ratings must be between 1 and 5.");
+      returnToSession(sessionId, playerSeasonId, "error", "Ratings must be between 1 and 5.");
     }
 
     ratings[code] = score;
@@ -91,7 +97,7 @@ export async function saveEvaluation(formData: FormData) {
     const answer = String(formData.get(`experience_${code}`) ?? "unknown");
 
     if (!["yes", "no", "unknown"].includes(answer)) {
-      returnToSession(sessionId, "error", "Invalid experience answer.");
+      returnToSession(sessionId, playerSeasonId, "error", "Invalid experience answer.");
     }
 
     experienceAnswers[code] = answer;
@@ -107,10 +113,10 @@ export async function saveEvaluation(formData: FormData) {
   });
 
   if (error) {
-    returnToSession(sessionId, "error", `Could not save: ${error.message}`);
+    returnToSession(sessionId, playerSeasonId, "error", `Could not save: ${error.message}`);
   }
 
   revalidatePath("/protected/evaluations");
 
-  returnToSession(sessionId, "message", INTENTS[intent]);
+  returnToSession(sessionId, goNext ? nextPlayerSeasonId : playerSeasonId, "message", goNext ? `${INTENTS[intent]} Showing the next player.` : INTENTS[intent]);
 }

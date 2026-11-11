@@ -283,6 +283,34 @@ export async function changeSessionStage(formData: FormData) {
   redirect(`/protected/sessions?message=${encodeURIComponent(STAGE_MESSAGES[action])}`);
 }
 
+// League board decision: show prior-year ratings to coaches and evaluators while they score.
+export async function setPriorYearVisibility(formData: FormData) {
+  const seasonId = Number(formData.get("seasonId"));
+  const visible = formData.get("visible") === "true";
+  if (!Number.isSafeInteger(seasonId) || seasonId < 1) {
+    redirect("/protected/sessions?error=Invalid%20season.");
+  }
+
+  const auth = await getAdministratorClient();
+  if ("error" in auth && auth.error) {
+    redirect(`/protected/sessions?error=${encodeURIComponent(auth.error)}`);
+  }
+  const { supabase } = auth;
+
+  const { error } = await supabase.rpc("set_prior_year_visibility", { p_season_id: seasonId, p_visible: visible });
+  if (error) {
+    redirect(`/protected/sessions?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/protected/sessions");
+  revalidatePath("/protected/evaluations");
+  redirect(`/protected/sessions?message=${encodeURIComponent(
+    visible
+      ? "Prior-year ratings are now shown to coaches and evaluators while they score."
+      : "Prior-year ratings are now hidden while scoring. They still appear in draft reports.",
+  )}`);
+}
+
 export async function applyGlobalPrimaryEventSchedule(formData: FormData) {
   const seasonId = Number(formData.get("seasonId"));
   const eventDate = String(formData.get("eventDate") ?? "").trim();

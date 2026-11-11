@@ -318,7 +318,7 @@ async function ProtectedDashboardContent() {
             <Card className="hover:border-emerald-500/50 transition-colors group border-border bg-card">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-lg font-semibold text-foreground">
-                  Coach Draft Packets
+                  Draft Reports
                 </CardTitle>
                 <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-foreground transition-colors">
                   <Award className="h-5 w-5" />
@@ -326,10 +326,10 @@ async function ProtectedDashboardContent() {
               </CardHeader>
               <CardContent className="space-y-4 pt-2">
                 <CardDescription className="text-muted-foreground">
-                  Generate manager draft sheets with standardized ratings sorted by division rank.
+                  Coach and evaluator averages with prior-year ratings, by age group. Available once an administrator releases each age group.
                 </CardDescription>
                 <Button asChild variant="outline" className="w-full border-border bg-card text-foreground hover:bg-accent hover:text-accent-foreground">
-                  <Link href="/protected/coach-reports">Open Draft Packets</Link>
+                  <Link href="/protected/draft-reports">Open Draft Reports</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -337,6 +337,28 @@ async function ProtectedDashboardContent() {
         ) : (
           /* Render Admin-Only Modules */
           <>
+            <Card className="hover:border-emerald-500/50 transition-colors group border-border bg-card">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-semibold text-foreground">Draft Reports</CardTitle>
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
+                  <Award className="h-5 w-5" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-2">
+                <CardDescription className="text-muted-foreground">
+                  Coach and evaluator averages by age group. You can view them anytime; coaches see an age group after you release it.
+                </CardDescription>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Button asChild variant="outline" className="w-full border-border bg-card text-foreground hover:bg-accent">
+                    <Link href="/protected/draft-reports">Draft Reports</Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full border-border bg-card text-foreground hover:bg-accent">
+                    <Link href="/protected/roster">Evaluation-Day Roster</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="hover:border-emerald-500/50 transition-colors group border-border bg-card">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-lg font-semibold text-foreground">
