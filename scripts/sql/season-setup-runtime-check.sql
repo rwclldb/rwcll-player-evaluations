@@ -141,6 +141,20 @@ SELECT pg_temp.check(public.dismiss_prior_year_rows(:py_batch, ARRAY[(SELECT id 
   'admin dismisses a held row for a player who is not returning');
 SELECT pg_temp.check((SELECT count(*) = 0 FROM public.players WHERE first_name = 'Gone'), 'no player is ever created from a prior-year row');
 
+-- ---------- bulk import review ----------
+RESET ROLE;
+INSERT INTO public.import_batches (import_type, source_file_name, rows_received, season_id) VALUES ('players', 'ss-bulk.csv', 3, (SELECT season_id FROM ctx)) RETURNING id AS bulk_batch \gset
+INSERT INTO public.sports_connect_import_rows (import_batch_id, source_row_number, first_name, last_name, birth_date, external_player_id, source_program, source_division, league_age, review_flags) VALUES
+  (:bulk_batch, 2, 'Gus', 'Bulktest', '2017-07-07', 'BK1', 'Baseball', 'AA', 10, '["Payment status needs review"]'),
+  (:bulk_batch, 3, 'Ann', 'Sstest', '2017-08-08', 'BK2', 'Baseball', 'AA', 10, '[]'),
+  (:bulk_batch, 4, 'Tee', 'Bulktest', '2021-01-01', 'BK3', 'Tee Ball', 'Tee Ball', NULL, '["Division needs review"]');
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000aa001');
+SELECT pg_temp.check(public.bulk_ignore_out_of_scope_import_rows(:bulk_batch, 'Out-of-scope program') = 1, 'bulk ignore skips only the out-of-scope row');
+SELECT pg_temp.check(public.bulk_commit_clean_import_rows(:bulk_batch, 'Clean registration') = 1
+                     AND (SELECT review_state FROM public.sports_connect_import_rows WHERE import_batch_id = :bulk_batch AND first_name = 'Ann') = 'needs_review',
+  'bulk commit takes the clean row and leaves a same-name row for review');
+
 -- ---------- people admin ----------
 SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000ac001');
 SELECT pg_temp.expect_error(format('SELECT public.admin_grant_role(%L, %L, %s)', '00000000-0000-4000-8000-0000000ac001', 'independent_evaluator', (SELECT season_id FROM ctx)),

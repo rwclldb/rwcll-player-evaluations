@@ -362,6 +362,17 @@ BEGIN
   END IF;
 
   IF NOT v_linked_on_site THEN
+    -- One registration per Sports Connect Player Id per season: say who already has it.
+    IF nullif(btrim(v_row.external_player_id), '') IS NOT NULL AND EXISTS (
+      SELECT 1 FROM public.player_seasons ps
+      WHERE ps.season_id = v_row.batch_season_id AND ps.external_player_id = btrim(v_row.external_player_id)
+    ) THEN
+      RAISE EXCEPTION 'Player Id % is already registered this season to %. Fix the Player Id in Sports Connect and import this row again.',
+        btrim(v_row.external_player_id),
+        (SELECT p.first_name || ' ' || p.last_name FROM public.player_seasons ps JOIN public.players p ON p.id = ps.player_id
+         WHERE ps.season_id = v_row.batch_season_id AND ps.external_player_id = btrim(v_row.external_player_id) LIMIT 1);
+    END IF;
+
     INSERT INTO public.player_seasons (
       player_id,
       season_id,

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BulkPanel } from "./bulk-panel";
 import { 
   ArrowLeft, 
   FileSpreadsheet, 
@@ -87,7 +88,7 @@ function flagsOf(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string").slice(0, 30);
 }
 
-async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
+async function ImportBatchDetailContent({ batchId, bulkMessage, bulkError }: { batchId: string; bulkMessage?: string; bulkError?: string }) {
   const numericId = Number(batchId);
   if (!Number.isSafeInteger(numericId) || numericId < 1) {
     return (
@@ -218,6 +219,8 @@ async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
           </Link>
         </Button>
       </div>
+
+      <BulkPanel batchId={batch.id} message={bulkMessage} error={bulkError} />
 
       {/* Read-Only Notice */}
       <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-800 dark:text-amber-200/90 leading-relaxed">
@@ -395,8 +398,10 @@ async function ImportBatchDetailContent({ batchId }: { batchId: string }) {
 
 export default async function ImportBatchDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ batchId: string }>;
+  searchParams: Promise<{ bulkMessage?: string; bulkError?: string }>;
 }) {
   return (
     <Suspense
@@ -404,12 +409,13 @@ export default async function ImportBatchDetailPage({
         <div className="h-96 w-full rounded-lg border border-border bg-card animate-pulse" />
       }
     >
-      <ImportBatchParams params={params} />
+      <ImportBatchParams params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function ImportBatchParams({ params }: { params: Promise<{ batchId: string }> }) {
+async function ImportBatchParams({ params, searchParams }: { params: Promise<{ batchId: string }>; searchParams: Promise<{ bulkMessage?: string; bulkError?: string }> }) {
   const { batchId } = await params;
-  return <ImportBatchDetailContent batchId={batchId} />;
+  const sp = await searchParams;
+  return <ImportBatchDetailContent batchId={batchId} bulkMessage={sp.bulkMessage} bulkError={sp.bulkError} />;
 }

@@ -37,8 +37,8 @@ if (result.status !== 0) {
 }
 
 const passes = notices.filter((line) => line.includes("PASS:")).length;
-if (passes < 27) {
-  console.error(`FAIL: expected 27 PASS lines, saw ${passes}`);
+if (passes < 29) {
+  console.error(`FAIL: expected 29 PASS lines, saw ${passes}`);
   process.exit(1);
 }
 console.log("PASS: season setup tools (registration admin, on-site players, bibs, prior-year, roles) hold at runtime (local database)");
