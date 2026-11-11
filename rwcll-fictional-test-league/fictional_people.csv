@@ -1,18 +1,20 @@
-﻿fictional_person_key,first_name,last_name,intended_role,season_scope,scenario_note
-ADM-01,Admin,Jordan,administrator,All seasons,Primary test administrator
-ADM-02,Admin,Reese,administrator,All seasons,Second admin; test authorization separation
-COA-01,Coach,Avery,coach,Spring 2026 + Spring 2027,Complete historical records
-COA-02,Coach,Bailey,coach,Spring 2026 + Spring 2027,Incomplete historical ratings
-COA-03,Coach,Cameron,coach,Spring 2026 + Spring 2027,Conflicting historical match candidates
-COA-04,Coach,Dakota,coach,Spring 2027,New coach; no prior history
-COA-05,Coach,Elliot,coach,Spring 2026 + Spring 2027,Returning coach; source name variant
-COA-06,Coach,Finley,coach,Spring 2026 + Spring 2027,Assigned to more than one team in scenario
-COA-07,Coach,Gray,coach,Spring 2026,Prior coach not returning; preserve historical attribution
-COA-08,Coach,Harper,coach,Spring 2027,New coach; assigned after evaluations
-COA-09,Coach,Indigo,coach,Spring 2026 + Spring 2027,History exists but source coverage note required
-COA-10,Coach,Jamie,coach,Spring 2027,Coach with no historical ratings
-EVA-01,Independent,Kendall,independent_evaluator,Spring 2027,Assigned to younger age groups
-EVA-02,Independent,Lane,independent_evaluator,Spring 2027,Assigned to middle age groups
-EVA-03,Independent,Micah,independent_evaluator,Spring 2027,Assigned to older age groups
-EVA-04,Independent,Nico,independent_evaluator,Spring 2027,Overlapping assignment for disagreement case
-EVA-05,Independent,Orion,independent_evaluator,Spring 2027,Second submission / permission test
+fictional_person_key,first_name,last_name,email,role_spring_2027,coached_spring_2026,scenario_note
+ADM-01,Jordan,Admin,admin.jordan@example.com,administrator,NO,Primary test administrator
+ADM-02,Reese,Admin,admin.reese@example.com,administrator,NO,Second admin; tests audit attribution between admins
+COA-01,Avery,Linden,coach.avery@example.com,coach,YES,Returning coach; 2026 ratings complete (includes pitching for one player)
+COA-02,Bailey,Marsh,coach.bailey@example.com,coach,YES,Returning coach; some 2026 ratings have blank core skills
+COA-03,Cameron,Reyes,coach.cameron@example.com,coach,YES,Returning coach; co-rated two 2026 players with COA-02 and disagreed
+COA-04,Dakota,Shore,coach.dakota@example.com,coach,NO,New coach; no 2026 ratings
+COA-05,Elliot,Brandt,coach.elliot@example.com,coach,YES,"Returning coach; 2026 spreadsheet spells name ""Elliott Brandt"""
+COA-06,Finley,Moss,coach.finley@example.com,coach,YES,Returning coach; will coach more than one team after the draft
+COA-07,Gray,Whitfield,,none,YES,Coached 2026 only; not returning; no account. 2026 ratings keep source name only
+COA-08,Harper,Quill,coach.harper@example.com,coach,NO,New coach
+COA-09,Indigo,Ferris,coach.indigo@example.com,coach,YES,Returning coach; only part of their 2026 spreadsheet survived (coverage note)
+COA-10,Jamie,Sutton,coach.jamie@example.com,coach,NO,New coach; same person as EVA-06 (separate account)
+EVA-01,Kendall,Price,eval.kendall@example.com,independent_evaluator,NO,Assigned ages 7-9
+EVA-02,Lane,Okafor,eval.lane@example.com,independent_evaluator,NO,Assigned ages 10-12
+EVA-03,Micah,Delgado,eval.micah@example.com,independent_evaluator,NO,Assigned ages 13-16
+EVA-04,Nico,Hart,eval.nico@example.com,independent_evaluator,NO,Assigned ages 11-13 (overlaps EVA-02 and EVA-03; disagreement case)
+EVA-05,Orion,Vance,eval.orion@example.com,independent_evaluator,NO,No assignment; permission test (must not be able to score anyone)
+EVA-06,Jamie,Sutton,eval.jamie@example.com,independent_evaluator,NO,Same person as COA-10 using a second account; assigned ages 14-16
+NOR-01,Rowan,Nobody,norole.rowan@example.com,none,NO,Signed-in account with no role; must see nothing
