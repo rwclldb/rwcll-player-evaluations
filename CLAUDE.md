@@ -51,7 +51,15 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - Five required core skills: hitting, throwing, grounders, fly balls, running/awareness.
 - Pitching and catching categories are available for all ages, optional, and never gated by division.
 - `Not Evaluated` and blank optional ratings are not zero and are excluded from averages.
-- Evaluators can save drafts and edit their own submissions until the session is locked. Admin decides completion. Missing ratings are flagged, not blocking. Admin corrections after lock need a reason and audit entry.
+- Evaluators can save drafts and edit their own submissions until the session is locked. Admin decides completion. Missing ratings are flagged, not blocking: evaluators can submit with some core skills blank. (The current database trigger still requires all 5; this must change.) Only submitted evaluations count in reports. Admin corrections after lock need a reason and audit entry.
+- **Only players are rated. Coaches are never rated by anyone.** Names like `historical_coach_evaluation_*` mean ratings of players made by coaches.
+- End-of-season coach ratings use the same form: 5 core skills plus optional pitching and catching.
+
+**Accounts**
+- One person can be both a coach and an independent evaluator, but needs two separate accounts. An account never holds both roles in the same season.
+
+**Evaluation (bib) numbers**
+- League admins assign bib numbers, not the app. They come in by upload (keyed by Sports Connect Player Id, or by name plus birthdate) or are edited in the app. They must be unique across the whole season's evaluation. The current unique index is per division and needs to change.
 
 **Attendance and sessions**
 - All registered players are expected at evaluations, including injured players (they attend but need not perform).
@@ -74,12 +82,15 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Draft reports for coaches (top priority).** Decided 2026-11-10 (see `docs/DECISIONS.md`):
-  - One report per age group. Default sort is overall average; other sorts where practical.
-  - Coach averages, independent evaluator averages, and prior-year coach ratings in separate columns.
+  - One report per age group, with separate **coach overall** and **evaluator overall** columns. Each is the average of the 5 core skills only, and viewers can sort by either. Prior-year coach ratings get their own column.
+  - Extra detail is viewable: per-skill averages, pitching, catching, and the viewer's own ratings.
+  - Admins see a list of unsubmitted drafts before locking.
   - CSV first; PDF is a nice-to-have.
   - Two steps: the admin **locks** the session (scoring stops), then **releases** reports to coaches. Both steps can be undone (unrelease, unlock). Each admin page must state clearly what each step does and what undoing it does. Coaches see reports only after release. Admins see them anytime.
 - **Evaluation-day roster printout.** Per age group, no ratings, sortable by bib number or last name, first name.
 - **Prior-year ratings for all players.** Coaches can see prior-year ratings for every rated player (data will be sparse). Always shown in draft reports. During live evaluations, one on/off switch **per season** controls it (default off). The Little League board decides go or no-go.
+- **Bib number upload and editing.** CSV upload (by Player Id, or by name plus birthdate) and admin editing in the app, with numbers unique across the season.
+- **Partial submissions.** Allow submitting with blank core skills, and flag the blanks.
 - **Age chart upload.** Admin uploads the official age chart for each season.
 - **Possible-duplicate player flag.** Flag players with the same name and birthdate for admin review and merge.
 - **Shared test server (not urgent).** A hosted deployment built from GitHub so other league members can test, and so the app can be tested on phones. Needs a hosting choice (for example Vercel plus the hosted Supabase project) and the user's approval for every hosted step.
