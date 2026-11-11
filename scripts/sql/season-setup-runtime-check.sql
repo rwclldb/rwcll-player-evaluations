@@ -141,4 +141,14 @@ SELECT pg_temp.check(public.dismiss_prior_year_rows(:py_batch, ARRAY[(SELECT id 
   'admin dismisses a held row for a player who is not returning');
 SELECT pg_temp.check((SELECT count(*) = 0 FROM public.players WHERE first_name = 'Gone'), 'no player is ever created from a prior-year row');
 
+-- ---------- people admin ----------
+SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000ac001');
+SELECT pg_temp.expect_error(format('SELECT public.admin_grant_role(%L, %L, %s)', '00000000-0000-4000-8000-0000000ac001', 'independent_evaluator', (SELECT season_id FROM ctx)),
+  'Administrator access required', 'coaches cannot give roles');
+SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000aa001');
+SELECT pg_temp.expect_error(format('SELECT public.admin_grant_role(%L, %L, %s)', '00000000-0000-4000-8000-0000000ac001', 'independent_evaluator', (SELECT season_id FROM ctx)),
+  'both a coach and an independent evaluator', 'one account cannot be coach and evaluator in the same season');
+SELECT pg_temp.expect_error(format('SELECT public.admin_revoke_role(%L, %L, NULL)', '00000000-0000-4000-8000-0000000aa001', 'administrator'),
+  'your own administrator role', 'admins cannot remove their own admin role');
+
 ROLLBACK;

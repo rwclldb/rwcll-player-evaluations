@@ -11,6 +11,7 @@ import { DesktopNav, MobileMenu, type NavLink } from "@/components/app-nav";
 const ADMIN_LINKS: NavLink[] = [
   { href: "/protected/players", label: "Players" },
   { href: "/protected/sessions", label: "Sessions" },
+  { href: "/protected/people", label: "People" },
   { href: "/protected/assignments", label: "Assignments" },
   { href: "/protected/import-batches", label: "Imports" },
   { href: "/protected/evaluation-review", label: "Data Review" },
