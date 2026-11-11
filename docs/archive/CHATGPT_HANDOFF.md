@@ -81,14 +81,12 @@ project state, decisions, implementation notes, and test results.
     applicable evaluator workflow and permissions.
 -   Evaluators can search/evaluate players in their assigned division;
     coaches may evaluate players in any division.
--   Coaches should not see comparisons between their assigned-team
-    averages and division-wide averages.
+-   Coaches should not see other coaches' ratings.
 -   Coach and independent-evaluator ratings/averages remain separate.
     Coaches see group aggregates only; independent evaluator identities
     are hidden from coaches. Admins can inspect individual submissions.
 -   Admins can inspect player-level reports and export data.
-    Coach-facing reports must be scoped to the coach's assigned team
-    roster.
+    
 
 ### Seasons, ages, divisions, and draft
 
@@ -99,10 +97,12 @@ project state, decisions, implementation notes, and test results.
     The documented rule for the current synthetic test pack is age as of
     August 31, 2027. Verify the official source and import the
     appropriate chart for each real season before production use.
+	Should probably have a way for an admin to upload an age chart for a season.
 -   Active baseball divisions: AA, AAA, Majors, Juniors, Seniors.
 -   Division assignment occurs after evaluations/drafts; requested
     Sports Connect division is not a final assignment.
--   Draft order: Seniors → Juniors → Majors → AAA → AA.
+-   Draft order: Seniors → Juniors → Majors → AAA → AA. Although drafts are not
+    part of this application. 
 -   Top-age placement rule from user: players at the top age of a
     division must be drafted into that division if not placed higher
     (example: 11-year-olds not placed in Majors go to AAA even if
@@ -115,10 +115,14 @@ project state, decisions, implementation notes, and test results.
 -   Each player-season has a season-specific `evaluation_number`; it can
     be generated from an admin-selected starting number, manually
     overridden, or imported. It may remain null; it does not carry
-    forward between seasons.
+    forward between seasons. This is the bib number that a player wears
+	during live evaluations.
 -   New seasons carry forward only editable division setup. Do not copy
     teams/team names, coach assignments, player evaluations, or
     historical results. Team names are assigned after evaluations.
+-   The only thing carried forward are potential coach ratings of Players
+    at the end of the season. These are combined into final draft reports after
+	evaluations.
 -   Seasons are closed by default after completion. Admin reopening for
     correction must be explicit and audited. Session locking is a
     separate workflow state.
@@ -164,10 +168,10 @@ project state, decisions, implementation notes, and test results.
 -   Candidate matches require administrator confirmation. Do not
     silently merge based on name alone or create a player automatically
     from a historical row.
--   Import all registrations, including Pending/unpaid. Pending
+-   Import all registrations, including Pending/unpaid. All
     registrations remain eligible and should appear in player
-    lists/details/reports, but should not be shown in the evaluator UI.
-    The app does not process payments.
+    lists/details/reports and shown the evaluator UI.
+    The app does not process payments or care about eligibility -- it merely tracks and reports it.
 -   Out-of-scope programs/divisions (A, Tee Ball, Wiffle Ball, other
     non-active divisions) may be imported/staged but must be flagged for
     admin review and kept out of the active evaluation pool by default.
@@ -194,7 +198,9 @@ project state, decisions, implementation notes, and test results.
     provenance.
 -   Matching supports permanent RWCLL Player ID where available and a
     fallback candidate workflow using names/details. Never silently
-    match on name alone.
+    match on name alone. However sports connect can have different Player IDs
+	for the same player (not on purpose, but it happens). So there
+	should be a way to flag players with same name/birthdate to combine them
 -   Do not create a player automatically from a historical row.
     Ambiguous matches remain unresolved until administrator review.
 -   Historical records should appear in reports alongside current group

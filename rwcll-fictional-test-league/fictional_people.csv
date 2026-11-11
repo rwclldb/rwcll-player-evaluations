@@ -1,0 +1,18 @@
+﻿fictional_person_key,first_name,last_name,intended_role,season_scope,scenario_note
+ADM-01,Admin,Jordan,administrator,All seasons,Primary test administrator
+ADM-02,Admin,Reese,administrator,All seasons,Second admin; test authorization separation
+COA-01,Coach,Avery,coach,Spring 2026 + Spring 2027,Complete historical records
+COA-02,Coach,Bailey,coach,Spring 2026 + Spring 2027,Incomplete historical ratings
+COA-03,Coach,Cameron,coach,Spring 2026 + Spring 2027,Conflicting historical match candidates
+COA-04,Coach,Dakota,coach,Spring 2027,New coach; no prior history
+COA-05,Coach,Elliot,coach,Spring 2026 + Spring 2027,Returning coach; source name variant
+COA-06,Coach,Finley,coach,Spring 2026 + Spring 2027,Assigned to more than one team in scenario
+COA-07,Coach,Gray,coach,Spring 2026,Prior coach not returning; preserve historical attribution
+COA-08,Coach,Harper,coach,Spring 2027,New coach; assigned after evaluations
+COA-09,Coach,Indigo,coach,Spring 2026 + Spring 2027,History exists but source coverage note required
+COA-10,Coach,Jamie,coach,Spring 2027,Coach with no historical ratings
+EVA-01,Independent,Kendall,independent_evaluator,Spring 2027,Assigned to younger age groups
+EVA-02,Independent,Lane,independent_evaluator,Spring 2027,Assigned to middle age groups
+EVA-03,Independent,Micah,independent_evaluator,Spring 2027,Assigned to older age groups
+EVA-04,Independent,Nico,independent_evaluator,Spring 2027,Overlapping assignment for disagreement case
+EVA-05,Independent,Orion,independent_evaluator,Spring 2027,Second submission / permission test

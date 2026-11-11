@@ -1,0 +1,20 @@
+historical_evaluation_key,historical_registration_key,fictional_player_key,season_name,evaluator_key,throwing,fielding,hitting,running,pitching,catching,record_status,fixture_case,notes
+HEVAL-017-A,HREG-017,PLY-017,Spring 2026,EVAL-01,3,3,4,3,,,RECORDED,COMPLETE,Synthetic prior-season rating fixture.
+HEVAL-018-A,HREG-018,PLY-018,Spring 2026,EVAL-01,3,3,4,3,,,RECORDED,COMPLETE,Synthetic prior-season rating fixture.
+HEVAL-019-A,HREG-019,PLY-019,Spring 2026,EVAL-01,3,3,4,3,,,RECORDED,EXTERNAL_ID_CHANGED,Synthetic prior-season rating fixture.
+HEVAL-020-A,HREG-020,PLY-020,Spring 2026,EVAL-01,3,3,4,3,,,RECORDED,EXTERNAL_ID_CHANGED,Synthetic prior-season rating fixture.
+HEVAL-021-A,HREG-021,PLY-021,Spring 2026,EVAL-01,3,3,4,3,,,RECORDED,NAME_CHANGED,Synthetic prior-season rating fixture.
+HEVAL-026-A,HREG-026,PLY-026,Spring 2026,EVAL-01,3,,4,3,,,INCOMPLETE,MISSING_CORE_RATING,"Intentional missing core rating; expected result is incomplete-record warning, not an assumed zero."
+HEVAL-027-A,HREG-027,PLY-027,Spring 2026,EVAL-02,3,3,2,3,,,RECORDED,EVALUATOR_DISAGREEMENT,One side of an intentional evaluator disagreement; compare with the second evaluator record.
+HEVAL-027-B,HREG-027,PLY-027,Spring 2026,EVAL-03,4,4,5,4,,,RECORDED,EVALUATOR_DISAGREEMENT,Second side of intentional evaluator disagreement; retain both source evaluations.
+HEVAL-028-A,HREG-028,PLY-028,Spring 2026,EVAL-02,3,3,5,3,,,RECORDED,EVALUATOR_DISAGREEMENT,One side of an intentional evaluator disagreement; compare with the second evaluator record.
+HEVAL-028-B,HREG-028,PLY-028,Spring 2026,EVAL-03,4,4,2,4,,,RECORDED,EVALUATOR_DISAGREEMENT,Second side of intentional evaluator disagreement; retain both source evaluations.
+HEVAL-031-A,HREG-031,PLY-031,Spring 2026,EVAL-01,3,3,4,3,,,RECORDED,COMPLETE,Synthetic prior-season rating fixture.
+HEVAL-032-A,HREG-032,PLY-032,Spring 2026,EVAL-01,3,3,4,3,,,RECORDED,COMPLETE,Synthetic prior-season rating fixture.
+HEVAL-034-A,HREG-034,PLY-034,Spring 2026,EVAL-01,3,3,4,3,,,RECORDED,COMPLETE,Synthetic prior-season rating fixture.
+HEVAL-035-A,HREG-035,PLY-035,Spring 2026,EVAL-01,3,3,4,3,,,RECORDED,COMPLETE,Synthetic prior-season rating fixture.
+HEVAL-038-A,HREG-038,PLY-038,Spring 2026,EVAL-01,3,3,4,3,,,RECORDED,CONFLICTING_MATCH,Synthetic prior-season rating fixture.
+HEVAL-039-A,HREG-039,PLY-039,Spring 2026,EVAL-01,,3,4,,,,INCOMPLETE,INCOMPLETE_RATINGS,Intentional partial record; test incomplete-history handling.
+HEVAL-040-A,HREG-040,PLY-040,Spring 2026,EVAL-01,3,3,4,3,,,RECORDED,COMPLETE,Synthetic prior-season rating fixture.
+HEVAL-041-A,HREG-041,PLY-041,Spring 2026,EVAL-01,3,3,4,3,,,RECORDED,COMPLETE,Synthetic prior-season rating fixture.
+HEVAL-042-A,HREG-042,PLY-042,Spring 2026,EVAL-01,3,3,4,3,,,RECORDED,COMPLETE,Synthetic prior-season rating fixture.

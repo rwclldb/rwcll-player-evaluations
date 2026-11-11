@@ -1,0 +1,6 @@
+match_case_key,current_fictional_player_key,candidate_historical_registration_key,candidate_player_key,match_signal,expected_disposition,expected_reason
+MATCH-019,PLY-019,HREG-019,PLY-019,Name and synthetic DOB align; external ID differs.,ADMIN_REVIEW_REQUIRED,Changed external ID should not cause a silent duplicate player or automatic merge.
+MATCH-020,PLY-020,HREG-020,PLY-020,Name and synthetic DOB align; external ID differs.,ADMIN_REVIEW_REQUIRED,Changed external ID should not cause a silent duplicate player or automatic merge.
+MATCH-021,PLY-021,HREG-021,PLY-021,Synthetic DOB and prior-season context align; display name differs.,ADMIN_REVIEW_REQUIRED,Name mismatch requires review despite other matching attributes.
+MATCH-038,PLY-038,HREG-038,PLY-038,Candidate A matches the intended player; candidate B is deliberately ambiguous.,ADMIN_REVIEW_REQUIRED,Multiple plausible candidates must be surfaced; no silent merge.
+MATCH-038-B,PLY-038,HREG-018,PLY-018,Deliberately ambiguous candidate with similar synthetic name/age context; not the intended match.,REJECT_OR_KEEP_UNMATCHED_PENDING_REVIEW,Do not attach one player's history to another player based on weak similarities.
