@@ -435,3 +435,75 @@ Then two related settings:
 - **Authentication → Rate Limits**: raise "emails per hour" to around 100. With custom SMTP it starts at 30, which is tight when inviting 30–50 coaches at once. Gmail's own limit (about 2,000 a day for Workspace) won't be an issue.
 - **Authentication → Sign In / Providers → Email**: set the email link lifetime to 86400 seconds (24 hours), so invitations don't expire after an hour.
 Nothing changes in the app. Once SMTP is on, choosing "Email them an invitation" on People sends from your Google account.
+
+## Merging to main (for Vercel) using Git
+
+```
+git status --short
+git checkout main
+git pull --ff-only
+git merge --ff-only fix/stale-header-after-account-switch
+git push origin main
+```
+
+What each one does:
+
+- `git status --short` lists uncommitted changes. The only ones here were the two untracked CSVs in `rwcll-fictional-test-league/`, which are left alone.
+- `git checkout main` switches to the main branch.
+- `git pull --ff-only` brings in anything new from GitHub first. `--ff-only` makes it stop instead of creating a merge if the two have drifted apart.
+- `git merge --ff-only <branch>` moves `main` forward to include the branch. `--ff-only` refuses rather than mixing histories, so it either works cleanly or does nothing.
+- `git push origin main` sends `main` to GitHub, which starts the Vercel deploy.
+
+Next time, replace the branch name in step 4 with whichever branch I tell you the work is on.
+
+Two notes for doing it yourself:
+
+- **If step 3 or 4 says "Not possible to fast-forward"**, stop and tell me rather than forcing it. It means `main` and the branch have diverged.
+- **When I tell you a branch has migrations**, apply them to hosted before step 5. If the code deploys first, pages that use the new tables or functions will show errors until the migrations are applied.
+
+## Fixing Terminal Window Suggestions in VSCode
+
+My session wasn't allowed to install software, so I stopped there. Nothing was installed or changed. Here are the steps to run yourself; it takes about two minutes.
+
+**1. Install the newer PSReadLine, for your user only.** Open a normal (not admin) Windows PowerShell window outside VS Code and run:
+
+```powershell
+Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope CurrentUser -Force
+Install-Module PSReadLine -Repository PSGallery -Scope CurrentUser -Force -SkipPublisherCheck
+```
+
+Answer **Y** if it asks about trusting PSGallery.
+
+**2. Turn predictions on.** Open your profile, creating it if needed:
+
+```powershell
+if (!(Test-Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force }
+notepad $PROFILE
+```
+
+Paste these lines in and save:
+
+```powershell
+Import-Module PSReadLine
+Set-PSReadLineOption -PredictionSource History
+Set-PSReadLineOption -PredictionViewStyle InlineView
+```
+
+**3. Restart the terminal.** Close all VS Code terminals and VS Code itself, then open a new terminal. Type the start of a command you've run before, and the gray suggestion should appear. **Right arrow** accepts it, and **F2** switches between the inline suggestion and a dropdown list.
+
+**4. Check it worked**, in the new terminal:
+
+```powershell
+(Get-Module PSReadLine).Version          # should be 2.3.x or newer, not 2.0.0
+(Get-PSReadLineOption).PredictionSource  # should say History
+```
+
+**If step 2 shows a red error about running scripts being disabled**, run this once and reopen the terminal:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+**A separate option:** VS Code has its own terminal suggestions, a dropdown rather than gray text. Turn it on under Settings → search **"terminal suggest"** → tick **Terminal › Integrated › Suggest: Enabled**. It works alongside the steps above.
+
+**If you'd rather I do the install next time**, add a permission rule allowing it to your Claude Code settings. Running the two commands yourself is quicker.
