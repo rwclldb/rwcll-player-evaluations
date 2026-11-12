@@ -29,7 +29,8 @@ export const COLUMN_ALIASES = {
   birthDate: ["Player Birth Date", "Birth Date", "Birthdate", "Date of Birth", "DOB"],
   // Sports Connect's "Registration Number" field is where the league keeps the bib.
   bib: ["Evaluation Number", "Bib", "Bib Number", "Eval Number", "Evaluation #", "Registration Number", "Registration #", "Reg Number"],
-  season: ["Season"],
+  // Sports Connect exports name the season in "Program Name" (e.g. "2026 Spring Baseball").
+  season: ["Season", "Program Name", "Program"],
   division: ["Division", "Division Name"],
   team: ["Team", "Team Name"],
   coachName: ["Coach Name", "Coach"],

@@ -44,6 +44,9 @@ if (!("error" in p)) {
   check("unused columns are reported", ["User Email", "Order No", "Easy Rating", "DR Total"].every((c) => p.ignoredColumns.includes(c)), p.ignoredColumns);
 }
 
+const withProgram = parsePriorYear(readCsv(["Program Name,Player First Name,Player Last Name,DR Hitting", "2026 Spring Baseball,A,B,3"].join("\n")), CATEGORIES, "");
+check("Program Name is used as the season", !("error" in withProgram) && withProgram.rows[0].season === "2026 Spring Baseball", withProgram);
+
 const old = readCsv(fs.readFileSync(path.join(root, "rwcll-fictional-test-league/generated/spring-2026-coach-ratings.csv"), "utf8"));
 const o = parsePriorYear(old, CATEGORIES, "");
 check("older prior-year format (code columns, Season, Coach Name) still parses", !("error" in o) && o.rows.length > 0 && o.rows[0].season !== "", o.error);

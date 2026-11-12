@@ -54,7 +54,7 @@ async function PriorYearContent({ searchParams }: { searchParams: SearchParams }
             {(seasonData ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </label>
-        <label className="text-xs text-muted-foreground">Ratings are from (if no Season column)
+        <label className="text-xs text-muted-foreground">Ratings are from (if the file has no Program Name or Season column)
           <input name="seasonLabel" placeholder="Spring 2026" defaultValue={lastClosed?.name ?? ""} className="mt-1 block h-11 rounded-md border border-input bg-background px-3 text-sm text-foreground" />
         </label>
         <label className="min-w-56 flex-1 text-xs text-muted-foreground">CSV file

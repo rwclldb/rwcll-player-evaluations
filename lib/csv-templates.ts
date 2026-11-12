@@ -16,9 +16,9 @@ export const SPORTS_CONNECT_TEMPLATE: CsvTemplate = {
   columns: REQUIRED_HEADERS.map((name) => ({
     name,
     need: name === "Registration Number" ? "optional" : "required",
-    note: name === "Registration Number" ? "may be blank" : undefined,
+    note: name === "Registration Number" ? "the bib, if filled in; may be blank" : undefined,
   })),
-  tip: "Export the Enrollment Details report from Sports Connect; it already has these columns. Extra columns are ignored.",
+  tip: "Export the Enrollment Details report from Sports Connect; it already has these columns. A whole-number Registration Number becomes the player's bib when the row is committed (unless another player has that bib). Extra columns are ignored.",
 };
 
 export const BIB_TEMPLATE: CsvTemplate = {
@@ -49,6 +49,7 @@ export const PRIOR_YEAR_TEMPLATE: CsvTemplate = {
   file: "prior-year-coach-ratings-template.csv",
   // Same names as the Sports Connect enrollment export with the coaches' DR (draft rating) columns.
   columns: [
+    { name: "Program Name", need: "optional", note: "the season the ratings are from; or type it on the page" },
     { name: "Division Name", need: "optional", note: "\"AA Ball - Little League Baseball\" is fine" },
     { name: "Player Id", need: "optional", note: "Sports Connect Player Id; best match" },
     { name: "Player First Name", need: "required" },
@@ -65,7 +66,6 @@ export const PRIOR_YEAR_TEMPLATE: CsvTemplate = {
     { name: "DR Pitching Arm Strength", need: "rating", note: "optional skill" },
     { name: "DR Catching/Receiving", need: "rating", note: "optional skill" },
     { name: "DR Catching/Blocking", need: "rating", note: "optional skill" },
-    { name: "Season", need: "optional", note: "or type it on the page" },
     { name: "Coach Name", need: "optional", note: "overrides the name from Team Name" },
   ],
   tip: "The Sports Connect enrollment export with DR columns works as is. Players with no ratings are skipped; totals, averages (DR Total, Easy Rating), emails and order numbers are ignored and never stored.",
