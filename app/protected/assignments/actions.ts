@@ -164,8 +164,10 @@ export async function revokeEvaluatorRole(formData: FormData) {
 export async function assignEvaluatorToSession(formData: FormData) {
   const { supabase, userId } = await requireAdministrator();
   const sessionId = readPositiveId(formData.get("sessionId"));
-  const evaluatorUserId = String(formData.get("evaluatorUserId") ?? "");
-  const evaluatorType = readEvaluatorType(formData.get("evaluatorType"));
+  // The age-group view sends "userId|roleName" so the assignment type always matches the person's season role.
+  const [pickedUser, pickedType] = String(formData.get("evaluator") ?? "").split("|");
+  const evaluatorUserId = pickedUser || String(formData.get("evaluatorUserId") ?? "");
+  const evaluatorType = readEvaluatorType(pickedType ?? formData.get("evaluatorType"));
 
   if (!sessionId || !evaluatorUserId || !evaluatorType) {
     fail("Choose a session, account, and evaluator type.");
@@ -263,4 +265,64 @@ export async function removeEvaluatorFromSession(formData: FormData) {
   if (deleteError) fail(deleteError.message);
 
   finish("Evaluator removed from session.");
+}
+
+// "By person" view: set every age group one coach or evaluator scores in a season, in one save.
+// Only age groups still in Setup change; others are left as they are and reported.
+export async function setPersonAgeGroups(formData: FormData) {
+  const { supabase, userId } = await requireAdministrator();
+  const seasonId = readPositiveId(formData.get("seasonId"));
+  const personId = String(formData.get("personId") ?? "");
+  const wanted = new Set(formData.getAll("age").map((age) => Number(age)).filter((age) => Number.isInteger(age)));
+  const back: (kind: "message" | "error", text: string) => never = (kind, text) => {
+    revalidatePath("/protected/assignments");
+    revalidatePath("/protected/sessions");
+    redirect(`/protected/assignments?view=person&season=${seasonId}&person=${encodeURIComponent(personId)}&${kind}=${encodeURIComponent(text)}`);
+  };
+
+  if (!seasonId || !personId) fail("Choose a season and a person.");
+
+  const { data: season, error: seasonError } = await supabase.from("seasons").select("is_closed").eq("id", seasonId).maybeSingle();
+  if (seasonError || !season) back("error", "Season not found.");
+  if (season.is_closed) back("error", "This season is closed. Assignments can't change.");
+
+  const { data: role, error: roleError } = await supabase
+    .from("user_roles").select("role_name").eq("user_id", personId).eq("season_id", seasonId)
+    .in("role_name", ["coach", "independent_evaluator"]).maybeSingle();
+  if (roleError) back("error", roleError.message);
+  if (!role) back("error", "This person has no coach or evaluator role this season. Add one on the People page first.");
+
+  const { data: sessions, error: sessionsError } = await supabase
+    .from("evaluation_sessions").select("id, league_age, status")
+    .eq("season_id", seasonId).is("season_division_id", null).not("league_age", "is", null);
+  if (sessionsError) back("error", sessionsError.message);
+
+  const { data: current, error: currentError } = await supabase
+    .from("evaluator_assignments").select("id, evaluation_session_id")
+    .eq("evaluator_user_id", personId).in("evaluation_session_id", (sessions ?? []).map((s) => s.id));
+  if (currentError) back("error", currentError.message);
+
+  let added = 0, removed = 0;
+  const skipped: number[] = [];
+  for (const session of sessions ?? []) {
+    const existing = (current ?? []).find((a) => a.evaluation_session_id === session.id);
+    const want = wanted.has(session.league_age as number);
+    if (want === Boolean(existing)) continue;
+    if (session.status !== "setup") { skipped.push(session.league_age as number); continue; }
+    if (want) {
+      const { error } = await supabase.from("evaluator_assignments").insert({
+        evaluation_session_id: session.id, evaluator_user_id: personId, evaluator_type: role.role_name, assigned_by: userId,
+      });
+      if (error) back("error", `Age ${session.league_age}: ${error.message}`);
+      added++;
+    } else {
+      const { error } = await supabase.from("evaluator_assignments").delete().eq("id", existing!.id);
+      if (error) back("error", `Age ${session.league_age}: ${error.message}`);
+      removed++;
+    }
+  }
+
+  const parts = [`${added} age group${added === 1 ? "" : "s"} added`, `${removed} removed`];
+  if (skipped.length) parts.push(`not changed (no longer in Setup): age ${skipped.sort((a, b) => a - b).join(", ")}`);
+  back(skipped.length && !added && !removed ? "error" : "message", `Saved. ${parts.join("; ")}.`);
 }

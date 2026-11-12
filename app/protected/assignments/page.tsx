@@ -2,598 +2,250 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import {
-  assignEvaluatorToSession,
-  grantEvaluatorRole,
-  removeEvaluatorFromSession,
-  revokeEvaluatorRole,
-} from "./actions";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { assignEvaluatorToSession, removeEvaluatorFromSession, setPersonAgeGroups } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  Users, 
-  ShieldAlert, 
-  UserCheck, 
-  ArrowLeft,
-  UserPlus,
-  Trash2,
-  CheckCircle2,
-  Layers,
-  Award
-} from "lucide-react";
+import { Users, ArrowLeft, X } from "lucide-react";
 
-type SearchParams = Promise<{
-  message?: string;
-  error?: string;
-}>;
+// Age-group assignments only. Accounts and season roles live on the People page.
+type SearchParams = Promise<{ season?: string; view?: string; person?: string; message?: string; error?: string }>;
 
-type Candidate = {
-  user_id: string;
-  email: string | null;
-  display_name: string | null;
-  email_confirmed: boolean;
-};
+type Candidate = { user_id: string; email: string | null; display_name: string | null; email_confirmed: boolean };
+type RoleRow = { id: number; user_id: string; role_name: string; season_id: number | null };
+type Session = { id: number; season_id: number; league_age: number | null; status: string };
+type Assignment = { id: number; evaluation_session_id: number; evaluator_user_id: string; evaluator_type: string };
+type Season = { id: number; name: string; start_date: string | null; is_closed: boolean };
 
-type EvaluatorRole = {
-  id: number;
-  user_id: string;
-  role_name: string;
-  season_id: number | null;
-};
+const AGES = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+const ROLE_LABEL: Record<string, string> = { coach: "Coach", independent_evaluator: "Evaluator" };
+const STATUS_LABEL: Record<string, string> = { setup: "Setup", open: "Open", locked: "Locked" };
+const select = "h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground";
 
-type EvaluationSession = {
-  id: number;
-  season_id: number;
-  league_age: number | null;
-  season_division_id: number | null;
-  status: string;
-};
+const label = (c: Candidate | undefined, id: string) => c?.display_name?.trim() || c?.email || id;
 
-type Assignment = {
-  id: number;
-  evaluation_session_id: number;
-  evaluator_user_id: string;
-  evaluator_type: string;
-};
-
-type Season = {
-  id: number;
-  name: string;
-  start_date: string;
-  end_date: string;
-  is_closed: boolean;
-};
-
-const EVALUATOR_TYPES = [
-  { value: "coach", label: "Coach" },
-  { value: "independent_evaluator", label: "Independent evaluator" },
-] as const;
-
-const LEAGUE_AGES = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7];
-
-function accountLabel(candidate: Candidate) {
-  return candidate.display_name?.trim() || candidate.email || candidate.user_id;
-}
-
-async function AssignmentsContent({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+async function AssignmentsContent({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const supabase = await createClient();
+  const { data: isAdmin } = await supabase.rpc("is_admin");
+  if (isAdmin !== true) redirect("/protected");
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return redirect("/auth/login");
-  }
-
-  // Verify admin permissions via Supabase RPC function
-  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
-  const administrator = !roleError && isAdmin === true;
-
-  if (!administrator) {
-    return redirect("/protected");
-  }
-
-  const [
-    candidateResult,
-    seasonResult,
-    roleResult,
-    sessionResult,
-    assignmentResult,
-  ] = await Promise.all([
+  const [candidateResult, seasonResult, roleResult, sessionResult, assignmentResult] = await Promise.all([
     supabase.rpc("admin_list_evaluator_candidates"),
-    supabase
-      .from("seasons")
-      .select("id, name, start_date, end_date, is_closed")
-      .order("start_date", { ascending: false }),
-    supabase.from("user_roles").select("id, user_id, role_name, season_id"),
-    supabase
-      .from("evaluation_sessions")
-      .select("id, season_id, league_age, season_division_id, status")
-      .is("season_division_id", null)
-      .order("season_id", { ascending: false })
-      .order("league_age", { ascending: false }),
-    supabase
-      .from("evaluator_assignments")
-      .select("id, evaluation_session_id, evaluator_user_id, evaluator_type"),
+    supabase.from("seasons").select("id, name, start_date, is_closed").order("start_date", { ascending: false }),
+    supabase.from("user_roles").select("id, user_id, role_name, season_id").in("role_name", ["coach", "independent_evaluator"]),
+    supabase.from("evaluation_sessions").select("id, season_id, league_age, status").is("season_division_id", null),
+    supabase.from("evaluator_assignments").select("id, evaluation_session_id, evaluator_user_id, evaluator_type"),
   ]);
+  const loadError = [candidateResult, seasonResult, roleResult, sessionResult, assignmentResult].find((r) => r.error)?.error?.message;
 
   const candidates = (candidateResult.data ?? []) as Candidate[];
   const seasons = (seasonResult.data ?? []) as Season[];
-  const roles = (roleResult.data ?? []) as EvaluatorRole[];
-  const sessions = (sessionResult.data ?? []) as EvaluationSession[];
-  const assignments = (assignmentResult.data ?? []) as Assignment[];
+  const season = seasons.find((s) => String(s.id) === params.season) ?? seasons.find((s) => !s.is_closed) ?? seasons[0];
+  const view = params.view === "person" ? "person" : "age";
+  const candidateById = new Map(candidates.map((c) => [c.user_id, c]));
 
-  const loadError =
-    candidateResult.error?.message ??
-    seasonResult.error?.message ??
-    roleResult.error?.message ??
-    sessionResult.error?.message ??
-    assignmentResult.error?.message;
+  const seasonRoles = ((roleResult.data ?? []) as RoleRow[])
+    .filter((r) => r.season_id === season?.id)
+    .sort((a, b) => label(candidateById.get(a.user_id), a.user_id).localeCompare(label(candidateById.get(b.user_id), b.user_id)));
+  const sessionByAge = new Map(
+    ((sessionResult.data ?? []) as Session[]).filter((s) => s.season_id === season?.id && s.league_age !== null).map((s) => [s.league_age as number, s]),
+  );
+  const assignments = (assignmentResult.data ?? []) as Assignment[];
+  const assignedTo = (sessionId: number | undefined) => assignments.filter((a) => a.evaluation_session_id === sessionId);
+  const agesFor = (userId: string) => AGES.filter((age) => assignedTo(sessionByAge.get(age)?.id).some((a) => a.evaluator_user_id === userId));
+
+  const closed = Boolean(season?.is_closed);
+  const href = (next: Record<string, string | undefined>) => {
+    const q = new URLSearchParams({ season: String(season?.id ?? ""), view, ...Object.fromEntries(Object.entries(next).filter(([, v]) => v !== undefined)) as Record<string, string> });
+    return `/protected/assignments?${q.toString()}`;
+  };
+  const tab = (active: boolean) =>
+    `rounded-md border px-3 py-1.5 text-sm font-medium ${active ? "border-emerald-600 bg-emerald-600 text-white" : "border-border bg-card text-foreground hover:bg-accent"}`;
+  const person = seasonRoles.find((r) => r.user_id === params.person);
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
-              <Link href="/protected">
-                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to workspace
-              </Link>
-            </Button>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Users className="h-7 w-7 text-emerald-700 dark:text-emerald-400" />
-            Evaluator Assignments
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Grant season-specific evaluator roles and assign evaluators to age-based sessions.
-          </p>
-        </div>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 border-b border-border pb-5">
+        <Button asChild variant="ghost" size="sm" className="h-8 w-fit px-2 text-xs text-muted-foreground hover:text-foreground">
+          <Link href="/protected"><ArrowLeft className="mr-1 h-4 w-4" /> Back to workspace</Link>
+        </Button>
+        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          <Users className="h-7 w-7 text-emerald-700 dark:text-emerald-400" /> Age Group Assignments
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Choose which age groups each coach and evaluator scores. People need a coach or evaluator role for the season first: add
+          accounts and roles on the <Link href="/protected/people" className="underline">People</Link> page. Assignments can change only
+          while an age group is in Setup.
+        </p>
       </div>
 
-      {/* Action Notifications */}
-      {params.message && (
-        <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-300 font-mono">
-          {params.message}
-        </div>
-      )}
+      {params.message && <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">{params.message}</div>}
+      {params.error && <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-700 dark:text-rose-300">{params.error}</div>}
+      {loadError && <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-700 dark:text-rose-300">Could not load assignments: {loadError}</div>}
 
-      {params.error && (
-        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-700 dark:text-rose-300 font-mono">
-          {params.error}
-        </div>
-      )}
-
-      {loadError ? (
-        <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300">
-          Could not load assignment data: {loadError}
-        </div>
+      {!season ? (
+        <p className="text-sm text-muted-foreground">No seasons yet.</p>
       ) : (
         <>
-          {/* Registered Accounts Card */}
-          <Card className="border-border bg-card">
-            <CardHeader className="py-4 border-b border-border/50">
-              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                <UserCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
-                Registered Accounts ({candidates.length})
-              </CardTitle>
-              <CardDescription className="text-xs text-muted-foreground">
-                Accounts available for evaluator roles.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              {candidates.length === 0 ? (
-                <div className="p-6 text-center text-xs text-slate-600 dark:text-slate-400 italic">
-                  No registered accounts found.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-background text-xs font-mono uppercase tracking-wider text-muted-foreground border-b border-border">
-                      <tr>
-                        <th className="px-4 py-3">Name / User ID</th>
-                        <th className="px-4 py-3">Email</th>
-                        <th className="px-4 py-3 text-center">Email Confirmed</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {candidates.map((candidate) => (
-                        <tr key={candidate.user_id} className="hover:bg-accent/50 transition-colors">
-                          <td className="px-4 py-3 font-medium text-foreground text-xs font-mono">
-                            {accountLabel(candidate)}
-                          </td>
-                          <td className="px-4 py-3 text-xs font-mono text-slate-700 dark:text-slate-300">
-                            {candidate.email ?? "—"}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            {candidate.email_confirmed ? (
-                              <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-mono">
-                                Confirmed
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="border-border bg-muted text-muted-foreground text-xs font-mono">
-                                Pending
-                              </Badge>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <div className="flex flex-wrap items-end gap-3">
+            <form action="/protected/assignments" className="flex items-end gap-2">
+              <input type="hidden" name="view" value={view} />
+              <label className="text-xs text-muted-foreground">Season
+                <select name="season" defaultValue={season.id} className={`${select} mt-1 block`}>
+                  {seasons.map((s) => <option key={s.id} value={s.id}>{s.name}{s.is_closed ? " (closed)" : ""}</option>)}
+                </select>
+              </label>
+              <Button type="submit" variant="outline" className="h-9">Show</Button>
+            </form>
+            <nav className="flex gap-2" aria-label="View">
+              <Link href={href({ view: "age", person: undefined })} className={tab(view === "age")}>By age group</Link>
+              <Link href={href({ view: "person" })} className={tab(view === "person")}>By person</Link>
+            </nav>
+          </div>
 
-          {seasons.length === 0 && (
-            <Card className="border-border bg-card p-6 text-center text-xs text-muted-foreground">
-              No seasons found. Create a season before assigning evaluators.
-            </Card>
+          {closed && <p className="text-sm text-muted-foreground">{season.name} is closed. Assignments are shown read-only.</p>}
+          {seasonRoles.length === 0 && (
+            <p className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+              Nobody has a coach or evaluator role in {season.name} yet. Add roles on the <Link href="/protected/people" className="underline">People</Link> page.
+            </p>
           )}
 
-          {/* Seasons Management Blocks */}
-          {seasons.map((season) => {
-            const seasonRoles = roles.filter(
-              (role) =>
-                role.season_id === season.id &&
-                EVALUATOR_TYPES.some((type) => type.value === role.role_name)
-            );
-
-            const seasonSessions = sessions.filter(
-              (session) =>
-                session.season_id === season.id &&
-                session.league_age !== null &&
-                LEAGUE_AGES.includes(session.league_age)
-            );
-
-            return (
-              <Card key={season.id} className="border-border bg-card">
-                <CardHeader className="border-b border-border/50 py-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
-                        <Layers className="h-5 w-5 text-emerald-700 dark:text-emerald-400" />
-                        {season.name}
-                      </CardTitle>
-                      <CardDescription className="text-xs text-muted-foreground font-mono mt-1">
-                        {season.start_date} to {season.end_date} &bull;{" "}
-                        <span className={season.is_closed ? "text-muted-foreground" : "text-emerald-700 dark:text-emerald-400 font-semibold"}>
-                          {season.is_closed ? "Closed" : "Open"}
-                        </span>
-                      </CardDescription>
+          {/* ===== By age group ===== */}
+          {view === "age" && (
+            <div className="grid gap-3 md:grid-cols-2">
+              {AGES.map((age) => {
+                const session = sessionByAge.get(age);
+                if (!session) {
+                  return (
+                    <section key={age} className="rounded-lg border border-border bg-card p-3 text-sm text-muted-foreground">
+                      <strong className="text-foreground">Age {age}</strong>: no session yet. Create it on the <Link href="/protected/sessions" className="underline">Sessions</Link> page.
+                    </section>
+                  );
+                }
+                const here = assignedTo(session.id);
+                const editable = session.status === "setup" && !closed;
+                const available = seasonRoles.filter((r) => !here.some((a) => a.evaluator_user_id === r.user_id));
+                return (
+                  <section key={age} className="space-y-2 rounded-lg border border-border bg-card p-3">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-sm font-bold text-foreground">Age {age}</h2>
+                      <Badge variant="outline" className="text-xs">{STATUS_LABEL[session.status] ?? session.status}</Badge>
                     </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="space-y-6 pt-6">
-                  {/* Grant Evaluator Role Section */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                      <Award className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Grant Season Evaluator Role
-                    </h3>
-
-                    {season.is_closed ? (
-                      <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                        This season is closed. Role changes are disabled.
-                      </p>
+                    {here.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">Nobody assigned yet.</p>
                     ) : (
-                      <form action={grantEvaluatorRole} className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end bg-background p-4 rounded-lg border border-border">
-                        <input type="hidden" name="seasonId" value={season.id} />
-
-                        <div className="space-y-1">
-                          <label className="text-xs font-mono text-muted-foreground block">Select Account</label>
-                          <select
-                            name="evaluatorUserId"
-                            required
-                            defaultValue=""
-                            className="w-full rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground focus:outline-none focus:border-emerald-500"
-                          >
-                            <option value="" disabled>
-                              Select an account
-                            </option>
-                            {candidates.map((candidate) => (
-                              <option key={candidate.user_id} value={candidate.user_id}>
-                                {accountLabel(candidate)}
-                                {candidate.email ? ` — ${candidate.email}` : ""}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-xs font-mono text-muted-foreground block">Role</label>
-                          <select
-                            name="roleName"
-                            defaultValue="independent_evaluator"
-                            className="w-full rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground focus:outline-none focus:border-emerald-500"
-                          >
-                            {EVALUATOR_TYPES.map((type) => (
-                              <option key={type.value} value={type.value}>
-                                {type.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <Button
-                          type="submit"
-                          disabled={candidates.length === 0}
-                          size="sm"
-                          className="bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs h-9"
-                        >
-                          <UserPlus className="h-3.5 w-3.5 mr-1" /> Grant Role
-                        </Button>
-                      </form>
-                    )}
-
-                    {/* Roles Table */}
-                    <div className="overflow-x-auto rounded-md border border-border">
-                      <table className="w-full text-left text-sm">
-                        <thead className="bg-background text-xs font-mono uppercase tracking-wider text-muted-foreground border-b border-border">
-                          <tr>
-                            <th className="px-4 py-3">Evaluator</th>
-                            <th className="px-4 py-3">Season Role</th>
-                            <th className="px-4 py-3 text-right">Action</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                          {seasonRoles.map((role) => {
-                            const candidate = candidates.find(
-                              (item) => item.user_id === role.user_id
-                            );
-                            const type = EVALUATOR_TYPES.find(
-                              (item) => item.value === role.role_name
-                            );
-
-                            if (!type) return null;
-
-                            return (
-                              <tr key={role.id} className="hover:bg-accent/50 transition-colors">
-                                <td className="px-4 py-3 font-medium text-foreground text-xs">
-                                  {candidate ? accountLabel(candidate) : role.user_id}
-                                  {candidate?.email && (
-                                    <div className="text-[11px] text-muted-foreground font-mono">
-                                      {candidate.email}
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 text-xs font-mono">
-                                  <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
-                                    {type.label}
-                                  </Badge>
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                  {!season.is_closed ? (
-                                    <form action={revokeEvaluatorRole} className="inline-block">
-                                      <input type="hidden" name="seasonId" value={season.id} />
-                                      <input type="hidden" name="evaluatorUserId" value={role.user_id} />
-                                      <input type="hidden" name="roleName" value={role.role_name} />
-                                      <Button
-                                        type="submit"
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-7 text-xs border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-300"
-                                      >
-                                        <Trash2 className="h-3 w-3 mr-1" /> Revoke Role
-                                      </Button>
-                                    </form>
-                                  ) : (
-                                    <span className="text-xs font-mono text-slate-600 dark:text-slate-400">Season closed</span>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-
-                          {seasonRoles.length === 0 && (
-                            <tr>
-                              <td colSpan={3} className="px-4 py-4 text-center text-xs text-slate-600 dark:text-slate-400 italic">
-                                No evaluator roles granted for this season yet.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* Age-Session Assignments Section */}
-                  <div className="space-y-4 pt-4 border-t border-border">
-                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                      <Users className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Age-Session Assignments
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Assignments require matching season role and can only be updated while the session is in setup.
-                    </p>
-
-                    <div className="space-y-3">
-                      {LEAGUE_AGES.map((age) => {
-                        const session = seasonSessions.find(
-                          (item) => item.league_age === age
-                        );
-
-                        if (!session) {
-                          return (
-                            <div key={age} className="rounded-lg border border-border bg-background p-3 text-xs text-muted-foreground font-mono">
-                              <strong>Age {age}:</strong> No session found.
-                            </div>
-                          );
-                        }
-
-                        const sessionAssignments = assignments.filter(
-                          (assignment) => assignment.evaluation_session_id === session.id
-                        );
-
-                        const assignedIds = new Set(
-                          sessionAssignments.map((assignment) => assignment.evaluator_user_id)
-                        );
-
-                        const eligibleRoles = seasonRoles.filter(
-                          (role) =>
-                            role.role_name === "coach" ||
-                            role.role_name === "independent_evaluator"
-                        );
-
-                        return (
-                          <div key={session.id} className="rounded-lg border border-border bg-background p-4 space-y-3">
-                            <div className="flex items-center justify-between">
-                              <h4 className="text-xs font-bold text-foreground font-mono">
-                                Age {age} &bull; Session #{session.id}
-                              </h4>
-                              <Badge
-                                variant="outline"
-                                className={`text-xs font-mono ${
-                                  session.status === "open"
-                                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                                    : session.status === "setup"
-                                    ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                                    : "border-border bg-muted text-muted-foreground"
-                                }`}
-                              >
-                                {session.status}
-                              </Badge>
-                            </div>
-
-                            {sessionAssignments.length > 0 ? (
-                              <ul className="space-y-2">
-                                {sessionAssignments.map((assignment) => {
-                                  const candidate = candidates.find(
-                                    (item) => item.user_id === assignment.evaluator_user_id
-                                  );
-
-                                  const typeLabel =
-                                    EVALUATOR_TYPES.find(
-                                      (type) => type.value === assignment.evaluator_type
-                                    )?.label ?? assignment.evaluator_type;
-
-                                  return (
-                                    <li
-                                      key={assignment.id}
-                                      className="flex items-center justify-between text-xs bg-card p-2.5 rounded border border-border"
-                                    >
-                                      <span className="text-foreground font-mono">
-                                        {candidate ? accountLabel(candidate) : assignment.evaluator_user_id}
-                                        {" — "}
-                                        <span className="text-emerald-700 dark:text-emerald-400">{typeLabel}</span>
-                                      </span>
-
-                                      {session.status === "setup" && !season.is_closed ? (
-                                        <form action={removeEvaluatorFromSession}>
-                                          <input type="hidden" name="assignmentId" value={assignment.id} />
-                                          <Button
-                                            type="submit"
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-6 px-2 text-xs text-rose-700 dark:text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
-                                          >
-                                            Remove
-                                          </Button>
-                                        </form>
-                                      ) : null}
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            ) : (
-                              <p className="text-xs text-slate-600 dark:text-slate-400 italic">No evaluators assigned.</p>
-                            )}
-
-                            {session.status === "setup" && !season.is_closed ? (
-                              <form action={assignEvaluatorToSession} className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end pt-2">
-                                <input type="hidden" name="sessionId" value={session.id} />
-
-                                <div className="space-y-1">
-                                  <label className="text-[11px] font-mono text-muted-foreground block">Evaluator</label>
-                                  <select
-                                    name="evaluatorUserId"
-                                    required
-                                    defaultValue=""
-                                    className="w-full rounded border border-border bg-card px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-emerald-500"
-                                  >
-                                    <option value="" disabled>
-                                      Select an eligible evaluator
-                                    </option>
-                                    {eligibleRoles
-                                      .filter((role) => !assignedIds.has(role.user_id))
-                                      .map((role) => {
-                                        const candidate = candidates.find(
-                                          (item) => item.user_id === role.user_id
-                                        );
-
-                                        return (
-                                          <option key={`${role.user_id}-${role.role_name}`} value={role.user_id}>
-                                            {candidate ? accountLabel(candidate) : role.user_id}
-                                            {" — "}
-                                            {role.role_name === "coach" ? "Coach" : "Independent evaluator"}
-                                          </option>
-                                        );
-                                      })}
-                                  </select>
-                                </div>
-
-                                <div className="space-y-1">
-                                  <label className="text-[11px] font-mono text-muted-foreground block">Assignment Type</label>
-                                  <select
-                                    name="evaluatorType"
-                                    defaultValue="independent_evaluator"
-                                    className="w-full rounded border border-border bg-card px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-emerald-500"
-                                  >
-                                    {EVALUATOR_TYPES.map((type) => (
-                                      <option key={type.value} value={type.value}>
-                                        {type.label}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-
-                                <Button
-                                  type="submit"
-                                  disabled={
-                                    eligibleRoles.filter((role) => !assignedIds.has(role.user_id)).length === 0
-                                  }
-                                  size="sm"
-                                  className="bg-emerald-600 hover:bg-emerald-500 text-foreground text-xs h-8"
-                                >
-                                  Assign
-                                </Button>
+                      <ul className="flex flex-wrap gap-1">
+                        {here.map((a) => (
+                          <li key={a.id}>
+                            {editable ? (
+                              <form action={removeEvaluatorFromSession} className="inline-flex">
+                                <input type="hidden" name="assignmentId" value={a.id} />
+                                <button type="submit" title="Remove from this age group"
+                                  className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-xs text-foreground hover:border-rose-500">
+                                  {label(candidateById.get(a.evaluator_user_id), a.evaluator_user_id)}
+                                  <span className="text-muted-foreground">· {ROLE_LABEL[a.evaluator_type]}</span>
+                                  <X className="h-3 w-3" />
+                                </button>
                               </form>
                             ) : (
-                              <p className="text-[11px] font-mono text-slate-600 dark:text-slate-400">
-                                Assignments are locked because the session is not in setup or the season is closed.
-                              </p>
+                              <span className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-xs text-foreground">
+                                {label(candidateById.get(a.evaluator_user_id), a.evaluator_user_id)}
+                                <span className="text-muted-foreground">· {ROLE_LABEL[a.evaluator_type]}</span>
+                              </span>
                             )}
-                          </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {editable && available.length > 0 && (
+                      <form action={assignEvaluatorToSession} className="flex gap-2 border-t border-border pt-2">
+                        <input type="hidden" name="sessionId" value={session.id} />
+                        <select name="evaluator" required defaultValue="" aria-label={`Add someone to age ${age}`} className={`${select} min-w-0 flex-1 border-dashed text-xs`}>
+                          <option value="" disabled>+ Add a coach or evaluator…</option>
+                          {available.map((r) => (
+                            <option key={r.user_id} value={`${r.user_id}|${r.role_name}`}>
+                              {label(candidateById.get(r.user_id), r.user_id)} ({ROLE_LABEL[r.role_name]})
+                            </option>
+                          ))}
+                        </select>
+                        <Button type="submit" variant="outline" size="sm" className="h-9">Add</Button>
+                      </form>
+                    )}
+                    {!editable && !closed && <p className="text-[11px] text-muted-foreground">Locked for changes: this age group is past Setup.</p>}
+                  </section>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ===== By person ===== */}
+          {view === "person" && seasonRoles.length > 0 && (
+            <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+              <section className="space-y-2">
+                <h2 className="text-sm font-semibold text-foreground">Who scores which age groups</h2>
+                <ul className="divide-y divide-border rounded-lg border border-border bg-card text-sm">
+                  {seasonRoles.map((r) => {
+                    const ages = agesFor(r.user_id);
+                    const selected = r.user_id === person?.user_id;
+                    return (
+                      <li key={r.user_id}>
+                        <Link href={href({ view: "person", person: r.user_id })}
+                          className={`flex flex-wrap items-center gap-2 px-3 py-2 hover:bg-accent ${selected ? "bg-emerald-500/10" : ""}`}>
+                          <span className="min-w-40 flex-1 font-medium text-foreground">{label(candidateById.get(r.user_id), r.user_id)}</span>
+                          <span className="text-xs text-muted-foreground">{ROLE_LABEL[r.role_name]}</span>
+                          <span className="text-xs text-foreground">{ages.length ? `Ages ${ages.join(", ")}` : <em className="text-muted-foreground">no age groups</em>}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+
+              <section className="space-y-3 rounded-lg border border-border bg-card p-4">
+                {!person ? (
+                  <p className="text-sm text-muted-foreground">Pick a person on the left to choose several age groups at once.</p>
+                ) : (
+                  <form action={setPersonAgeGroups} className="space-y-3">
+                    <input type="hidden" name="seasonId" value={season.id} />
+                    <input type="hidden" name="personId" value={person.user_id} />
+                    <h2 className="text-sm font-semibold text-foreground">
+                      {label(candidateById.get(person.user_id), person.user_id)}{" "}
+                      <span className="font-normal text-muted-foreground">({ROLE_LABEL[person.role_name]}, {season.name})</span>
+                    </h2>
+                    <p className="text-xs text-muted-foreground">Tick every age group this person scores, then save. Age groups past Setup can&apos;t change and are greyed out.</p>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                      {AGES.map((age) => {
+                        const session = sessionByAge.get(age);
+                        const on = agesFor(person.user_id).includes(age);
+                        const locked = !session || session.status !== "setup" || closed;
+                        return (
+                          <label key={age} className={`flex min-h-11 items-center gap-2 rounded-md border px-2 text-sm ${locked ? "border-border opacity-60" : "cursor-pointer border-border hover:bg-accent"}`}>
+                            <input type="checkbox" name="age" value={age} defaultChecked={on} disabled={locked} className="h-4 w-4" />
+                            <span>
+                              Age {age}
+                              <span className="block text-[10px] text-muted-foreground">{!session ? "no session" : STATUS_LABEL[session.status]}</span>
+                            </span>
+                            {/* Keep locked ticks in the submission so saving never removes them. */}
+                            {locked && on && <input type="hidden" name="age" value={age} />}
+                          </label>
                         );
                       })}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                    <Button type="submit" disabled={closed} className="bg-emerald-600 text-white hover:bg-emerald-500">Save age groups</Button>
+                  </form>
+                )}
+              </section>
+            </div>
+          )}
         </>
       )}
     </div>
   );
 }
 
-export default function AssignmentsPage(props: {
-  searchParams: SearchParams;
-}) {
+export default function AssignmentsPage(props: { searchParams: SearchParams }) {
   return (
-    <Suspense
-      fallback={
-        <div className="h-96 w-full rounded-lg border border-border bg-card animate-pulse" />
-      }
-    >
+    <Suspense fallback={<div className="h-96 w-full animate-pulse rounded-lg border border-border bg-card" />}>
       <AssignmentsContent {...props} />
     </Suspense>
   );

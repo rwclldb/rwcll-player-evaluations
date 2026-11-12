@@ -140,11 +140,11 @@ PHASES = [
          "Open the No bib filter.",
          "3 players: Gale Oak, Indigo Vale, Jamie Carter (the fixture leaves them without bibs on purpose).", False),
         ("4.4", "Admin", "Players, each of the three",
-         "Give them bibs 401, 402 and 403 on their edit pages (no reason needed for a bib).",
+         "Give them bibs 901, 902 and 903 on their edit pages (no reason needed for a bib). These are outside the fixture range (201-548).",
          "\"Saved.\" No bib shows (0).", True),
         ("4.5", "Admin", "Players, any other player",
-         "Give a fourth player bib 401.",
-         "REFUSED: \"Bib 401 is already used by <name> this season.\"", True),
+         "Give a fourth player bib 901.",
+         "REFUSED: \"Bib 901 is already used by <name> this season.\"", True),
         ("4.6", "Admin", "Players, Upload bibs",
          "Upload rwcll-fictional-test-league/generated/bib-numbers-with-errors.csv. Compare with its Expected Result column. Don't apply.",
          "Conflicts (1): Eli Turner (245 belongs to Wren Carter). Already set (2): Alex Arbor, Elliot Carter. "
@@ -158,7 +158,7 @@ PHASES = [
          "Step 1: last name Hayes, press Check.",
          "Hayes players already registered this season are listed with a \"Find them\" link, not as choices to add again.", False),
         ("5.2", "Admin", "Add player on site",
-         "First name Test, last name Walkup, no birthdate, age group 9, bib 450, reason \"Walk-up at evaluations\". Add player.",
+         "First name Test, last name Walkup, no birthdate, age group 9, bib 950, reason \"Walk-up at evaluations\". Add player.",
          "The player page says \"Added on site\" and \"No Sports Connect Player Id yet\". Players, Added on site (1).", True),
     ]),
     ("Phase 6: Sessions and dates", 10, "One session per age group, with the evaluation date and a makeup date.", [
@@ -250,7 +250,7 @@ DB_CHECKS = [
     ("5", "After Phase 5", "Walk-up player",
      "select p.first_name, p.last_name, ps.league_age, ps.evaluation_number, ps.registration_source, ps.external_player_id\n"
      "from public.player_seasons ps join public.players p on p.id = ps.player_id where ps.registration_source = 'on_site';",
-     "Test Walkup, 9, 450, on_site, (blank)"),
+     "Test Walkup, 9, 950, on_site, (blank)"),
     ("6", "After Phases 6-7", "Sessions, events, assignments",
      "select es.league_age, es.status,\n       (select count(*) from public.evaluation_session_events e where e.evaluation_session_id = es.id) as events,\n"
      "       (select count(*) from public.evaluator_assignments a where a.evaluation_session_id = es.id) as people_assigned\n"

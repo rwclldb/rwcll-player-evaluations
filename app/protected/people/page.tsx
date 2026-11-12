@@ -127,7 +127,7 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
                 </div>
                 <span className={`rounded px-1.5 py-0.5 text-xs ${st.tone}`}>{st.label}</span>
                 <div className="flex flex-wrap items-center gap-1">
-                  {mine.length === 0 && <span className="text-xs text-muted-foreground">No role in {seasonName}</span>}
+                  <span className="text-xs text-muted-foreground">{mine.length === 0 ? `No role in ${seasonName}` : `Roles in ${seasonName}:`}</span>
                   {mine.map((r) => (
                     <form key={`${r.role_name}-${r.season_id}`} action={revokeRole} className="inline-flex">
                       <input type="hidden" name="userId" value={u.id} />
@@ -141,16 +141,29 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
                     </form>
                   ))}
                 </div>
-                <form action={grantRole} className="flex items-center gap-1">
-                  <input type="hidden" name="userId" value={u.id} />
-                  <input type="hidden" name="seasonId" value={season?.id ?? ""} />
-                  <select name="role" aria-label="Role to add" className="h-8 rounded-md border border-input bg-background px-1 text-xs text-foreground">
-                    <option value="coach">Coach</option>
-                    <option value="independent_evaluator">Evaluator</option>
-                    <option value="administrator">Admin</option>
-                  </select>
-                  <Button type="submit" variant="outline" size="sm" className="h-8">Add</Button>
-                </form>
+                {(() => {
+                  // Offer only roles this account can take: not one it has, and never coach + evaluator together.
+                  const has = new Set(mine.map((r) => r.role_name));
+                  const addable = (["coach", "independent_evaluator", "administrator"] as const).filter((role) =>
+                    !has.has(role) &&
+                    !(role === "coach" && has.has("independent_evaluator")) &&
+                    !(role === "independent_evaluator" && has.has("coach")));
+                  if (addable.length === 0) return null;
+                  return (
+                    <>
+                      <span aria-hidden className="hidden h-6 w-px bg-border sm:block" />
+                      <form action={grantRole} className="flex items-center gap-1">
+                        <input type="hidden" name="userId" value={u.id} />
+                        <input type="hidden" name="seasonId" value={season?.id ?? ""} />
+                        <select name="role" required defaultValue="" aria-label={`Add a role in ${seasonName}`} className="h-8 rounded-md border border-dashed border-input bg-background px-1 text-xs text-foreground">
+                          <option value="" disabled>+ Add a role…</option>
+                          {addable.map((role) => <option key={role} value={role}>{ROLE_LABEL[role]}</option>)}
+                        </select>
+                        <Button type="submit" variant="outline" size="sm" className="h-8">Add</Button>
+                      </form>
+                    </>
+                  );
+                })()}
                 {!st.disabled && <SignInLinkButton userId={u.id} seasonId={season?.id ?? null} />}
                 {!u.last_sign_in_at && !st.disabled && (
                   <form action={resendInvite}>

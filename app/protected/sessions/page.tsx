@@ -218,8 +218,26 @@ async function SessionsContent({
                 </div>
               </CardHeader>
 
+              {/* Closed seasons start collapsed; open seasons start expanded. */}
+              <details open={!season.is_closed} className="group/season">
+              <summary className="cursor-pointer list-none border-b border-border/50 px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground marker:hidden">
+                <span className="group-open/season:hidden">▸ Show age groups and settings{season.is_closed ? " (closed season)" : ""}</span>
+                <span className="hidden group-open/season:inline">▾ Hide age groups and settings</span>
+              </summary>
               <CardContent className="p-4">
-                <form action={setPriorYearVisibility} className="mb-4 flex flex-col gap-2 rounded-lg border border-border bg-background p-3 text-xs sm:flex-row sm:items-center sm:justify-between">
+                {(() => {
+                  const ageList = seasonSessions.filter((session) => session.league_age !== null && LEAGUE_AGES.includes(session.league_age));
+                  const primaryCount = ageList.filter((session) => (sessionEvents ?? []).some((event) => event.evaluation_session_id === session.id && event.event_type === "primary")).length;
+                  return (
+                <details className="mb-4 rounded-lg border border-border bg-background">
+                  <summary className="cursor-pointer px-3 py-2 text-xs">
+                    <span className="font-semibold text-foreground">Season-wide settings</span>
+                    <span className="ml-2 text-muted-foreground">
+                      Prior-year ratings while scoring: {season.show_prior_year_during_evaluations ? "Shown" : "Hidden"} · Primary event scheduled for {primaryCount} of {ageList.length} age groups · Set one schedule for all age groups
+                    </span>
+                  </summary>
+                  <div className="space-y-3 border-t border-border p-3">
+                <form action={setPriorYearVisibility} className="flex flex-col gap-2 rounded-lg border border-border bg-background p-3 text-xs sm:flex-row sm:items-center sm:justify-between">
                   <input type="hidden" name="seasonId" value={season.id} />
                   <input type="hidden" name="visible" value={season.show_prior_year_during_evaluations ? "false" : "true"} />
                   <div>
@@ -251,7 +269,11 @@ async function SessionsContent({
                   sessions={seasonSessions.filter((session) => session.league_age !== null && LEAGUE_AGES.includes(session.league_age))}
                   events={(sessionEvents ?? []).filter((event) => seasonSessions.some((session) => session.id === event.evaluation_session_id)).map((event) => ({ evaluation_session_id: event.evaluation_session_id, event_type: event.event_type }))}
                 />
-                <details className="rounded-lg border border-border bg-background p-3 text-xs" open>
+                  </div>
+                </details>
+                  );
+                })()}
+                <details className="rounded-lg border border-border bg-background p-3 text-xs">
                   <summary className="cursor-pointer font-semibold text-foreground">How each age group moves through evaluations</summary>
                   <ol className="mt-2 grid gap-2 sm:grid-cols-4">
                     <li className="rounded border border-border p-2"><strong className="text-amber-700 dark:text-amber-400">1. Setup</strong><br />Schedule events and assign evaluators. Nobody can score yet.</li>
@@ -358,6 +380,7 @@ async function SessionsContent({
                   </table>
                 </div>
               </CardContent>
+              </details>
             </Card>
           );
         })}

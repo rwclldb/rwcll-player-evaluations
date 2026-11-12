@@ -112,7 +112,12 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - **Prior-year upload** (`/protected/prior-year`, migration 20261111160000): rows matched to the chosen season's registrations as matched / review / held / invalid. Admin imports matched rows and confirms review rows; held rows can be re-checked or dismissed. Duplicate ratings are rejected. Never creates players.
 - **People page** (`/protected/people`, migration 20261111170000): invite by email (single or CSV list), add or remove season roles, resend invites, disable or enable accounts. Uses `SUPABASE_SECRET_KEY` on the server only (`lib/supabase/admin.ts`). A trigger blocks coach + evaluator roles on one account in one season. Works with Supabase's default invite email (`components/auth-hash-handler.tsx` picks up the session from the link), and admins can skip email: "Give me a link" on invite, or the per-account Sign-in link (one-time `/auth/confirm` link, also for forgotten passwords). Hosted needs Site URL and Redirect URLs set; SMTP only if the app should send the emails.
 - **Bulk import review** (migration 20261111180000): on an import batch, admins ignore all out-of-scope rows and approve-and-commit all clean rows (active division, age set, no warnings except payment, no same-name player, unused Player Id) in two clicks. The rest stay for row review.
-- Test: `test:season-setup-runtime` (29 checks). Walkthrough: `docs/TEST-PLAN-SEASON-SETUP.xlsx` (built by `scripts/build-test-plan-season-setup.py`).
+- Test: `test:season-setup-runtime` (29 checks). Walkthrough: `docs/TEST-PLAN-SEASON-SETUP.xlsx` (built by `scripts/build-test-plan-season-setup.py`). Test-plan bibs use 901–903 and 950, outside the fixture range 201–548.
+- **Admin UI polish (2026-11-11, no migrations):**
+  - **Assignments** (`/protected/assignments`) covers age-group assignments only. Accounts and roles are on People. It has a "By age group" view, where the assignment type follows the person's season role, and a "By person" view: a who-scores-what overview plus age checkboxes saved in bulk (`setPersonAgeGroups`). Only Setup age groups change.
+  - **Sessions:** closed seasons and the "Season-wide settings" box (prior-year switch, global schedules) start collapsed.
+  - **People:** each row labels "Roles in <season>:", then a divider, then "+ Add a role…" offering only roles the account can take.
+  - Home says "Welcome," instead of "Welcome back,".
 
 ## Tracked additions (confirmed requirements, not yet built)
 

@@ -69,7 +69,7 @@ async function ProtectedDashboardContent() {
             Evaluations Dashboard
           </h1>
           <div className="mt-1 text-sm text-muted-foreground flex items-center gap-2">
-            <span>Welcome back, <span className="text-emerald-700 dark:text-emerald-400 font-mono">{user.email}</span></span>
+            <span>Welcome, <span className="text-emerald-700 dark:text-emerald-400 font-mono">{user.email}</span></span>
             {administrator && (
               <Badge variant="outline" className="text-[10px] font-mono border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400 gap-1">
                 <ShieldCheck className="h-3 w-3" /> Admin Mode
