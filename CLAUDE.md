@@ -118,6 +118,11 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
   - **Sessions:** closed seasons and the "Season-wide settings" box (prior-year switch, global schedules) start collapsed.
   - **People:** each row labels "Roles in <season>:", then a divider, then "+ Add a role…" offering only roles the account can take.
   - Home says "Welcome," instead of "Welcome back,".
+- **Admin roadmap** (admin home page `/protected`, migration 20261111190000, test `test:admin-roadmap-runtime`):
+  - Five stages: Before evaluations, Evaluation week, Evaluation day, After evaluations, End of season. `admin_season_roadmap(season, today)` returns all counts and the suggested stage in one call. The stage is worked out from data and event dates (rules in the migration header); the page passes today's Pacific date.
+  - Each stage lists steps with a live status (done, needs attention, to do, tool, coming later) and buttons to the right page. Step rules live in `lib/roadmap.ts`. Admins can click any stage to look ahead or back; the top menu (with a "Roadmap" link) stays for anything off the map.
+  - Desktop-first; admins do this on a laptop. End-of-season steps (teams, coach re-rating, close season) show as "coming later".
+  - Coaches and evaluators get a "Your evaluations" card instead: evaluation date, their assigned age groups with times, location, makeups, and a Score or Draft report button (`my_evaluation_schedule()`).
 
 ## Tracked additions (confirmed requirements, not yet built)
 

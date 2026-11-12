@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const reviewPage = read("app/protected/evaluation-review/page.tsx");
 const evaluatorPage = read("app/protected/evaluations/page.tsx");
-const workspacePage = read("app/protected/page.tsx");
+const workspacePage = read("lib/roadmap.ts"); // admin home is the roadmap; its links live here
 const eligibilityMigration = read("supabase/migrations/20261108150000_allow_pending_registrations_in_evaluations.sql");
 const signUpPage = read("app/auth/sign-up/page.tsx");
 const actions = read("app/actions.ts");

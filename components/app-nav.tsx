@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 export type NavLink = { href: string; label: string };
 
 function isCurrent(pathname: string, href: string) {
+  if (href === "/protected") return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

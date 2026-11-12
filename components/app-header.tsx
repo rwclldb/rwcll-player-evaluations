@@ -9,6 +9,7 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 import { DesktopNav, MobileMenu, type NavLink } from "@/components/app-nav";
 
 const ADMIN_LINKS: NavLink[] = [
+  { href: "/protected", label: "Roadmap" },
   { href: "/protected/players", label: "Players" },
   { href: "/protected/sessions", label: "Sessions" },
   { href: "/protected/people", label: "People" },

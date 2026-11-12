@@ -33,6 +33,7 @@ assert.match(listPage, /\.limit\(100\)/, "batch list should be bounded");
 assert.match(detailPage, /\.limit\(5000\)/, "row detail query should be bounded to max batch size");
 assert.match(detailPage, /Read-only review|Read-only review\./, "detail page must clearly state that it is read-only");
 assert.doesNotMatch(listPage + detailPage, /\.insert\(|\.update\(|\.upsert\(|\.delete\(/, "review pages must not mutate database records");
-assert.match(fs.readFileSync(path.join(root, "app/protected/page.tsx"), "utf8"), /\/protected\/import-batches/);
+// The admin home is the roadmap; its links live in lib/roadmap.ts.
+assert.match(fs.readFileSync(path.join(root, "lib/roadmap.ts"), "utf8"), /\/protected\/import-batches/);
 console.log("PASS: staged batch list/detail TSX syntax, auth/admin gates, request-time rendering boundaries, bounded queries, navigation, and read-only contract.");
 console.log("LIMITATION: static contract checks only; database behavior still requires testing against the local Supabase instance after applying the Phase 5.0 migration locally.");

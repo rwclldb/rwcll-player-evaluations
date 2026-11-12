@@ -7,7 +7,7 @@ const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "u
 const reportsPage = read("app/protected/reports/page.tsx");
 const playerPage = read("app/protected/reports/player/[playerSeasonId]/page.tsx");
 const exportRoute = read("app/protected/reports/export/route.ts");
-const workspace = read("app/protected/page.tsx");
+const workspace = read("lib/roadmap.ts"); // admin home is the roadmap; its links live here
 
 assert.match(reportsPage, /supabase\.rpc\("is_admin"\)/, "report index must require administrator access");
 assert.match(playerPage, /supabase\.rpc\("is_admin"\)/, "individual report must require administrator access");
