@@ -117,7 +117,7 @@ async function BatchContent({ params, searchParams }: { params: Params; searchPa
               <ul className={box}>
                 {review.map((r) => (
                   <li key={r.id} className="space-y-1 px-3 py-2">
-                    <p className="text-xs font-medium text-amber-800 dark:text-amber-300">Row {r.source_row_number}: {r.match_message}</p>
+                    <p className="text-xs font-medium text-amber-800 dark:text-amber-300">Line {r.source_row_number}: {r.match_message}</p>
                     {fileLine(r)}
                     <div>{ratingLine(r)}</div>
                     <fieldset className="flex flex-col gap-1 pt-1">
@@ -150,7 +150,7 @@ async function BatchContent({ params, searchParams }: { params: Params; searchPa
                 <li key={r.id} className="px-3 py-2">
                   <label className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <input type="checkbox" name="dismiss" value={r.id} className="h-5 w-5" />
-                    <span className="text-xs text-muted-foreground">Row {r.source_row_number}</span>
+                    <span className="text-xs text-muted-foreground">Line {r.source_row_number}</span>
                     {fileLine(r)}
                   </label>
                 </li>
@@ -172,7 +172,7 @@ async function BatchContent({ params, searchParams }: { params: Params; searchPa
           <ul className={box}>
             {invalid.map((r) => (
               <li key={r.id} className="space-y-1 px-3 py-2">
-                <p className="text-xs text-rose-700 dark:text-rose-300">Row {r.source_row_number}: {r.match_message}</p>
+                <p className="text-xs text-rose-700 dark:text-rose-300">Line {r.source_row_number}: {r.match_message}</p>
                 {fileLine(r)}
               </li>
             ))}
@@ -186,7 +186,7 @@ async function BatchContent({ params, searchParams }: { params: Params; searchPa
           <ul className={box}>
             {[...imported, ...dismissed].sort((a, b) => a.source_row_number - b.source_row_number).map((r) => (
               <li key={r.id} className="flex flex-wrap items-center gap-x-3 px-3 py-2 text-xs">
-                <span className="text-muted-foreground">Row {r.source_row_number}</span>
+                <span className="text-muted-foreground">Line {r.source_row_number}</span>
                 {r.review_state === "imported"
                   ? <span className="text-foreground">Imported for {describe(r.resolved_player_id!)}</span>
                   : <span className="text-muted-foreground">Dismissed: {r.first_name} {r.last_name} ({r.review_reason})</span>}

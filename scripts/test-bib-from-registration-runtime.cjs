@@ -37,8 +37,8 @@ if (result.status !== 0) {
 }
 
 const passes = notices.filter((line) => line.includes("PASS:")).length;
-if (passes < 7) {
-  console.error(`FAIL: expected 7 PASS lines, saw ${passes}`);
+if (passes < 9) {
+  console.error(`FAIL: expected 9 PASS lines, saw ${passes}`);
   process.exit(1);
 }
 console.log("PASS: bibs come from Registration Number at runtime (local database)");

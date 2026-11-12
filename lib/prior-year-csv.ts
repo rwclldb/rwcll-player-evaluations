@@ -14,6 +14,7 @@ import { COLUMN_ALIASES, findHeader, isoDateOrNull, type CsvTable } from "@/lib/
 
 export type RatingCategory = { code: string; name: string };
 export type PriorYearRow = {
+  line: number;
   player_id: string; first_name: string; last_name: string; birth_date: string | null;
   season: string; division: string; team: string; coach_name: string;
   ratings: Record<string, number | string>; source: Record<string, string>;
@@ -63,7 +64,7 @@ export function parsePriorYear(table: CsvTable, categories: RatingCategory[], de
 
   let unrated = 0;
   const rows: PriorYearRow[] = [];
-  for (const r of table.rows) {
+  for (const [index, r] of table.rows.entries()) {
     const ratings: Record<string, number | string> = {};
     for (const c of ratingColumns) {
       const v = (r[c.header] ?? "").trim();
@@ -74,6 +75,7 @@ export function parsePriorYear(table: CsvTable, categories: RatingCategory[], de
     if (Object.keys(ratings).length === 0) { unrated++; continue; }
     const team = h.team ? r[h.team] ?? "" : "";
     rows.push({
+      line: table.lines?.[index] ?? index + 2,
       player_id: h.playerId ? r[h.playerId] ?? "" : "",
       first_name: r[h.first] ?? "",
       last_name: r[h.last] ?? "",

@@ -1,15 +1,17 @@
-import { normalizeDate, parseCsv } from "@/lib/sports-connect-preview";
+import { normalizeDate, parseCsvLines } from "@/lib/sports-connect-preview";
 
 // Spreadsheet uploads with flexible column names ("Player Id", "player_id", "PlayerID" all work).
 const key = (header: string) => header.toLowerCase().replace(/[^a-z0-9]/g, "");
 
-export type CsvTable = { headers: string[]; rows: Record<string, string>[] };
+/** lines[i] is the spreadsheet row number of rows[i] (the headings are row 1), so messages can say "Line 7". */
+export type CsvTable = { headers: string[]; rows: Record<string, string>[]; lines?: number[] };
 
 export function readCsv(text: string): CsvTable {
-  const grid = parseCsv(text).filter((r) => r.some((c) => c.trim() !== ""));
-  const headers = (grid[0] ?? []).map((h) => h.trim());
-  const rows = grid.slice(1).map((cells) => Object.fromEntries(headers.map((h, i) => [h, (cells[i] ?? "").trim()])));
-  return { headers, rows };
+  const grid = parseCsvLines(text);
+  const headers = (grid[0]?.cells ?? []).map((h) => h.trim());
+  const data = grid.slice(1);
+  const rows = data.map(({ cells }) => Object.fromEntries(headers.map((h, i) => [h, (cells[i] ?? "").trim()])));
+  return { headers, rows, lines: data.map((r) => r.line) };
 }
 
 // The header that matches one of the aliases, if any. Earlier aliases win, so a file with both

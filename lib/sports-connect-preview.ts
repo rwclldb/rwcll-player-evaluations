@@ -31,7 +31,13 @@ const chartByBirthMonth = new Map<string, number>(
 );
 
 export function parseCsv(text: string): string[][] {
-  const rows: string[][] = [];
+  return parseCsvLines(text).map((r) => r.cells);
+}
+
+/** Non-blank records with their spreadsheet row number (blank rows are skipped but still counted). */
+export function parseCsvLines(text: string): { cells: string[]; line: number }[] {
+  const rows: { cells: string[]; line: number }[] = [];
+  let line = 0;
   let row: string[] = [];
   let field = "";
   let quoted = false;
@@ -47,14 +53,16 @@ export function parseCsv(text: string): string[][] {
     else if (char === "\n" || char === "\r") {
       if (char === "\r" && input[i + 1] === "\n") i += 1;
       row.push(field); field = "";
-      if (row.some((value) => value.trim() !== "")) rows.push(row);
+      line += 1;
+      if (row.some((value) => value.trim() !== "")) rows.push({ cells: row, line });
       row = [];
     } else field += char;
   }
   if (quoted) throw new Error("The CSV contains an unclosed quoted field.");
   if (field.length > 0 || row.length > 0) {
     row.push(field);
-    if (row.some((value) => value.trim() !== "")) rows.push(row);
+    line += 1;
+    if (row.some((value) => value.trim() !== "")) rows.push({ cells: row, line });
   }
   return rows;
 }
@@ -79,7 +87,8 @@ export function leagueAgeForBirthDate(value: string | null | undefined): number 
 }
 
 export function makePreview(text: string): { rows: PreviewRow[]; missingHeaders: string[] } {
-  const parsed = parseCsv(text);
+  const records = parseCsvLines(text);
+  const parsed = records.map((r) => r.cells);
   if (parsed.length < 2) throw new Error("The file must include a header row and at least one registration.");
   const headers = parsed[0].map((header) => header.trim());
   const indexes = new Map(headers.map((header, index) => [header, index]));
@@ -104,7 +113,7 @@ export function makePreview(text: string): { rows: PreviewRow[]; missingHeaders:
     const leagueAge = date ? chartByBirthMonth.get(`${date.year}-${date.month}`) ?? null : null;
     if (date && leagueAge === null) issues.push("No reviewed age-chart entry");
     return {
-      line: index + 2,
+      line: records[index + 1].line,
       playerId,
       firstName,
       lastName,

@@ -66,4 +66,18 @@ SELECT pg_temp.check((SELECT (a.after_data->>'evaluation_number')::int = 412 FRO
                         AND a.target_id = (SELECT id::text FROM public.sports_connect_import_rows WHERE first_name = 'Num' AND last_name = 'Bibreg')),
   'the audit entry records the bib that was set');
 
+-- Bib and prior-year uploads keep the spreadsheet line the app sends ("line"), else number rows 1, 2, 3.
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000b1001","role":"authenticated"}', true);
+SELECT public.stage_bib_import((SELECT season_id FROM ctx), 'lines.csv',
+  '[{"line": 4, "player_id": "", "first_name": "Num", "last_name": "Bibreg", "birth_date": "2017-01-01", "bib": "412"},
+    {"player_id": "", "first_name": "Text", "last_name": "Bibreg", "birth_date": "2017-01-03", "bib": "413"}]'::jsonb) AS bib_batch \gset
+SELECT public.stage_prior_year_import((SELECT season_id FROM ctx), 'lines.csv',
+  '[{"line": 9, "first_name": "Num", "last_name": "Bibreg", "season": "Spring 2096", "ratings": {"hitting": 3}}]'::jsonb) AS py_batch \gset
+RESET ROLE;
+SELECT pg_temp.check((SELECT array_agg(source_row_number ORDER BY source_row_number) FROM public.bib_import_rows WHERE import_batch_id = :bib_batch) = ARRAY[2, 4],
+  'bib upload stores the spreadsheet line (4), and falls back to the row count (2) without one');
+SELECT pg_temp.check((SELECT source_row_number FROM public.historical_evaluation_import_rows WHERE import_batch_id = :py_batch) = 9,
+  'prior-year upload stores the spreadsheet line');
+
 ROLLBACK;

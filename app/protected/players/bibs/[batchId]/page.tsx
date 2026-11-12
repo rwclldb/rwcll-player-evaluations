@@ -33,7 +33,7 @@ function Group({ title, tone, rows, children, note }: { title: string; tone: str
       <ul className="divide-y divide-border rounded-lg border border-border bg-card text-sm">
         {rows.map((r) => (
           <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
-            <span className="w-10 text-xs text-muted-foreground">Row {r.source_row_number}</span>
+            <span className="w-10 text-xs text-muted-foreground">Line {r.source_row_number}</span>
             {children(r)}
           </li>
         ))}

@@ -93,7 +93,8 @@ export async function stageBibUpload(formData: FormData) {
   if (!h.playerId && !(h.first && h.last && h.birth)) {
     go(back, "error", "The file needs a \"Player Id\" column, or first name, last name, and birthdate columns.");
   }
-  const rows = table.rows.map((r) => ({
+  const rows = table.rows.map((r, index) => ({
+    line: table.lines?.[index] ?? index + 2,
     player_id: h.playerId ? r[h.playerId] : "",
     first_name: h.first ? r[h.first] : "",
     last_name: h.last ? r[h.last] : "",

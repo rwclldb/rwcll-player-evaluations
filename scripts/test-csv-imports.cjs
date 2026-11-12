@@ -39,6 +39,7 @@ if (!("error" in p)) {
   check("season comes from the page when the file has none", p.rows[0].season === "Spring 2026");
   check("birthdate M/D/YYYY becomes ISO", p.rows[0].birth_date === "2018-07-21", p.rows[0].birth_date);
   check("Player Id kept for matching", p.rows[0].player_id === "90000002");
+  check("rated players keep their spreadsheet line (row 2 was skipped)", p.rows[0].line === 3 && p.rows[1].line === 4, p.rows.map((r) => r.line));
   const stored = JSON.stringify(p.rows.map((r) => r.source));
   check("emails and order numbers are never stored", !/example\.com|22222222|User Email|Order No/.test(stored), stored);
   check("unused columns are reported", ["User Email", "Order No", "Easy Rating", "DR Total"].every((c) => p.ignoredColumns.includes(c)), p.ignoredColumns);
@@ -46,6 +47,9 @@ if (!("error" in p)) {
 
 const withProgram = parsePriorYear(readCsv(["Program Name,Player First Name,Player Last Name,DR Hitting", "2026 Spring Baseball,A,B,3"].join("\n")), CATEGORIES, "");
 check("Program Name is used as the season", !("error" in withProgram) && withProgram.rows[0].season === "2026 Spring Baseball", withProgram);
+
+const gappy = readCsv(["Player Id,Evaluation Number", "1,201", "", "2,202", "\"3\",\"203\""].join(String.fromCharCode(13, 10)));
+check("blank lines are skipped but line numbers still match the spreadsheet", JSON.stringify(gappy.lines) === "[2,4,5]", gappy.lines);
 
 const old = readCsv(fs.readFileSync(path.join(root, "rwcll-fictional-test-league/generated/spring-2026-coach-ratings.csv"), "utf8"));
 const o = parsePriorYear(old, CATEGORIES, "");
