@@ -49,8 +49,20 @@ function flags(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string").slice(0, 30) : [];
 }
 
-async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId: string }> }) {
+// Which rows the review list shows. Default hides rows that need nothing more: ignored (the admin chose not
+// to use them) and committed. Ignored rows can be reopened from the Ignored view.
+const VIEWS = [
+  { key: "open", label: "Needs work", test: (s: string) => s !== "ignored" && s !== "committed" },
+  { key: "ignored", label: "Ignored", test: (s: string) => s === "ignored" },
+  { key: "committed", label: "Committed", test: (s: string) => s === "committed" },
+  { key: "all", label: "All rows", test: () => true },
+] as const;
+type ViewKey = (typeof VIEWS)[number]["key"];
+
+async function ImportBatchReviewContent({ params, searchParams }: { params: Promise<{ batchId: string }>; searchParams: Promise<{ show?: string }> }) {
   const { batchId } = await params;
+  const { show } = await searchParams;
+  const view = VIEWS.find((v) => v.key === show) ?? VIEWS[0];
   const id = Number(batchId);
 
   if (!Number.isSafeInteger(id) || id < 1) {
@@ -136,6 +148,9 @@ async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId:
     .limit(1000);
 
   const candidates = (players ?? []) as Player[];
+  const allRows = (rows ?? []) as Row[];
+  const counts = Object.fromEntries(VIEWS.map((v) => [v.key, allRows.filter((r) => v.test(r.review_state)).length])) as Record<ViewKey, number>;
+  const shownRows = allRows.filter((r) => view.test(r.review_state));
 
   // Fetch committed player details for committed rows
   const committedRegistrationIds = (rows ?? [])
@@ -204,8 +219,26 @@ async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId:
         </Card>
       ) : (
         <div className="space-y-6">
-          {rows.map((row) => {
-            const rowData = row as Row;
+          <nav aria-label="Filter rows" className="flex flex-wrap items-center gap-2">
+            {VIEWS.map((v) => (
+              <Link key={v.key} href={`/protected/import-batches/${id}/review${v.key === "open" ? "" : `?show=${v.key}`}`}
+                aria-current={v.key === view.key ? "page" : undefined}
+                className={`rounded-full border px-3 py-1.5 text-sm ${v.key === view.key ? "border-emerald-500 bg-emerald-600 text-white" : "border-border bg-card text-foreground hover:bg-accent"}`}>
+                {v.label} <span className="ml-1 font-mono text-xs opacity-80">{counts[v.key]}</span>
+              </Link>
+            ))}
+            {view.key === "open" && counts.ignored + counts.committed > 0 && (
+              <span className="text-xs text-muted-foreground">
+                Hiding {counts.ignored} ignored and {counts.committed} committed. To use an ignored row after all, open Ignored and click Reopen Ignored Row.
+              </span>
+            )}
+          </nav>
+          {shownRows.length === 0 && (
+            <Card className="border-border bg-card p-8 text-center text-sm text-muted-foreground">
+              {view.key === "open" ? "Nothing left to review in this batch." : `No ${view.label.toLowerCase()} rows.`}
+            </Card>
+          )}
+          {shownRows.map((rowData) => {
             const name = `${rowData.first_name} ${rowData.last_name}`.trim().toLocaleLowerCase("en-US");
             const date = rowData.birth_date;
             const matches = candidates
@@ -308,14 +341,14 @@ async function ImportBatchReviewContent({ params }: { params: Promise<{ batchId:
   );
 }
 
-export default function ImportBatchReviewPage({ params }: { params: Promise<{ batchId: string }> }) {
+export default function ImportBatchReviewPage({ params, searchParams }: { params: Promise<{ batchId: string }>; searchParams: Promise<{ show?: string }> }) {
   return (
     <Suspense
       fallback={
         <div className="h-96 w-full rounded-lg border border-border bg-card animate-pulse" />
       }
     >
-      <ImportBatchReviewContent params={params} />
+      <ImportBatchReviewContent params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
