@@ -1,4 +1,5 @@
 import { AppHeader } from "@/components/app-header";
+import { SessionWatcher } from "@/components/session-watcher";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -21,6 +22,7 @@ async function ProtectedLayoutContent({
     <div className="min-h-screen bg-background text-slate-800 dark:text-slate-100 flex flex-col font-sans antialiased">
       <div className="print:hidden">
         <AppHeader user={user} />
+        <SessionWatcher userId={user.id} />
       </div>
       <main className="flex-1 bg-background dark:bg-gradient-to-b dark:from-[#121824] dark:to-[#0d131d] print:bg-none print:bg-white print:text-black">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 print:max-w-none print:p-0">
