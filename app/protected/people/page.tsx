@@ -6,7 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, hasAdminKey } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
-import { grantRole, resendInvite, revokeRole, setDisabled } from "./actions";
+import { grantRole, resendInvite, revokeRole, setCoachDivisions, setDisabled } from "./actions";
 import { InviteForm, SignInLinkButton } from "./link-forms";
 import { PeopleImport } from "./people-import";
 
@@ -51,6 +51,19 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
     supabase.from("user_roles").select("user_id, role_name, season_id"),
     supabase.from("user_profiles").select("user_id, display_name"),
   ]);
+  const [{ data: divisionData }, { data: coachDivisionData }] = await Promise.all([
+    supabase.from("season_divisions").select("division_id, divisions(name, sort_order)").eq("season_id", season?.id ?? -1),
+    supabase.from("coach_divisions").select("user_id, division_id").eq("season_id", season?.id ?? -1),
+  ]);
+  const seasonDivisions = (divisionData ?? []).map((r) => {
+    const d = (Array.isArray(r.divisions) ? r.divisions[0] : r.divisions) as { name: string; sort_order: number } | null;
+    return { id: r.division_id as number, name: d?.name ?? "?", order: d?.sort_order ?? 99 };
+  }).sort((a, b) => a.order - b.order);
+  const seasonDivisionNames = seasonDivisions.map((d) => d.name);
+  const divisionsOf = (userId: string) => {
+    const ids = new Set((coachDivisionData ?? []).filter((c) => c.user_id === userId).map((c) => c.division_id as number));
+    return seasonDivisions.filter((d) => ids.has(d.id));
+  };
   const roles = (roleData ?? []) as RoleRow[];
   const names = new Map((profileData ?? []).map((p) => [p.user_id as string, (p.display_name as string | null) ?? ""]));
   const rolesFor = (id: string) => roles.filter((r) => r.user_id === id && (r.season_id === null || r.season_id === season?.id));
@@ -109,7 +122,7 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
             A CSV with an email column, names, and optionally a role column (from the Sports Connect volunteer report, for example).
             Head coaches, assistants and managers become coaches. You&apos;ll see the list before anything is sent.
           </p>
-          {season && !keyMissing && <PeopleImport seasonId={season.id} />}
+          {season && !keyMissing && <PeopleImport seasonId={season.id} divisions={seasonDivisionNames} />}
         </section>
       </div>
 
@@ -141,6 +154,27 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
                     </form>
                   ))}
                 </div>
+                {mine.some((r) => r.role_name === "coach") && season && (() => {
+                  const has = divisionsOf(u.id);
+                  return (
+                    <details className="group relative">
+                      <summary className="flex cursor-pointer list-none items-center gap-1 rounded border border-dashed border-input px-2 py-0.5 text-xs text-foreground hover:border-emerald-500">
+                        {has.length ? has.map((d) => <span key={d.id} className="rounded bg-emerald-500/15 px-1 font-medium text-emerald-800 dark:text-emerald-300">{d.name}</span>) : <span className="text-muted-foreground">+ Divisions</span>}
+                      </summary>
+                      <form action={setCoachDivisions} className="absolute z-10 mt-1 w-52 space-y-1 rounded-lg border border-border bg-card p-3 shadow-lg">
+                        <input type="hidden" name="userId" value={u.id} />
+                        <input type="hidden" name="seasonId" value={season.id} />
+                        <p className="text-xs font-semibold text-foreground">Coaches in {seasonName}</p>
+                        {seasonDivisions.map((d) => (
+                          <label key={d.id} className="flex items-center gap-2 text-sm text-foreground">
+                            <input type="checkbox" name="division" value={d.name} defaultChecked={has.some((x) => x.id === d.id)} className="h-4 w-4" /> {d.name}
+                          </label>
+                        ))}
+                        <Button type="submit" size="sm" className="mt-1 h-8 w-full">Save</Button>
+                      </form>
+                    </details>
+                  );
+                })()}
                 {(() => {
                   // Offer only roles this account can take: not one it has, and never coach + evaluator together.
                   const has = new Set(mine.map((r) => r.role_name));

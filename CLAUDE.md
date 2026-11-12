@@ -124,6 +124,14 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
   - Desktop-first; admins do this on a laptop. End-of-season steps (teams, coach re-rating, close season) show as "coming later".
   - Coaches and evaluators get a "Your evaluations" card instead: evaluation date, their assigned age groups with times, location, makeups, and a Score or Draft report button (`my_evaluation_schedule()`).
 
+## Built 2026-11-12 (local only; migration not on hosted)
+
+- **Row review filter** (no migration): the import batch row review opens on "Needs work" and hides ignored and committed rows. Tabs show Ignored, Committed and All rows; ignored rows are reopened from the Ignored tab.
+- **Coach divisions** (migration 20261112090000, test `test:coach-divisions-runtime`):
+  - **Division ages** per season (`season_divisions.min_age/max_age`), edited on Sessions → Season-wide settings (`admin_set_division_ages`, audited). RWCLL defaults: AA 7–9, AAA 8–11, Majors 10–12, Juniors 13–14, Seniors 15–16. Ranges overlap on purpose. New seasons copy the latest earlier season's ranges.
+  - **Coach divisions** (`coach_divisions`, coaches only, not carried forward). The people import reads "Division Name". Rows with the same email merge their divisions. Names that aren't divisions this season (Tee Ball, Other) are shown struck through and skipped. The People page shows and edits them. `admin_set_coach_divisions` adds (import) or replaces (People page), audited. Removing the coach role drops them.
+  - **Assignments → From divisions**: `division_assignment_preview` lists each coach's ages (union of their divisions' ranges). "Add N assignments" (`apply_division_assignments`) only adds, only to Setup age groups, and adds nothing on a second run. Audited with the count. Coach names show their divisions everywhere on the page, e.g. "Avery Smith (AA, Juniors)".
+
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Retire the team-scoped coach report** (`/protected/coach-reports`, `coach_historical_report*`). It's superseded by draft reports and no longer linked from the evaluation screen or the top menu (the pages and functions still exist).

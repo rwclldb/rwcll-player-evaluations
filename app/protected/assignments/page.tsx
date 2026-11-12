@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { assignEvaluatorToSession, removeEvaluatorFromSession, setPersonAgeGroups } from "./actions";
+import { applyDivisionAssignments, assignEvaluatorToSession, removeEvaluatorFromSession, setPersonAgeGroups } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Users, ArrowLeft, X } from "lucide-react";
@@ -15,6 +15,8 @@ type RoleRow = { id: number; user_id: string; role_name: string; season_id: numb
 type Session = { id: number; season_id: number; league_age: number | null; status: string };
 type Assignment = { id: number; evaluation_session_id: number; evaluator_user_id: string; evaluator_type: string };
 type Season = { id: number; name: string; start_date: string | null; is_closed: boolean };
+type PreviewRow = { user_id: string; coach_name: string | null; email: string; league_age: number; divisions: string; session_id: number | null; session_status: string | null; already_assigned: boolean };
+type DivisionRef = { name: string; sort_order: number };
 
 const AGES = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 const ROLE_LABEL: Record<string, string> = { coach: "Coach", independent_evaluator: "Evaluator" };
@@ -41,7 +43,22 @@ async function AssignmentsContent({ searchParams }: { searchParams: SearchParams
   const candidates = (candidateResult.data ?? []) as Candidate[];
   const seasons = (seasonResult.data ?? []) as Season[];
   const season = seasons.find((s) => String(s.id) === params.season) ?? seasons.find((s) => !s.is_closed) ?? seasons[0];
-  const view = params.view === "person" ? "person" : "age";
+  const view = params.view === "person" ? "person" : params.view === "divisions" ? "divisions" : "age";
+
+  // Coaches' divisions and the assignments they suggest.
+  const [coachDivisionResult, previewResult] = season
+    ? await Promise.all([
+        supabase.from("coach_divisions").select("user_id, divisions(name, sort_order)").eq("season_id", season.id),
+        supabase.rpc("division_assignment_preview", { p_season_id: season.id }),
+      ])
+    : [null, null];
+  const divisionNames = new Map<string, string[]>();
+  for (const r of (coachDivisionResult?.data ?? []) as { user_id: string; divisions: DivisionRef | DivisionRef[] | null }[]) {
+    const d = Array.isArray(r.divisions) ? r.divisions[0] : r.divisions;
+    if (d) divisionNames.set(r.user_id, [...(divisionNames.get(r.user_id) ?? []), d.name]);
+  }
+  const preview = (previewResult?.data ?? []) as PreviewRow[];
+  const previewError = previewResult?.error?.message;
   const candidateById = new Map(candidates.map((c) => [c.user_id, c]));
 
   const seasonRoles = ((roleResult.data ?? []) as RoleRow[])
@@ -62,6 +79,15 @@ async function AssignmentsContent({ searchParams }: { searchParams: SearchParams
   const tab = (active: boolean) =>
     `rounded-md border px-3 py-1.5 text-sm font-medium ${active ? "border-emerald-600 bg-emerald-600 text-white" : "border-border bg-card text-foreground hover:bg-accent"}`;
   const person = seasonRoles.find((r) => r.user_id === params.person);
+  // "Avery Smith (AA, Juniors)" for coaches with divisions.
+  const who = (userId: string) => {
+    const d = divisionNames.get(userId);
+    return `${label(candidateById.get(userId), userId)}${d?.length ? ` (${d.join(", ")})` : ""}`;
+  };
+  const willAdd = (p: PreviewRow) => p.session_id !== null && p.session_status === "setup" && !p.already_assigned;
+  const toAdd = preview.filter(willAdd);
+  const previewCoaches = [...new Set(preview.map((p) => p.user_id))];
+  const coachesWithoutDivisions = seasonRoles.filter((r) => r.role_name === "coach" && !divisionNames.has(r.user_id));
 
   return (
     <div className="space-y-6">
@@ -100,6 +126,10 @@ async function AssignmentsContent({ searchParams }: { searchParams: SearchParams
             <nav className="flex gap-2" aria-label="View">
               <Link href={href({ view: "age", person: undefined })} className={tab(view === "age")}>By age group</Link>
               <Link href={href({ view: "person" })} className={tab(view === "person")}>By person</Link>
+              <Link href={href({ view: "divisions", person: undefined })} className={tab(view === "divisions")}>
+                From divisions
+                {toAdd.length > 0 && !closed && <span className="ml-1.5 rounded-full bg-amber-500 px-1.5 text-xs text-white">{toAdd.length}</span>}
+              </Link>
             </nav>
           </div>
 
@@ -142,14 +172,14 @@ async function AssignmentsContent({ searchParams }: { searchParams: SearchParams
                                 <input type="hidden" name="assignmentId" value={a.id} />
                                 <button type="submit" title="Remove from this age group"
                                   className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-xs text-foreground hover:border-rose-500">
-                                  {label(candidateById.get(a.evaluator_user_id), a.evaluator_user_id)}
+                                  {who(a.evaluator_user_id)}
                                   <span className="text-muted-foreground">· {ROLE_LABEL[a.evaluator_type]}</span>
                                   <X className="h-3 w-3" />
                                 </button>
                               </form>
                             ) : (
                               <span className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-xs text-foreground">
-                                {label(candidateById.get(a.evaluator_user_id), a.evaluator_user_id)}
+                                {who(a.evaluator_user_id)}
                                 <span className="text-muted-foreground">· {ROLE_LABEL[a.evaluator_type]}</span>
                               </span>
                             )}
@@ -164,7 +194,7 @@ async function AssignmentsContent({ searchParams }: { searchParams: SearchParams
                           <option value="" disabled>+ Add a coach or evaluator…</option>
                           {available.map((r) => (
                             <option key={r.user_id} value={`${r.user_id}|${r.role_name}`}>
-                              {label(candidateById.get(r.user_id), r.user_id)} ({ROLE_LABEL[r.role_name]})
+                              {who(r.user_id)} · {ROLE_LABEL[r.role_name]}
                             </option>
                           ))}
                         </select>
@@ -175,6 +205,67 @@ async function AssignmentsContent({ searchParams }: { searchParams: SearchParams
                   </section>
                 );
               })}
+            </div>
+          )}
+
+          {/* ===== From divisions ===== */}
+          {view === "divisions" && (
+            <div className="space-y-4">
+              <section className="rounded-lg border border-border bg-card p-4 text-sm">
+                <p className="text-muted-foreground">
+                  Each coach is suggested for every age group their divisions cover. Division ages are set on the{" "}
+                  <Link href="/protected/sessions" className="underline">Sessions</Link> page (Season-wide settings). A coach&apos;s divisions come
+                  from the people import or the <Link href="/protected/people" className="underline">People</Link> page. This only adds:
+                  nothing is removed, age groups past Setup are skipped, and running it again changes nothing.
+                </p>
+                {previewError && <p role="alert" className="mt-2 text-rose-700 dark:text-rose-300">Could not build the preview: {previewError}</p>}
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <form action={applyDivisionAssignments}>
+                    <input type="hidden" name="seasonId" value={season.id} />
+                    <Button type="submit" disabled={closed || toAdd.length === 0} className="bg-emerald-600 text-white hover:bg-emerald-500">
+                      Add {toAdd.length} assignment{toAdd.length === 1 ? "" : "s"}
+                    </Button>
+                  </form>
+                  <span className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-emerald-800 dark:text-emerald-300">+ will be added</span>
+                    <span className="rounded bg-muted px-1.5 py-0.5">already assigned</span>
+                    <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-amber-800 dark:text-amber-300">skipped (past Setup or no session)</span>
+                  </span>
+                </div>
+              </section>
+
+              {previewCoaches.length === 0 ? (
+                <p className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+                  No coach has a division in {season.name} yet. Import coaches with a Division Name column, or set divisions on the People page.
+                </p>
+              ) : (
+                <ul className="divide-y divide-border rounded-lg border border-border bg-card text-sm">
+                  {previewCoaches.map((userId) => (
+                    <li key={userId} className="flex flex-wrap items-center gap-2 px-3 py-2">
+                      <span className="min-w-56 flex-1 font-medium text-foreground">{who(userId)}</span>
+                      <span className="flex flex-wrap gap-1">
+                        {preview.filter((p) => p.user_id === userId).map((p) => {
+                          const add = willAdd(p);
+                          const cls = add ? "bg-emerald-500/15 font-semibold text-emerald-800 dark:text-emerald-300"
+                            : p.already_assigned ? "bg-muted text-muted-foreground"
+                            : "bg-amber-500/15 text-amber-800 dark:text-amber-300";
+                          const why = add ? "Will be added" : p.already_assigned ? "Already assigned" : p.session_id === null ? "No session for this age" : "Age group is past Setup";
+                          return (
+                            <span key={p.league_age} title={`Age ${p.league_age}: ${why} (${p.divisions})`} className={`rounded px-1.5 py-0.5 text-xs ${cls}`}>
+                              {add ? "+" : ""}Age {p.league_age}
+                            </span>
+                          );
+                        })}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {coachesWithoutDivisions.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Coaches with no division yet: {coachesWithoutDivisions.map((r) => label(candidateById.get(r.user_id), r.user_id)).join(", ")}.
+                </p>
+              )}
             </div>
           )}
 
@@ -191,7 +282,7 @@ async function AssignmentsContent({ searchParams }: { searchParams: SearchParams
                       <li key={r.user_id}>
                         <Link href={href({ view: "person", person: r.user_id })}
                           className={`flex flex-wrap items-center gap-2 px-3 py-2 hover:bg-accent ${selected ? "bg-emerald-500/10" : ""}`}>
-                          <span className="min-w-40 flex-1 font-medium text-foreground">{label(candidateById.get(r.user_id), r.user_id)}</span>
+                          <span className="min-w-40 flex-1 font-medium text-foreground">{who(r.user_id)}</span>
                           <span className="text-xs text-muted-foreground">{ROLE_LABEL[r.role_name]}</span>
                           <span className="text-xs text-foreground">{ages.length ? `Ages ${ages.join(", ")}` : <em className="text-muted-foreground">no age groups</em>}</span>
                         </Link>
@@ -209,10 +300,15 @@ async function AssignmentsContent({ searchParams }: { searchParams: SearchParams
                     <input type="hidden" name="seasonId" value={season.id} />
                     <input type="hidden" name="personId" value={person.user_id} />
                     <h2 className="text-sm font-semibold text-foreground">
-                      {label(candidateById.get(person.user_id), person.user_id)}{" "}
+                      {who(person.user_id)}{" "}
                       <span className="font-normal text-muted-foreground">({ROLE_LABEL[person.role_name]}, {season.name})</span>
                     </h2>
                     <p className="text-xs text-muted-foreground">Tick every age group this person scores, then save. Age groups past Setup can&apos;t change and are greyed out.</p>
+                    {preview.some((p) => p.user_id === person.user_id) && (
+                      <p className="rounded-md bg-emerald-500/10 px-2 py-1 text-xs text-emerald-800 dark:text-emerald-300">
+                        Their divisions cover ages {[...new Set(preview.filter((p) => p.user_id === person.user_id).map((p) => p.league_age))].join(", ")}.
+                      </p>
+                    )}
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                       {AGES.map((age) => {
                         const session = sessionByAge.get(age);

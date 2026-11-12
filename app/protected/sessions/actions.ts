@@ -601,3 +601,34 @@ export async function deleteEvaluationSessionEvent(formData: FormData) {
   revalidatePath("/protected/sessions");
   redirect("/protected/sessions?message=Event%20removed.");
 }
+
+// Division age ranges for a season (used to suggest coach assignments from their divisions).
+export async function setDivisionAges(formData: FormData) {
+  const seasonId = Number(formData.get("seasonId"));
+  if (!Number.isSafeInteger(seasonId) || seasonId < 1) redirect("/protected/sessions?error=Invalid%20season.");
+
+  const auth = await getAdministratorClient();
+  if ("error" in auth && auth.error) redirect(`/protected/sessions?error=${encodeURIComponent(auth.error)}`);
+  const { supabase } = auth;
+
+  const { data: current } = await supabase.from("season_divisions")
+    .select("division_id, min_age, max_age, divisions(name)").eq("season_id", seasonId);
+  let changed = 0;
+  for (const row of current ?? []) {
+    const min = Number(formData.get(`min_${row.division_id}`));
+    const max = Number(formData.get(`max_${row.division_id}`));
+    if (min === row.min_age && max === row.max_age) continue;
+    const { error } = await supabase.rpc("admin_set_division_ages", {
+      p_season_id: seasonId, p_division_id: row.division_id, p_min_age: min || null, p_max_age: max || null,
+    });
+    if (error) {
+      const name = (Array.isArray(row.divisions) ? row.divisions[0] : row.divisions as { name: string } | null)?.name ?? "Division";
+      redirect(`/protected/sessions?error=${encodeURIComponent(`${name}: ${error.message}`)}`);
+    }
+    changed++;
+  }
+
+  revalidatePath("/protected/sessions");
+  revalidatePath("/protected/assignments");
+  redirect(`/protected/sessions?message=${encodeURIComponent(changed ? `Division ages saved (${changed} changed).` : "No changes to division ages.")}`);
+}

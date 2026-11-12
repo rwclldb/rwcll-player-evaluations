@@ -326,3 +326,18 @@ export async function setPersonAgeGroups(formData: FormData) {
   if (skipped.length) parts.push(`not changed (no longer in Setup): age ${skipped.sort((a, b) => a - b).join(", ")}`);
   back(skipped.length && !added && !removed ? "error" : "message", `Saved. ${parts.join("; ")}.`);
 }
+
+// Add the age-group assignments suggested by coaches' divisions (only adds; Setup age groups only).
+export async function applyDivisionAssignments(formData: FormData) {
+  const seasonId = Number(formData.get("seasonId"));
+  const back = (kind: "message" | "error", text: string): never =>
+    redirect(`/protected/assignments?view=divisions&season=${seasonId}&${kind}=${encodeURIComponent(text)}`);
+  if (!Number.isSafeInteger(seasonId) || seasonId < 1) back("error", "Invalid season.");
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("apply_division_assignments", { p_season_id: seasonId });
+  if (error) back("error", error.message);
+  revalidatePath("/protected/assignments");
+  revalidatePath("/protected");
+  const added = Number(data) || 0;
+  back("message", added ? `Added ${added} assignment${added === 1 ? "" : "s"} from coaches' divisions.` : "Nothing to add: every suggested assignment is already in place.");
+}

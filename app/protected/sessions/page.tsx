@@ -2,7 +2,7 @@ import { Fragment, Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createMissingAgeSessions, setPriorYearVisibility } from "./actions";
+import { createMissingAgeSessions, setDivisionAges, setPriorYearVisibility } from "./actions";
 import { SessionActions } from "./SessionActions";
 import { SessionEventManager } from "./SessionEventManager";
 import { GlobalPrimarySchedule } from "./GlobalPrimarySchedule";
@@ -19,6 +19,9 @@ import {
   Layers,
   ArrowLeft
 } from "lucide-react";
+
+type DivisionAge = { season_id: number; division_id: number; min_age: number | null; max_age: number | null; name: string; sort_order: number };
+const ageRange = (d: DivisionAge) => (d.min_age === null ? "not set" : d.min_age === d.max_age ? `${d.min_age}` : `${d.min_age}–${d.max_age}`);
 
 const LEAGUE_AGES = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7];
 
@@ -85,6 +88,14 @@ async function SessionsContent({
     .select("id, evaluation_session_id, event_type, event_date, start_time, end_time, location, notes")
     .order("event_date", { ascending: true })
     .order("start_time", { ascending: true });
+
+  const { data: divisionAgeData } = await supabase
+    .from("season_divisions")
+    .select("season_id, division_id, min_age, max_age, divisions(name, sort_order)");
+  const divisionAges: DivisionAge[] = (divisionAgeData ?? []).map((r) => {
+    const d = (Array.isArray(r.divisions) ? r.divisions[0] : r.divisions) as { name: string; sort_order: number } | null;
+    return { season_id: r.season_id, division_id: r.division_id, min_age: r.min_age, max_age: r.max_age, name: d?.name ?? "?", sort_order: d?.sort_order ?? 99 };
+  }).sort((a, b) => a.sort_order - b.sort_order);
 
   const { data: evaluatorAssignments, error: assignmentsError } = await supabase
     .from("evaluator_assignments")
@@ -227,13 +238,14 @@ async function SessionsContent({
               <CardContent className="p-4">
                 {(() => {
                   const ageList = seasonSessions.filter((session) => session.league_age !== null && LEAGUE_AGES.includes(session.league_age));
+                  const seasonDivisions = divisionAges.filter((d) => d.season_id === season.id);
                   const primaryCount = ageList.filter((session) => (sessionEvents ?? []).some((event) => event.evaluation_session_id === session.id && event.event_type === "primary")).length;
                   return (
                 <details className="mb-4 rounded-lg border border-border bg-background">
                   <summary className="cursor-pointer px-3 py-2 text-xs">
                     <span className="font-semibold text-foreground">Season-wide settings</span>
                     <span className="ml-2 text-muted-foreground">
-                      Prior-year ratings while scoring: {season.show_prior_year_during_evaluations ? "Shown" : "Hidden"} · Primary event scheduled for {primaryCount} of {ageList.length} age groups · Set one schedule for all age groups
+                      Prior-year ratings while scoring: {season.show_prior_year_during_evaluations ? "Shown" : "Hidden"} · Division ages: {seasonDivisions.map((d) => `${d.name} ${ageRange(d)}`).join(", ") || "none"} · Primary event scheduled for {primaryCount} of {ageList.length} age groups
                     </span>
                   </summary>
                   <div className="space-y-3 border-t border-border p-3">
@@ -254,6 +266,29 @@ async function SessionsContent({
                   <Button type="submit" size="sm" variant="outline" disabled={season.is_closed} className="shrink-0 text-xs">
                     {season.show_prior_year_during_evaluations ? "Hide while scoring" : "Show while scoring"}
                   </Button>
+                </form>
+                <form action={setDivisionAges} className="space-y-2 rounded-lg border border-border bg-background p-3 text-xs">
+                  <input type="hidden" name="seasonId" value={season.id} />
+                  <div>
+                    <p className="font-semibold text-foreground">Division ages</p>
+                    <p className="text-muted-foreground">
+                      Which league ages each division covers. Ranges may overlap. Used to suggest age-group assignments for coaches from their divisions (Assignments page). New seasons copy these.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {seasonDivisions.map((d) => (
+                      <fieldset key={d.division_id} className="flex items-center gap-1 rounded-md border border-border px-2 py-1">
+                        <legend className="sr-only">{d.name} ages</legend>
+                        <span className="w-14 font-semibold text-foreground">{d.name}</span>
+                        <input type="number" min={4} max={18} name={`min_${d.division_id}`} defaultValue={d.min_age ?? ""} aria-label={`${d.name} youngest age`} disabled={season.is_closed}
+                          className="h-8 w-14 rounded border border-input bg-background px-1 text-center text-sm text-foreground" />
+                        <span className="text-muted-foreground">to</span>
+                        <input type="number" min={4} max={18} name={`max_${d.division_id}`} defaultValue={d.max_age ?? ""} aria-label={`${d.name} oldest age`} disabled={season.is_closed}
+                          className="h-8 w-14 rounded border border-input bg-background px-1 text-center text-sm text-foreground" />
+                      </fieldset>
+                    ))}
+                  </div>
+                  <Button type="submit" size="sm" variant="outline" disabled={season.is_closed} className="text-xs">Save division ages</Button>
                 </form>
                 <GlobalPrimarySchedule
                   seasonId={season.id}

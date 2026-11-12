@@ -151,6 +151,7 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
           links: [
             { href: "/protected/assignments", label: "By age group", primary: noEvaluator.length > 0 },
             { href: "/protected/assignments?view=person", label: "By person", primary: noEvaluator.length === 0 && ppl.unassigned > 0 },
+            { href: "/protected/assignments?view=divisions", label: "From coaches' divisions" },
           ],
         },
         {

@@ -50,7 +50,7 @@ async function appOrigin() {
 const confirmLink = (origin: string, tokenHash: string, type: "invite" | "recovery") =>
   `${origin}/auth/confirm?token_hash=${encodeURIComponent(tokenHash)}&type=${type}&next=/auth/update-password`;
 
-type InviteResult = { status: "invited" | "role_added" | "already" | "error"; message?: string; link?: string };
+type InviteResult = { status: "invited" | "role_added" | "already" | "error"; message?: string; link?: string; userId?: string };
 
 // Invite one person (or, if the email already has an account, just add the role).
 // delivery "email": Supabase sends its invite email. "link": no email; the result carries a link to send yourself.
@@ -87,7 +87,7 @@ async function invite(supabase: SupabaseClient, name: string, rawEmail: string, 
   const { error } = await supabase.rpc("admin_grant_role", { p_user_id: user.id, p_role: role, p_season_id: role === "administrator" ? null : seasonId });
   if (error) return { status: "error", message: `${email}: ${error.message}` };
   if (status === "role_added" && (before ?? []).length > 0) status = "already";
-  return { status, link };
+  return { status, link, userId: user.id };
 }
 
 export type FormResult = { ok: boolean; message: string; link?: string } | null;
@@ -110,28 +110,44 @@ export async function invitePerson(_prev: FormResult, formData: FormData): Promi
   return { ok: true, message: result.status === "already" ? "That person already has this role." : "That email already has an account; the role was added." };
 }
 
-// Bulk: rows come from the CSV preview on the page as JSON [{name, email, role}].
+// Bulk: rows come from the CSV preview on the page as JSON [{name, email, role, divisions}].
+// Coaches' divisions (from the file's Division Name column) are added to what they already have.
 // With delivery "link" accounts are created without email; use each person's "Sign-in link" afterwards.
 export async function invitePeople(formData: FormData) {
   const { supabase } = await requireAdmin();
   const seasonId = Number(formData.get("seasonId")) || null;
   const delivery: Delivery = formData.get("delivery") === "link" ? "link" : "email";
-  let rows: { name: string; email: string; role: Role }[] = [];
+  let rows: { name: string; email: string; role: Role; divisions?: string[] }[] = [];
   try { rows = JSON.parse(String(formData.get("rows") ?? "[]")); } catch { go(back(formData), "error", "Could not read the list."); }
   if (!Array.isArray(rows) || rows.length === 0) go(back(formData), "error", "No people selected.");
   if (rows.length > 200) go(back(formData), "error", "Invite at most 200 people at a time.");
 
   const tally = { invited: 0, role_added: 0, already: 0, error: 0 };
   const problems: string[] = [];
+  let withDivisions = 0;
+  const skipped = new Set<string>();
   for (const r of rows) {
-    const res = await invite(supabase, String(r.name ?? ""), String(r.email ?? ""), r.role, seasonId, delivery)
+    const res: InviteResult = await invite(supabase, String(r.name ?? ""), String(r.email ?? ""), r.role, seasonId, delivery)
       .catch((e: Error) => ({ status: "error" as const, message: e.message }));
     tally[res.status]++;
     if (res.status === "error" && res.message) problems.push(res.message);
+    const divisions = Array.isArray(r.divisions) ? r.divisions.map(String).filter(Boolean) : [];
+    if (res.status !== "error" && res.userId && r.role === "coach" && divisions.length && seasonId) {
+      const { data, error } = await supabase.rpc("admin_set_coach_divisions", {
+        p_user_id: res.userId, p_season_id: seasonId, p_division_names: divisions, p_replace: false,
+      });
+      if (error) problems.push(`${r.email}: ${error.message}`);
+      else {
+        if (((data as { divisions?: string[] })?.divisions ?? []).length) withDivisions++;
+        for (const n of (data as { skipped?: string[] })?.skipped ?? []) skipped.add(n);
+      }
+    }
   }
   revalidatePath("/protected/people");
   const created = delivery === "link" ? `${tally.invited} account(s) created (no email sent; use Sign-in link for each)` : `${tally.invited} invited by email`;
-  const summary = `${created}, ${tally.role_added} existing account(s) given the role, ${tally.already} already set.`;
+  const summary = `${created}, ${tally.role_added} existing account(s) given the role, ${tally.already} already set.`
+    + (withDivisions ? ` Divisions recorded for ${withDivisions} coach(es).` : "")
+    + (skipped.size ? ` Not divisions this season (ignored): ${[...skipped].join(", ")}.` : "");
   if (problems.length) go(back(formData), "error", `${summary} ${tally.error} problem(s): ${problems.slice(0, 5).join(" ")}${problems.length > 5 ? " ..." : ""}`);
   go(back(formData), "message", summary);
 }
@@ -200,4 +216,20 @@ export async function setDisabled(formData: FormData) {
   await supabase.rpc("admin_log_account_event", { p_user_id: userId, p_action: disable ? "account_disabled" : "account_enabled", p_detail: null });
   revalidatePath("/protected/people");
   go(back(formData), "message", disable ? "Account disabled. They can no longer sign in." : "Account enabled.");
+}
+
+// The divisions a coach coaches this season (People page). Replaces the coach's list.
+export async function setCoachDivisions(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const { data, error } = await supabase.rpc("admin_set_coach_divisions", {
+    p_user_id: String(formData.get("userId") ?? ""),
+    p_season_id: Number(formData.get("seasonId")) || null,
+    p_division_names: formData.getAll("division").map(String),
+    p_replace: true,
+  });
+  revalidatePath("/protected/people");
+  revalidatePath("/protected/assignments");
+  if (error) go(back(formData), "error", error.message);
+  const list = (data as { divisions?: string[] })?.divisions ?? [];
+  go(back(formData), "message", list.length ? `Divisions saved: ${list.join(", ")}.` : "Divisions cleared.");
 }
