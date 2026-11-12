@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { COLUMN_ALIASES, findHeader, isoDateOrNull, readUploadedCsv } from "@/lib/csv-upload";
+import { readUploadedCsv } from "@/lib/csv-upload";
+import { parsePriorYear, type RatingCategory } from "@/lib/prior-year-csv";
 
 const id = (v: FormDataEntryValue | null) => {
   const n = Number(v);
@@ -11,7 +12,6 @@ const id = (v: FormDataEntryValue | null) => {
 };
 const go = (path: string, kind: "message" | "error", text: string): never =>
   redirect(`${path}${path.includes("?") ? "&" : "?"}${kind}=${encodeURIComponent(text)}`);
-const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 export async function stagePriorYearUpload(formData: FormData) {
   const back = "/protected/prior-year";
@@ -22,51 +22,18 @@ export async function stagePriorYearUpload(formData: FormData) {
 
   const supabase = await createClient();
   const { data: categories } = await supabase.from("rating_categories").select("code, name");
-  // A rating column may be named by code ("fly_balls") or by name ("Fly Balls").
-  const ratingColumns = (categories ?? []).map((c) => ({
-    code: c.code as string,
-    header: table.headers.find((h) => norm(h) === norm(c.code) || norm(h) === norm(c.name)),
-  })).filter((c): c is { code: string; header: string } => Boolean(c.header));
-
-  const h = {
-    playerId: findHeader(table.headers, COLUMN_ALIASES.playerId),
-    first: findHeader(table.headers, COLUMN_ALIASES.firstName),
-    last: findHeader(table.headers, COLUMN_ALIASES.lastName),
-    birth: findHeader(table.headers, COLUMN_ALIASES.birthDate),
-    season: findHeader(table.headers, COLUMN_ALIASES.season),
-    division: findHeader(table.headers, COLUMN_ALIASES.division),
-    team: findHeader(table.headers, COLUMN_ALIASES.team),
-    coach: findHeader(table.headers, COLUMN_ALIASES.coachName),
-  };
-  if (!h.first || !h.last) go(back, "error", "The file needs player first and last name columns.");
-  if (ratingColumns.length === 0) go(back, "error", "No rating columns found. Use skill names (Hitting, Throwing, Grounders, Fly Balls, Running / Awareness, ...) or codes (hitting, fly_balls, ...).");
-  if (!h.season && !defaultSeason) go(back, "error", "The file has no Season column. Type the season the ratings are from (for example Spring 2026).");
-
-  const rows = table.rows.map((r) => {
-    const ratings: Record<string, number | string> = {};
-    for (const c of ratingColumns) {
-      const v = r[c.header];
-      if (v === "" || v === undefined) continue;
-      // Send non-numbers as text so the database rejects the row with a clear message.
-      ratings[c.code] = /^\d+$/.test(v) ? Number(v) : v;
-    }
-    return {
-      player_id: h.playerId ? r[h.playerId] : "",
-      first_name: r[h.first!],
-      last_name: r[h.last!],
-      birth_date: h.birth ? isoDateOrNull(r[h.birth]) : null,
-      season: (h.season ? r[h.season] : "") || defaultSeason,
-      division: h.division ? r[h.division] : "",
-      team: h.team ? r[h.team] : "",
-      coach_name: h.coach ? r[h.coach] : "",
-      ratings,
-      source: r,
-    };
-  });
+  const parsed = parsePriorYear(table, (categories ?? []) as RatingCategory[], defaultSeason);
+  if ("error" in parsed) return go(back, "error", parsed.error);
+  const { rows, unrated, ignoredColumns } = parsed;
+  if (rows.length === 0) return go(back, "error", `None of the ${unrated} players in the file have ratings, so there is nothing to import.`);
 
   const { data, error } = await supabase.rpc("stage_prior_year_import", { p_season_id: seasonId, p_file_name: name ?? "prior-year.csv", p_rows: rows });
   if (error) go(back, "error", error.message);
-  go(`/protected/prior-year/${data}`, "message", `Read ${rows.length} rows. Check the matches, then import.`);
+  go(`/protected/prior-year/${data}`, "message",
+    `Read ${rows.length} rated player${rows.length === 1 ? "" : "s"}` +
+    (unrated ? `; skipped ${unrated} with no ratings` : "") +
+    (ignoredColumns.length ? `; not used: ${ignoredColumns.join(", ")}` : "") +
+    ". Check the matches, then import.");
 }
 
 export async function recheckPriorYear(formData: FormData) {

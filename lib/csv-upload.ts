@@ -12,10 +12,14 @@ export function readCsv(text: string): CsvTable {
   return { headers, rows };
 }
 
-// The header that matches one of the aliases, if any.
+// The header that matches one of the aliases, if any. Earlier aliases win, so a file with both
+// "Evaluation Number" and "Registration Number" uses Evaluation Number for the bib.
 export function findHeader(headers: string[], aliases: string[]): string | undefined {
-  const wanted = aliases.map(key);
-  return headers.find((h) => wanted.includes(key(h)));
+  for (const alias of aliases) {
+    const hit = headers.find((h) => key(h) === key(alias));
+    if (hit) return hit;
+  }
+  return undefined;
 }
 
 export const COLUMN_ALIASES = {
@@ -23,7 +27,8 @@ export const COLUMN_ALIASES = {
   firstName: ["Player First Name", "First Name", "First"],
   lastName: ["Player Last Name", "Last Name", "Last"],
   birthDate: ["Player Birth Date", "Birth Date", "Birthdate", "Date of Birth", "DOB"],
-  bib: ["Evaluation Number", "Bib", "Bib Number", "Eval Number", "Evaluation #"],
+  // Sports Connect's "Registration Number" field is where the league keeps the bib.
+  bib: ["Evaluation Number", "Bib", "Bib Number", "Eval Number", "Evaluation #", "Registration Number", "Registration #", "Reg Number"],
   season: ["Season"],
   division: ["Division", "Division Name"],
   team: ["Team", "Team Name"],

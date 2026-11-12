@@ -40,7 +40,8 @@
     "test:season-setup-runtime": "node scripts/test-season-setup-runtime.cjs",
     "test:admin-roadmap-runtime": "node scripts/test-admin-roadmap-runtime.cjs",
     "test:coach-divisions-runtime": "node scripts/test-coach-divisions-runtime.cjs",
-    "e2e:evaluation-navigation": "node scripts/e2e-evaluation-navigation.cjs"
+    "e2e:evaluation-navigation": "node scripts/e2e-evaluation-navigation.cjs",
+    "test:csv-imports": "node scripts/test-csv-imports.cjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.1",

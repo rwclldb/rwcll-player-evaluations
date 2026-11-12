@@ -5,6 +5,8 @@ import { ArrowLeft, Hash, Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { stageBibUpload } from "../actions";
+import { CsvTemplatePanel } from "@/components/csv-template";
+import { BIB_TEMPLATE } from "@/lib/csv-templates";
 
 type SearchParams = Promise<{ message?: string; error?: string }>;
 type Batch = { id: number; source_file_name: string | null; status: string; rows_received: number; created_at: string; season_id: number };
@@ -33,7 +35,7 @@ async function BibsContent({ searchParams }: { searchParams: SearchParams }) {
         </Button>
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground"><Hash className="h-6 w-6 text-emerald-700 dark:text-emerald-400" /> Upload bib numbers</h1>
         <p className="text-sm text-muted-foreground">
-          A CSV with a bib column (&quot;Evaluation Number&quot; or &quot;Bib&quot;) and either a &quot;Player Id&quot; column (Sports Connect) or first name,
+          A CSV with a bib column (&quot;Evaluation Number&quot;, &quot;Bib&quot;, or Sports Connect&apos;s &quot;Registration Number&quot;) and either a &quot;Player Id&quot; column (Sports Connect) or first name,
           last name, and birthdate columns. You&apos;ll see a preview before anything changes. Rows that don&apos;t match a registered player
           are held, so you can upload before or after the registration import and check them again later.
         </p>
@@ -41,6 +43,8 @@ async function BibsContent({ searchParams }: { searchParams: SearchParams }) {
 
       {sp.message && <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">{sp.message}</div>}
       {sp.error && <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-700 dark:text-rose-300">{sp.error}</div>}
+
+      <CsvTemplatePanel template={BIB_TEMPLATE} />
 
       <form action={stageBibUpload} className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-card p-4">
         <label className="text-xs text-muted-foreground">Season

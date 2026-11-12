@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { RegistrationImportPreview } from "./registration-import-preview";
+import { CsvTemplatePanel } from "@/components/csv-template";
+import { SPORTS_CONNECT_TEMPLATE } from "@/lib/csv-templates";
 import { ShieldAlert, ArrowLeft, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -74,6 +76,8 @@ async function ImportPreviewContent() {
           </Link>
         </Button>
       </div>
+
+      <CsvTemplatePanel template={SPORTS_CONNECT_TEMPLATE} />
 
       {/* Warning Notice Banner */}
       <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-800 dark:text-amber-200/90 leading-relaxed">

@@ -5,6 +5,8 @@ import { ArrowLeft, History, Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { stagePriorYearUpload } from "./actions";
+import { CsvTemplatePanel } from "@/components/csv-template";
+import { PRIOR_YEAR_TEMPLATE } from "@/lib/csv-templates";
 
 type SearchParams = Promise<{ message?: string; error?: string }>;
 type Batch = { id: number; source_file_name: string | null; status: string; rows_received: number; created_at: string };
@@ -20,6 +22,8 @@ async function PriorYearContent({ searchParams }: { searchParams: SearchParams }
     supabase.from("import_batches").select("id, source_file_name, status, rows_received, created_at").eq("import_type", "historical_evaluations").order("created_at", { ascending: false }).limit(20),
     supabase.from("historical_evaluation_import_rows").select("import_batch_id, match_status").eq("review_state", "pending_review").neq("match_status", "invalid"),
   ]);
+  // Ratings usually come from the most recent closed season; suggest its name.
+  const { data: lastClosed } = await supabase.from("seasons").select("name").eq("is_closed", true).order("start_date", { ascending: false }).limit(1).maybeSingle();
   const batches = (batchData ?? []) as Batch[];
   const open = new Map<number, number>();
   for (const r of pendingData ?? []) open.set(r.import_batch_id, (open.get(r.import_batch_id) ?? 0) + 1);
@@ -42,6 +46,8 @@ async function PriorYearContent({ searchParams }: { searchParams: SearchParams }
       {sp.message && <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">{sp.message}</div>}
       {sp.error && <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-700 dark:text-rose-300">{sp.error}</div>}
 
+      <CsvTemplatePanel template={PRIOR_YEAR_TEMPLATE} />
+
       <form action={stagePriorYearUpload} className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-card p-4">
         <label className="text-xs text-muted-foreground">Match to players in
           <select name="seasonId" className="mt-1 block h-11 rounded-md border border-input bg-background px-2 text-sm text-foreground">
@@ -49,7 +55,7 @@ async function PriorYearContent({ searchParams }: { searchParams: SearchParams }
           </select>
         </label>
         <label className="text-xs text-muted-foreground">Ratings are from (if no Season column)
-          <input name="seasonLabel" placeholder="Spring 2026" className="mt-1 block h-11 rounded-md border border-input bg-background px-3 text-sm text-foreground" />
+          <input name="seasonLabel" placeholder="Spring 2026" defaultValue={lastClosed?.name ?? ""} className="mt-1 block h-11 rounded-md border border-input bg-background px-3 text-sm text-foreground" />
         </label>
         <label className="min-w-56 flex-1 text-xs text-muted-foreground">CSV file
           <input type="file" name="file" accept=".csv,text/csv" required className="mt-1 block w-full text-sm text-foreground file:mr-3 file:rounded-md file:border file:border-border file:bg-background file:px-3 file:py-2" />

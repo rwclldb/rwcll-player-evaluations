@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { grantRole, resendInvite, revokeRole, setCoachDivisions, setDisabled } from "./actions";
 import { InviteForm, SignInLinkButton } from "./link-forms";
 import { PeopleImport } from "./people-import";
+import { CsvTemplatePanel } from "@/components/csv-template";
+import { PEOPLE_TEMPLATE } from "@/lib/csv-templates";
 
 type SearchParams = Promise<{ season?: string; q?: string; message?: string; error?: string }>;
 type RoleRow = { user_id: string; role_name: string; season_id: number | null };
@@ -122,6 +124,7 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
             A CSV with an email column, names, and optionally a role column (from the Sports Connect volunteer report, for example).
             Head coaches, assistants and managers become coaches. You&apos;ll see the list before anything is sent.
           </p>
+          <CsvTemplatePanel template={PEOPLE_TEMPLATE} />
           {season && !keyMissing && <PeopleImport seasonId={season.id} divisions={seasonDivisionNames} />}
         </section>
       </div>

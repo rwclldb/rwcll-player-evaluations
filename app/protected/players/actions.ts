@@ -89,7 +89,7 @@ export async function stageBibUpload(formData: FormData) {
     birth: findHeader(table.headers, COLUMN_ALIASES.birthDate),
     bib: findHeader(table.headers, COLUMN_ALIASES.bib),
   };
-  if (!h.bib) go(back, "error", "The file needs a bib column (\"Evaluation Number\" or \"Bib\").");
+  if (!h.bib) go(back, "error", "The file needs a bib column (\"Evaluation Number\", \"Bib\" or \"Registration Number\").");
   if (!h.playerId && !(h.first && h.last && h.birth)) {
     go(back, "error", "The file needs a \"Player Id\" column, or first name, last name, and birthdate columns.");
   }
