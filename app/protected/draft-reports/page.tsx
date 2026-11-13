@@ -57,7 +57,7 @@ export default async function DraftReportsPage({
           <Award className="h-7 w-7 text-emerald-700 dark:text-emerald-400" /> Draft Reports
         </h1>
         <p className="text-sm text-muted-foreground">
-          Coach and independent-evaluator averages are kept separate. Each overall is the average of the 5 core skills that were rated; blanks are never counted as zero. Only submitted evaluations count.
+          Coach and independent-evaluator averages are kept separate. Each overall is the average of the 5 core skills that were rated; blanks are never counted as zero. Only submitted evaluations count. A number in (parentheses) after a coach average leaves out the highest and lowest coach score for each skill that 3 or more coaches scored.
         </p>
       </div>
 

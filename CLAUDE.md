@@ -139,6 +139,10 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - **Bib upload accepts "Registration Number"** (where the league keeps bibs in Sports Connect). `findHeader` now prefers earlier aliases, so Evaluation Number or Bib wins when a file has both.
 - **Expected-columns panel on every CSV upload** (`components/csv-template.tsx`, lists in `lib/csv-templates.ts`): column list with required/optional, "Download blank CSV" (UTF-8 with BOM for Excel), and "Copy headings" (tab-separated, pastes into row 1). Templates are tested against their own parsers.
 
+## Built 2026-11-13 (local only; migration not on hosted)
+
+- **Coach trimmed mean** (migration 20261113090000, test `test:coach-trimmed-runtime`): the draft report shows, in parentheses after each coach average, the coach average with that skill's single highest and single lowest coach score left out. Per skill, only where 3 or more coaches scored it (ties drop once). The trimmed overall averages the five core skills using the trimmed value where there is one and the normal mean otherwise, and appears only when at least one core skill was trimmed. Coaches only: evaluator and prior-year averages are never trimmed. Returned in `skill_averages.coach_trimmed` and `skill_averages.coach_trimmed_overall` from `private.session_player_summary` (no signature change). Also in the per-skill rows, pitching and catching columns, print legend and CSV ("(high/low dropped)" columns). Data Review and the admin player report show age-group averages, so they are unchanged.
+
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Retire the team-scoped coach report** (`/protected/coach-reports`, `coach_historical_report*`). It's superseded by draft reports and no longer linked from the evaluation screen or the top menu (the pages and functions still exist).

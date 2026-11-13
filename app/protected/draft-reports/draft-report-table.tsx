@@ -21,7 +21,12 @@ export type DraftReportRow = {
   prior_overall: number | null;
   prior_skills_rated: number;
   prior_ratings: number;
-  skill_averages: { coach: Record<string, number>; evaluator: Record<string, number>; prior: Record<string, number> };
+  // coach_trimmed: per-skill coach average with that skill's highest and lowest coach score dropped (only skills
+  // scored by 3+ coaches). coach_trimmed_overall: overall built from those, present when any core skill was trimmed.
+  skill_averages: {
+    coach: Record<string, number>; evaluator: Record<string, number>; prior: Record<string, number>;
+    coach_trimmed?: Record<string, number>; coach_trimmed_overall?: number;
+  };
   my_evaluation: { status: string; ratings: Record<string, number> } | null;
   blank_core_skills: number;
   not_evaluated_marks: number;
@@ -38,6 +43,7 @@ const SKILLS: [string, string][] = [
 const OPTIONAL: [string, string][] = [["pitching", "Pitching"], ["catching", "Catching"]];
 const MY_PITCH = ["pitching_mechanics", "pitching_accuracy_control", "pitching_arm_strength"];
 const MY_CATCH = ["catching_receiving", "catching_blocking", "catching_throwing"];
+const TRIM_TITLE = "In parentheses: the coach average with the highest and lowest coach score left out (skills scored by 3 or more coaches).";
 
 const num = (v: number | string | null | undefined) => (v === null || v === undefined || v === "" ? null : Number(v));
 const fmt = (v: number | string | null | undefined) => { const n = num(v); return n === null ? "—" : n.toFixed(2); };
@@ -98,14 +104,16 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
   );
 
   function downloadCsv() {
-    const head = ["Bib", "Last Name", "First Name", "Age", "Evaluator Overall", "Evaluator Skills Rated", "Evaluators", "Coach Overall", "Coach Skills Rated", "Coaches",
-      "Prior-Year Overall", "Prior-Year Ratings", ...SKILLS.flatMap(([c, l]) => [`Evaluator ${l}`, `Coach ${l}`, `Prior ${l}`]),
-      "Evaluator Pitching", "Coach Pitching", "Evaluator Catching", "Coach Catching", "Flags"];
+    const head = ["Bib", "Last Name", "First Name", "Age", "Evaluator Overall", "Evaluator Skills Rated", "Evaluators", "Coach Overall",
+      "Coach Overall (high/low dropped)", "Coach Skills Rated", "Coaches",
+      "Prior-Year Overall", "Prior-Year Ratings", ...SKILLS.flatMap(([, l]) => [`Evaluator ${l}`, `Coach ${l}`, `Coach ${l} (high/low dropped)`, `Prior ${l}`]),
+      "Evaluator Pitching", "Coach Pitching", "Coach Pitching (high/low dropped)", "Evaluator Catching", "Coach Catching", "Coach Catching (high/low dropped)", "Flags"];
     const lines = sorted.map((r) => [
       r.evaluation_number ?? "", r.last_name, r.first_name, r.league_age, fmt(r.evaluator_overall), r.evaluator_skills_rated, r.evaluator_evaluations,
-      fmt(r.coach_overall), r.coach_skills_rated, r.coach_evaluations, fmt(r.prior_overall), r.prior_ratings,
-      ...SKILLS.flatMap(([c]) => [fmt(r.skill_averages?.evaluator?.[c]), fmt(r.skill_averages?.coach?.[c]), fmt(r.skill_averages?.prior?.[c])]),
-      fmt(r.skill_averages?.evaluator?.pitching), fmt(r.skill_averages?.coach?.pitching), fmt(r.skill_averages?.evaluator?.catching), fmt(r.skill_averages?.coach?.catching),
+      fmt(r.coach_overall), fmt(r.skill_averages?.coach_trimmed_overall), r.coach_skills_rated, r.coach_evaluations, fmt(r.prior_overall), r.prior_ratings,
+      ...SKILLS.flatMap(([c]) => [fmt(r.skill_averages?.evaluator?.[c]), fmt(r.skill_averages?.coach?.[c]), fmt(r.skill_averages?.coach_trimmed?.[c]), fmt(r.skill_averages?.prior?.[c])]),
+      fmt(r.skill_averages?.evaluator?.pitching), fmt(r.skill_averages?.coach?.pitching), fmt(r.skill_averages?.coach_trimmed?.pitching),
+      fmt(r.skill_averages?.evaluator?.catching), fmt(r.skill_averages?.coach?.catching), fmt(r.skill_averages?.coach_trimmed?.catching),
       flags(r, administrator).join("; "),
     ].map((v) => safeCsvCell(String(v === "—" ? "" : v))).join(","));
     const blob = new Blob([[head.map((h) => safeCsvCell(h)).join(","), ...lines].join("\r\n") + "\r\n"], { type: "text/csv;charset=utf-8" });
@@ -116,9 +124,12 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
     URL.revokeObjectURL(link.href);
   }
 
-  const overallCell = (value: number | null, skills: number, raters: number, who: string) => (
+  // Trimmed coach value in parentheses after a coach average, when there is one.
+  const trim = (v: number | string | null | undefined) =>
+    num(v) === null ? null : <span className="ml-1 font-normal text-muted-foreground print:text-black" title={TRIM_TITLE}>({fmt(v)})</span>;
+  const overallCell = (value: number | null, skills: number, raters: number, who: string, trimmed?: number | null) => (
     <td className="px-3 py-2 text-right">
-      <div className="font-mono text-sm font-bold">{fmt(value)}</div>
+      <div className="whitespace-nowrap font-mono text-sm font-bold">{fmt(value)}{trim(trimmed)}</div>
       {raters > 0 && (
         <div className={`text-[10px] ${skills < 5 ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground"} print:text-black`}>
           {skills < 5 ? `${skills} of 5 skills · ` : ""}{raters} {raters === 1 ? who : who === "coach" ? "coaches" : `${who}s`}
@@ -169,10 +180,10 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
                       </button>
                     </td>
                     {overallCell(num(r.evaluator_overall), r.evaluator_skills_rated, r.evaluator_evaluations, "evaluator")}
-                    {overallCell(num(r.coach_overall), r.coach_skills_rated, r.coach_evaluations, "coach")}
+                    {overallCell(num(r.coach_overall), r.coach_skills_rated, r.coach_evaluations, "coach", num(r.skill_averages?.coach_trimmed_overall))}
                     <td className="px-3 py-2 text-right font-mono">{fmt(r.prior_overall)}</td>
-                    <td className="px-3 py-2 text-right font-mono text-xs">{bestOptional(r, "pitching") === null ? "—" : `E ${fmt(r.skill_averages?.evaluator?.pitching)} · C ${fmt(r.skill_averages?.coach?.pitching)}`}</td>
-                    <td className="px-3 py-2 text-right font-mono text-xs">{bestOptional(r, "catching") === null ? "—" : `E ${fmt(r.skill_averages?.evaluator?.catching)} · C ${fmt(r.skill_averages?.coach?.catching)}`}</td>
+                    <td className="px-3 py-2 text-right font-mono text-xs">{bestOptional(r, "pitching") === null ? "—" : <>E {fmt(r.skill_averages?.evaluator?.pitching)} · C {fmt(r.skill_averages?.coach?.pitching)}{trim(r.skill_averages?.coach_trimmed?.pitching)}</>}</td>
+                    <td className="px-3 py-2 text-right font-mono text-xs">{bestOptional(r, "catching") === null ? "—" : <>E {fmt(r.skill_averages?.evaluator?.catching)} · C {fmt(r.skill_averages?.coach?.catching)}{trim(r.skill_averages?.coach_trimmed?.catching)}</>}</td>
                     <td className="px-3 py-2 text-xs">
                       <div className="flex flex-wrap gap-1">
                         {flags(r, administrator).map((f) => (
@@ -199,7 +210,7 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
                               <tr key={code}>
                                 <td className="pr-6 font-sans">{label}</td>
                                 <td className="pr-6 text-right">{fmt(r.skill_averages?.evaluator?.[code])}</td>
-                                <td className="pr-6 text-right">{fmt(r.skill_averages?.coach?.[code])}</td>
+                                <td className="whitespace-nowrap pr-6 text-right">{fmt(r.skill_averages?.coach?.[code])}{trim(r.skill_averages?.coach_trimmed?.[code])}</td>
                                 <td className="pr-6 text-right">{fmt(r.skill_averages?.prior?.[code])}</td>
                                 {r.my_evaluation && (
                                   <td className="text-right">
@@ -227,7 +238,7 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
           </tbody>
         </table>
       </div>
-      <p className="hidden text-[9px] print:block">E = independent evaluators, C = coaches. Averages use submitted evaluations only; blank skills are not counted as zero.</p>
+      <p className="hidden text-[9px] print:block">E = independent evaluators, C = coaches. Averages use submitted evaluations only; blank skills are not counted as zero. (Parentheses) after a coach average: the highest and lowest coach score left out, for skills scored by 3 or more coaches.</p>
     </section>
   );
 }
