@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { fetchAllByIds } from "@/lib/supabase/fetch-all";
 
 type Registration = {
   id: number; player_id: number; season_id: number; league_age: number | null; evaluation_number: number | null;
@@ -59,16 +60,19 @@ export async function GET(request: Request) {
   const historical = (historyResult.data ?? []) as HistoricalEvaluation[];
   const sessionIds = sessions.map((session) => session.id);
   const [evaluationResult, historyRatingsResult] = await Promise.all([
-    playerSeasonIds.length && sessionIds.length ? supabase.from("evaluations")
+    // Every row, not just the first 1,000.
+    sessionIds.length ? fetchAllByIds(playerSeasonIds, (ids, from, to) => supabase.from("evaluations")
       .select("id, evaluation_session_id, player_season_id, evaluator_user_id, evaluator_type, status")
-      .in("player_season_id", playerSeasonIds).in("evaluation_session_id", sessionIds) : Promise.resolve({ data: [], error: null }),
-    historical.length ? supabase.from("historical_ratings").select("historical_evaluation_id, category_name, score, rating_category_id").in("historical_evaluation_id", historical.map((item) => item.id)) : Promise.resolve({ data: [], error: null }),
+      .in("player_season_id", ids).in("evaluation_session_id", sessionIds).order("id").range(from, to)) : Promise.resolve({ data: [], error: null }),
+    fetchAllByIds(historical.map((item) => item.id), (ids, from, to) => supabase.from("historical_ratings")
+      .select("historical_evaluation_id, category_name, score, rating_category_id").in("historical_evaluation_id", ids).order("id").range(from, to)),
   ]);
   if (evaluationResult.error || historyRatingsResult.error) return new Response("Could not load evaluation records.", { status: 500 });
   const evaluations = (evaluationResult.data ?? []) as Evaluation[];
   const historyRatings = (historyRatingsResult.data ?? []) as HistoricalRating[];
   const evaluationIds = evaluations.map((item) => item.id);
-  const ratingResult = evaluationIds.length ? await supabase.from("ratings").select("evaluation_id, rating_category_id, score").in("evaluation_id", evaluationIds) : { data: [], error: null };
+  const ratingResult = await fetchAllByIds(evaluationIds, (ids, from, to) => supabase.from("ratings")
+    .select("evaluation_id, rating_category_id, score").in("evaluation_id", ids).order("id").range(from, to));
   if (ratingResult.error) return new Response("Could not load current ratings.", { status: 500 });
   const ratings = (ratingResult.data ?? []) as Rating[];
   const nameFor = (playerSeasonId: number) => {

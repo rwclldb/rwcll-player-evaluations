@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { fetchAllByIds, fetchAllRows } from "@/lib/supabase/fetch-all";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -166,23 +167,24 @@ async function PlayerReportContent({ params }: Props) {
     .filter((session) => session.league_age === registration.league_age)
     .map((session) => session.id);
 
+  // Every row for the age group, not just the first 1,000.
   const groupEvaluationResult = groupSessionIds.length
-    ? await supabase
+    ? await fetchAllRows((from, to) => supabase
         .from("evaluations")
         .select("id, evaluation_session_id, evaluator_type, status")
         .in("evaluation_session_id", groupSessionIds)
         .eq("status", "submitted")
+        .order("id").range(from, to))
     : { data: [], error: null };
 
   const groupEvaluations = (groupEvaluationResult.data ?? []) as GroupEvaluation[];
   const groupEvaluationIds = groupEvaluations.map((item) => item.id);
 
-  const groupRatingResult = groupEvaluationIds.length
-    ? await supabase
-        .from("ratings")
-        .select("evaluation_id, rating_category_id, score")
-        .in("evaluation_id", groupEvaluationIds)
-    : { data: [], error: null };
+  const groupRatingResult = await fetchAllByIds(groupEvaluationIds, (ids, from, to) => supabase
+    .from("ratings")
+    .select("evaluation_id, rating_category_id, score")
+    .in("evaluation_id", ids)
+    .order("id").range(from, to));
 
   const groupRatings = (groupRatingResult.data ?? []) as Rating[];
 

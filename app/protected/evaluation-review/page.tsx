@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { fetchAllByIds, fetchAllRows } from "@/lib/supabase/fetch-all";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -122,12 +123,15 @@ async function EvaluationReviewContent() {
       .is("season_division_id", null)
       .order("season_id", { ascending: false })
       .order("league_age", { ascending: false }),
-    supabase
+    // Every row, not just the first 1,000.
+    fetchAllRows((from, to) => supabase
       .from("player_seasons")
-      .select("id, season_id, league_age, evaluation_number, players(first_name, last_name)"),
-    supabase
+      .select("id, season_id, league_age, evaluation_number, players(first_name, last_name)")
+      .order("id").range(from, to)),
+    fetchAllRows((from, to) => supabase
       .from("evaluations")
-      .select("id, evaluation_session_id, player_season_id, evaluator_user_id, evaluator_type, status"),
+      .select("id, evaluation_session_id, player_season_id, evaluator_user_id, evaluator_type, status")
+      .order("id").range(from, to)),
     supabase
       .from("rating_categories")
       .select("id, code, name, category_group, sort_order")
@@ -150,13 +154,17 @@ async function EvaluationReviewContent() {
   const categories = (categoriesResult.data ?? []) as Category[];
   const profiles = (profilesResult.data ?? []) as Profile[];
 
-  const ratingResult = evaluations.length
-    ? await supabase
-        .from("ratings")
-        .select("evaluation_id, rating_category_id, score")
-        .in("evaluation_id", evaluations.map((evaluation) => evaluation.id))
-    : { data: [] as Rating[], error: null };
+  const ratingResult = await fetchAllByIds(evaluations.map((evaluation) => evaluation.id), (ids, from, to) => supabase
+    .from("ratings")
+    .select("evaluation_id, rating_category_id, score")
+    .in("evaluation_id", ids)
+    .order("id").range(from, to));
   const ratings = (ratingResult.data ?? []) as Rating[];
+
+  // Evaluations an admin has corrected (admin_save_evaluation_correction writes these audit entries).
+  const { data: correctionData } = await supabase.from("audit_log").select("target_id")
+    .eq("action", "evaluation_admin_corrected").eq("target_table", "evaluations");
+  const corrected = new Set((correctionData ?? []).map((row) => Number(row.target_id)));
 
   const evaluatorName = (userId: string) =>
     profiles.find((profile) => profile.user_id === userId)?.display_name?.trim() || userId;
@@ -447,6 +455,14 @@ async function EvaluationReviewContent() {
                                                   <p className="text-[11px] font-mono text-slate-700 dark:text-slate-300 mt-1">
                                                     Total: {summary.total} &bull; Avg: {summary.average} &bull; Rated: {summary.count}/5
                                                   </p>
+                                                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                                                    <Link href={`/protected/evaluation-review/${evaluation.id}`} className="text-[11px] font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400">
+                                                      View / correct
+                                                    </Link>
+                                                    {corrected.has(evaluation.id) && (
+                                                      <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-800 dark:text-amber-300">Corrected by admin</span>
+                                                    )}
+                                                  </div>
                                                 </div>
                                               );
                                             })}
