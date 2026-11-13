@@ -36,6 +36,7 @@
     "test:evaluation-submit-runtime": "node scripts/test-evaluation-submit-runtime.cjs",
     "test:session-stage-runtime": "node scripts/test-session-stage-runtime.cjs",
     "test:draft-report-runtime": "node scripts/test-draft-report-runtime.cjs",
+    "test:admin-correction-runtime": "node scripts/test-admin-correction-runtime.cjs",
     "test:coach-trimmed-runtime": "node scripts/test-coach-trimmed-runtime.cjs",
     "test:player-notes-runtime": "node scripts/test-player-notes-runtime.cjs",
     "test:season-setup-runtime": "node scripts/test-season-setup-runtime.cjs",

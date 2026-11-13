@@ -139,9 +139,12 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - **Bib upload accepts "Registration Number"** (where the league keeps bibs in Sports Connect). `findHeader` now prefers earlier aliases, so Evaluation Number or Bib wins when a file has both.
 - **Expected-columns panel on every CSV upload** (`components/csv-template.tsx`, lists in `lib/csv-templates.ts`): column list with required/optional, "Download blank CSV" (UTF-8 with BOM for Excel), and "Copy headings" (tab-separated, pastes into row 1). Templates are tested against their own parsers.
 
-## Built 2026-11-13 (local only; migration not on hosted)
+## Built 2026-11-13 (local only; migrations not on hosted)
 
 - **Coach trimmed mean** (migration 20261113090000, test `test:coach-trimmed-runtime`): the draft report shows, in parentheses after each coach average, the coach average with that skill's single highest and single lowest coach score left out. Per skill, only where 3 or more coaches scored it (ties drop once). The trimmed overall averages the five core skills using the trimmed value where there is one and the normal mean otherwise, and appears only when at least one core skill was trimmed. Coaches only: evaluator and prior-year averages are never trimmed. Returned in `skill_averages.coach_trimmed` and `skill_averages.coach_trimmed_overall` from `private.session_player_summary` (no signature change). Also in the per-skill rows, pitching and catching columns, print legend and CSV ("(high/low dropped)" columns). Data Review and the admin player report show age-group averages, so they are unchanged.
+
+- **Admin score correction** (migration 20261113120000, test `test:admin-correction-runtime`): Data Review shows "View / correct" on every evaluation card. The page (`/protected/evaluation-review/[evaluationId]`) shows the scorer, all scores, experience answers and status like the scoring screen, and saves through `admin_save_evaluation_correction` (reason required; before and after audited as `evaluation_admin_corrected`; original submitted time kept; returns false and writes nothing when unchanged). Works in Open, Locked and Released age groups (Released shows a warning that coaches can already see the report); refused in a closed season. The scorer is not notified. Cards show "Corrected by admin". The workflow guard now lets an authorized correction delete a single rating or answer in a locked session; deleting the evaluation stays blocked. The old `admin_correct_evaluation` is unused.
+- **1,000-row limit fixed** (`lib/supabase/fetch-all.ts`): Data Review, the admin Reports CSV export and the admin player report's age-group comparison now page through all rows (Supabase returns at most 1,000 per request). Data Review was showing 1,000 of 1,230 fixture evaluations and the export was truncated.
 
 ## Tracked additions (confirmed requirements, not yet built)
 
@@ -159,7 +162,8 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - **Coach access to historical ratings is scoped to current team assignment** (`coach_historical_report_roster`, `coach_historical_report`). Decided 2026-11-10: replace with access to all rated players, as described under Tracked additions. Not yet built.
 - **One registration per Sports Connect Player Id per season** (`player_seasons_season_external_player_id_uidx`). Decided 2026-11-10: keep this rule. Repeated Ids are data errors, so the app flags them and holds later rows in import review.
 - Documentation drift: some docs still describe implemented migrations as proposed, describe division-based evaluation, or say pitching/catching is AAA-and-up only. Reconcile against actual code.
-- Remaining security checks: confirm admin reports and CSV export still work.
+- Remaining security checks: confirm admin reports and CSV export still work. (2026-11-13: the export now includes every row; check the content.)
+- Other queries that could return more than 1,000 rows should use `fetchAllRows` / `fetchAllByIds`.
 - `.claude/settings.json` denies Supabase CLI commands that reach the hosted project. A hosted deployment is a step the user runs or explicitly approves.
 
 ## Test data (local)
