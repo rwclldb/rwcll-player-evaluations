@@ -91,7 +91,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
   - All averages come from `private.session_player_summary`, through `draft_report` and `draft_report_sessions`.
   - Admins see every age group anytime. Coaches and independent evaluators see an age group only after it is released (evaluators added 2026-11-11, migration 20261111130000).
   - Default sort is evaluator overall. Columns sort on click, and rows expand to per-skill detail and the viewer's own ratings.
-  - CSV and print are built. PDF is still a nice-to-have.
+  - CSV, print and PDF are built (PDF added 2026-11-16).
 - **Lock and release** (migration 20261110210000): Sessions page with confirmations and an explainer.
 - **Evaluation-day roster** (`/protected/roster`, admin): blank Check-in and Notes columns, bib or name sort, and "All ages" prints one age group per page.
 - **Prior-year switch**, one per season, on the Sessions page. When on, coaches and evaluators see prior-year ratings while scoring (`prior_year_for_session`). Draft reports always include prior-year ratings.
@@ -210,6 +210,8 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - **Back to the scanned page after signing in**: when signed out, `proxy.ts` sends people to `/auth/login?next=<page>`; the sign-in form passes it on and `loginAction` returns there. `lib/safe-next.ts` only allows `/protected...` paths (no other sites, `//`, backslashes or line breaks). A wrong password keeps `next`.
 
 - **Invites on the roadmap** (migration 20261116150000, test `test:roadmap-invites-runtime`): the roadmap steps "Invite coaches and evaluators", "Make sure everyone can sign in" and "Help someone sign in" list who hasn't signed in yet (`admin_people_not_signed_in(season)`: coaches, evaluators and registrars, not disabled), with roles and invite date, an **Email invite again** and a **Sign-in link** button per person, and "Copy all emails". Open by default when 5 or fewer. People actions accept `returnTo` (checked by `safeNext`) so they come back to the roadmap. The roadmap's `not_signed_in` now counts registrars and each person once; `unassigned` still leaves registrars out.
+
+- **Draft report PDF** (no migration; `jspdf` + `jspdf-autotable`, loaded only when the button is used; `lib/draft-report-pdf.ts`): a PDF button next to CSV and Print downloads the table as shown (same sort order and My stars filter). Landscape Letter; heading with the sort, the filter and when it was made; a legend; per row star, bib, player (CK), evaluator, coach (high/low dropped) and prior-year overalls, then each core skill plus pitching and catching as "E / C (trimmed) / P"; flags. Header row repeats on each page. Made in the browser, so no server load.
 
 ## Tracked additions (confirmed requirements, not yet built)
 

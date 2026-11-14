@@ -1,12 +1,13 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Download, Lock, MessageSquare, Printer, Star, StickyNote } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, FileText, Lock, MessageSquare, Printer, Star, StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { safeCsvCell } from "@/lib/sports-connect-preview";
 import { saveNote } from "@/app/protected/my-notes/actions";
 import { CoachKidBadge } from "@/components/coach-kid-badge";
 import { toggleStar } from "./actions";
+import { downloadPdf } from "@/lib/draft-report-pdf";
 
 export type DraftReportRow = {
   player_season_id: number;
@@ -141,6 +142,49 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
     URL.revokeObjectURL(link.href);
   }
 
+  // The same rows as on screen (sort order and the My stars filter), as a PDF file.
+  const [pdfBusy, setPdfBusy] = useState(false);
+  async function downloadPdfReport() {
+    const SORT_LABEL: Record<SortKey, string> = {
+      evaluator_overall: "evaluator overall", coach_overall: "coach overall", prior_overall: "prior-year overall",
+      evaluation_number: "bib", name: "name", pitching: "pitching", catching: "catching",
+    };
+    const skillCell = (r: DraftReportRow, code: string) => {
+      const a = r.skill_averages ?? { coach: {}, evaluator: {}, prior: {} };
+      const trimmed = num(a.coach_trimmed?.[code]);
+      const lines = [`E ${fmt(a.evaluator?.[code])}`, `C ${fmt(a.coach?.[code])}${trimmed === null ? "" : ` (${fmt(trimmed)})`}`];
+      if (num(a.prior?.[code]) !== null) lines.push(`P ${fmt(a.prior[code])}`);
+      return lines.join("\n");
+    };
+    const trimmedOverall = (r: DraftReportRow) => num(r.skill_averages?.coach_trimmed_overall);
+    setPdfBusy(true);
+    try {
+      await downloadPdf({
+        title,
+        fileName: fileName.replace(/\.csv$/, ".pdf"),
+        subtitle: `${sorted.length} player${sorted.length === 1 ? "" : "s"}${onlyStars ? " (your starred players only)" : ""}. Sorted by ${SORT_LABEL[sort.key]}${sort.key === "name" || sort.key === "evaluation_number" ? "" : sort.desc ? ", highest first" : ", lowest first"}.`,
+        legend: "Overall = average of the five core skills. E = independent evaluators, C = coaches, P = prior-year coach rating. "
+          + "(Parentheses) after a coach average: the highest and lowest coach score left out, for skills scored by 3 or more coaches. "
+          + "Averages use submitted evaluations only; blank skills are not counted as zero. Star = your shortlist. CK = coach's kid.",
+        head: ["Star", "Bib", "Player", "Evaluator overall", "Coach overall", "Prior-year overall", ...SKILLS.map(([, l]) => l.replace(" / Awareness", "")), "Pitching", "Catching", "Flags"],
+        rows: sorted.map((r) => [
+          starred.has(r.player_season_id) ? "*" : "",
+          String(r.evaluation_number ?? "—"),
+          `${r.last_name}, ${r.first_name}${kids.has(r.player_season_id) ? "  CK" : ""}`,
+          `${fmt(r.evaluator_overall)}${r.evaluator_evaluations ? `\n${r.evaluator_evaluations} eval.` : ""}`,
+          `${fmt(r.coach_overall)}${trimmedOverall(r) === null ? "" : ` (${fmt(trimmedOverall(r))})`}${r.coach_evaluations ? `\n${r.coach_evaluations} coach${r.coach_evaluations === 1 ? "" : "es"}` : ""}`,
+          fmt(r.prior_overall),
+          ...SKILLS.map(([c]) => skillCell(r, c)),
+          skillCell(r, "pitching"), skillCell(r, "catching"),
+          flags(r, administrator).join("; "),
+        ]),
+        numeric: [1, 3, 4, 5],
+      });
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
   // Trimmed coach value in parentheses after a coach average, when there is one.
   const trim = (v: number | string | null | undefined) =>
     num(v) === null ? null : <span className="ml-1 font-normal text-muted-foreground print:text-black" title={TRIM_TITLE}>({fmt(v)})</span>;
@@ -166,6 +210,9 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
             <Star className={`mr-1 h-4 w-4 ${onlyStars ? "fill-current" : ""}`} /> My stars ({starred.size})
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={downloadCsv}><Download className="mr-1 h-4 w-4" /> CSV</Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => void downloadPdfReport()} disabled={pdfBusy} title="Download this table as a PDF file (same order and filter as on screen)">
+            <FileText className="mr-1 h-4 w-4" /> {pdfBusy ? "Making PDF…" : "PDF"}
+          </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => window.print()}><Printer className="mr-1 h-4 w-4" /> Print</Button>
         </div>
       </div>

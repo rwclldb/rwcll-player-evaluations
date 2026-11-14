@@ -79,7 +79,7 @@ const draftReports = (who: "coach" | "evaluator"): HelpSection => ({
       "Tap a column heading to sort. Tap a row to see each skill" + (who === "coach" ? ", your own scores and your private note (you can edit the note there)." : " and your own scores."),
       "Shared notes from independent evaluators appear in the expanded row, labelled only \"Independent evaluator\".",
       "Tap the star next to a name to add the player to your private shortlist, then use [[My stars]] to show only them. Nobody else sees your stars.",
-      "[[CSV]] downloads the report for a spreadsheet; [[Print]] prints it.",
+      "[[PDF]] saves the report as a PDF file, in the order and with the filter you see (sort by a column or use [[My stars]] first); handy to bring to the draft. [[CSV]] downloads it for a spreadsheet; [[Print]] prints it.",
     ] },
     who === "coach"
       ? "You never see another coach's individual scores, only the averages, and evaluators' names are never shown to coaches."
