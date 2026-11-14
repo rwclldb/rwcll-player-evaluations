@@ -43,7 +43,8 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
     if (error || !data) {
       return <p role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-700 dark:text-rose-300">Could not load the roadmap: {error?.message ?? "no data"}</p>;
     }
-    const roadmap = data as RoadmapData;
+    const { data: duplicates } = await supabase.rpc("admin_possible_duplicate_count");
+    const roadmap = { ...(data as RoadmapData), duplicates: Number(duplicates ?? 0) };
     const viewing = (STAGES.some((s) => s.key === sp.stage) ? sp.stage : roadmap.stage) as StageKey;
     const { data: pending } = await supabase.rpc("admin_people_not_signed_in", { p_season_id: season.id });
     return (

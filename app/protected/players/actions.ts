@@ -174,3 +174,40 @@ export async function setCoachKid(formData: FormData) {
   revalidatePath("/protected/players");
   go(back, "message", formData.get("value") === "true" ? "Marked as a coach's kid." : "No longer marked as a coach's kid.");
 }
+
+// ---------- possible duplicates (admins) ----------
+const DUPLICATES = "/protected/players/duplicates";
+
+export async function mergePlayers(formData: FormData) {
+  const a = id(formData.get("playerA"));
+  const b = id(formData.get("playerB"));
+  const keep = id(formData.get("keep"));
+  if (!a || !b || (keep !== a && keep !== b)) go(DUPLICATES, "error", "Choose which record to keep.");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_merge_players", {
+    p_keep_player_id: keep, p_remove_player_id: keep === a ? b : a, p_reason: String(formData.get("reason") ?? ""),
+  });
+  if (error) go(DUPLICATES, "error", error.message);
+  revalidatePath("/protected/players");
+  go(DUPLICATES, "message", "Merged. The other record is gone; its registrations and ratings are on the one you kept.");
+}
+
+export async function dismissDuplicate(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_dismiss_duplicate", {
+    p_player_a: id(formData.get("playerA")), p_player_b: id(formData.get("playerB")), p_reason: String(formData.get("reason") ?? ""),
+  });
+  if (error) go(DUPLICATES, "error", error.message);
+  revalidatePath("/protected/players");
+  go(DUPLICATES, "message", "Marked as different children. The pair is on the Not duplicates tab.");
+}
+
+export async function restoreDuplicate(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_restore_duplicate", {
+    p_player_a: id(formData.get("playerA")), p_player_b: id(formData.get("playerB")),
+  });
+  if (error) go(`${DUPLICATES}?tab=dismissed`, "error", error.message);
+  revalidatePath("/protected/players");
+  go(DUPLICATES, "message", "The pair is flagged again.");
+}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Hash, Search, UserPlus, Users } from "lucide-react";
+import { ArrowLeft, Hash, Search, UserPlus, Users, Copy } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { CoachKidBadge } from "@/components/coach-kid-badge";
@@ -29,6 +29,7 @@ async function PlayersContent({ searchParams }: { searchParams: SearchParams }) 
   const { data: isAdmin } = await supabase.rpc("is_admin_or_registrar");
   if (isAdmin !== true) redirect("/protected");
   const { data: realAdmin } = await supabase.rpc("is_admin");
+  const { data: duplicateCount } = realAdmin === true ? await supabase.rpc("admin_possible_duplicate_count") : { data: null };
 
   const { data: seasonData } = await supabase.from("seasons").select("id, name, is_closed, start_date").order("start_date", { ascending: false });
   const seasons = seasonData ?? [];
@@ -86,6 +87,11 @@ async function PlayersContent({ searchParams }: { searchParams: SearchParams }) 
             <Users className="h-7 w-7 text-emerald-700 dark:text-emerald-400" /> Players
           </h1>
           <div className="flex flex-wrap gap-2">
+            {realAdmin === true && (
+              <Button asChild variant="outline" size="sm" className={Number(duplicateCount) > 0 ? "border-amber-500/60 text-amber-800 dark:text-amber-300" : undefined}>
+                <Link href="/protected/players/duplicates"><Copy className="mr-1 h-4 w-4" /> Possible duplicates{Number(duplicateCount) > 0 ? ` (${duplicateCount})` : ""}</Link>
+              </Button>
+            )}
             <Button asChild variant="outline" size="sm"><Link href="/protected/players/bibs"><Hash className="mr-1 h-4 w-4" /> Upload bibs</Link></Button>
             <Button asChild size="sm"><Link href="/protected/players/new"><UserPlus className="mr-1 h-4 w-4" /> Add player on site</Link></Button>
           </div>

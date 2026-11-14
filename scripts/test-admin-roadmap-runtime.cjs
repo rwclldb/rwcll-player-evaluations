@@ -55,7 +55,8 @@ const data = (o = {}) => ({ season: { id: 2, name: "S", is_closed: false }, stag
   people: { coaches: 1, evaluators: 1, not_signed_in: 0, unassigned: 0 }, sessions: [sess({})], ...o });
 const step = (d, stage, key) => rm.buildSteps(d, stage).find((s) => s.key === key);
 const checks = [
-  ["a fully set-up season has every Before step done", rm.stepProgress(rm.buildSteps(data(), "before")).done === 7],
+  ["a fully set-up season has every Before step done", rm.stepProgress(rm.buildSteps(data(), "before")).done === 8],
+  ["possible duplicate players need attention", step(data({ duplicates: 2 }), "before", "duplicates").status === "attention"],
   ["a player without a bib flags the bib step", step(data({ registrations: { total: 10, no_bib: 1, no_age: 0, on_site: 0 } }), "before", "bibs").status === "attention"],
   ["an age group without an evaluator flags assignments", step(data({ sessions: [sess({ evaluators: 0 })] }), "before", "assignments").detail.includes("Age 9")],
   ["readiness links to players without bibs", step(data({ registrations: { total: 10, no_bib: 2, no_age: 0, on_site: 0 }, sessions: [sess({ no_bib: 2 })] }), "week", "readiness").links[0].href.includes("show=nobib")],

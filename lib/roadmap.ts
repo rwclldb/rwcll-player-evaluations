@@ -29,6 +29,8 @@ export type RoadmapSession = {
 
 export type RoadmapData = {
   season: { id: number; name: string; is_closed: boolean };
+  /** Possible-duplicate player pairs waiting for a decision (all seasons); filled in by the page. */
+  duplicates?: number;
   stage: StageKey;
   today: string;
   first_primary_date: string | null;
@@ -125,6 +127,14 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
             ...(reg.no_bib > 0 ? [{ href: `/protected/players?season=${sid}&show=nobib`, label: "Show who's missing" }] : []),
             ...(reg.no_age > 0 ? [{ href: `/protected/players?season=${sid}&show=noage`, label: "Show missing ages" }] : []),
           ],
+        },
+        {
+          key: "duplicates", title: "Check for duplicate players",
+          status: (d.duplicates ?? 0) > 0 ? "attention" : reg.total > 0 ? "done" : "todo",
+          detail: (d.duplicates ?? 0) > 0
+            ? `${plural(d.duplicates ?? 0, "pair")} of player records may be the same child. Merge them or mark them as different children.`
+            : "Same name and birthdate, or the same Player Id, on two records. None right now.",
+          links: [{ href: "/protected/players/duplicates", label: "Possible duplicates", primary: (d.duplicates ?? 0) > 0 }],
         },
         {
           key: "prior-year", title: "Upload last season's coach ratings",
