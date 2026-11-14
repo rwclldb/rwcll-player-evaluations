@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ClipboardList, ArrowLeft, Layers, MapPin } from "lucide-react";
 import { ScoringSession, type MyScores, type PriorYear, type ScoringCategory, type ScoringPlayer } from "./scoring-session";
 import { HideWhileScoring } from "./hide-while-scoring";
+import { HelpLink } from "@/components/help-link";
 
 const OLDEST_TO_YOUNGEST = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7];
 
@@ -47,6 +48,11 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
     );
   }
   if (isAdmin === true) return redirect("/protected");
+
+  // Which guide the Help link opens: evaluators get theirs, everyone else the coach guide.
+  const { data: myRoles } = await supabase.rpc("my_season_roles");
+  const roleNames = new Set(((myRoles ?? []) as { role_name: string }[]).map((r) => r.role_name));
+  const helpGuide = roleNames.has("independent_evaluator") && !roleNames.has("coach") ? "evaluator" : "coach";
 
   const [sessionResult, seasonResult, categoryResult] = await Promise.all([
     supabase.from("evaluation_sessions").select("id, season_id, league_age, status").is("season_division_id", null)
@@ -133,9 +139,12 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
             <ClipboardList className="h-7 w-7 text-emerald-700 dark:text-emerald-400" /> Evaluator Workspace
           </h1>
         </div>
-        <Button asChild variant="outline" size="sm" className="text-xs">
-          <Link href="/protected/draft-reports">Draft Reports &rarr;</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <HelpLink href={`/protected/help/${helpGuide}#scoring`} label="How to score" />
+          <Button asChild variant="outline" size="sm" className="text-xs">
+            <Link href="/protected/draft-reports">Draft Reports &rarr;</Link>
+          </Button>
+        </div>
       </div>
 
       {params.message && <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">{params.message}</div>}

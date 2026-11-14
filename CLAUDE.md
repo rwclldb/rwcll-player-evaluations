@@ -196,6 +196,8 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
   - `OfflineStatus` (`components/offline-sync.tsx`, in the header on every page) shows "N not sent" and sends the saves when the connection returns, on any page, every 15 seconds while anything waits. An expired sign-in keeps the save and retries after signing in again. A save the server refuses (age group locked, for example) turns the badge red with the reason and waits for Send now or Discard.
   - Not covered: reloading the page while offline shows the browser's offline page (no service worker). Saved scores are safe on the device and are sent the next time the app is opened online.
 
+- **In-app help** (`/protected/help`, test `test:help-content`): guides for coaches (the coach quick start), independent evaluators and registrars, all in `lib/help.ts`. Each guide prints or saves as a PDF (the quick-start sheet to hand out). Reached from the Help icon in the header (phone menu: Help), "How to score" on the scoring screen, Help on Check-in, and "How imports work" on Imports. The index puts the reader's own guides first ("For you"). `[[Label]]` marks on-screen labels; the test fails when a label no longer exists in the app or a help link points at a missing section.
+
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)
@@ -236,3 +238,4 @@ All local data is disposable. Rebuild it with `npm run fixtures:load -- --reset`
 - Read a migration fully before applying it locally. Apply migrations one at a time, never blindly.
 - When a product decision isn't covered here, ask the user instead of guessing. Then record the answer in this file or `docs/DECISIONS.md`.
 - Keep this file current: update "Tracked additions" and "Known issues" as work lands.
+- Keep the in-app help current: when a screen a coach, evaluator or registrar uses changes, update the matching section of `lib/help.ts` in the same branch. `test:help-content` catches renamed buttons but not changed behaviour.

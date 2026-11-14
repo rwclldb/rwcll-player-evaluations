@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { HelpLink } from "@/components/help-link";
 import { Button } from "@/components/ui/button";
 import { 
   UploadCloud, 
@@ -105,7 +106,7 @@ async function ImportBatchesContent() {
             Staged Import Batches
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Administrator-only, read-only review of Sports Connect staging batches.
+            Sports Connect registration uploads for the season. Open a batch to review it. <HelpLink href="/protected/help/registrar#imports" label="How imports work" />
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

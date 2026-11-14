@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { UserRound } from "lucide-react";
+import { CircleHelp, UserRound } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { signOutAction } from "@/app/actions";
@@ -75,6 +75,10 @@ export async function AppHeader({ user }: { user: User }) {
         {/* Desktop: clock, account, sign out, theme. Below xl these move into the menu button. */}
         <div className="hidden items-center gap-3 xl:flex">
           <TopbarClock />
+          <Link href="/protected/help" title="Help: guides for coaches, evaluators and registrars" aria-label="Help"
+            className="flex h-9 items-center rounded border border-border bg-background px-2.5 text-muted-foreground hover:border-emerald-500/50 hover:text-foreground">
+            <CircleHelp className="h-4 w-4" />
+          </Link>
           {/* Icon only on laptops so the menu fits; the email shows on wide screens. */}
           <Link href="/protected/account" title={`Your account (${email}): name and password`} aria-label="Your account"
             className="flex h-9 max-w-[16rem] items-center gap-2 rounded border border-border bg-background px-2.5 text-muted-foreground hover:border-emerald-500/50 hover:text-foreground">

@@ -8,6 +8,7 @@ import { getMyRoles } from "@/lib/my-roles";
 import { leagueToday } from "@/lib/roadmap";
 import { longDate } from "../evaluation-day-hub";
 import { CheckInList, type CheckInRow } from "./check-in-list";
+import { HelpLink } from "@/components/help-link";
 
 type Day = { event_date: string; has_primary: boolean; has_makeup: boolean; age_groups: number[] };
 type SearchParams = Promise<{ date?: string; season?: string; message?: string }>;
@@ -40,9 +41,12 @@ async function CheckInContent({ searchParams }: { searchParams: SearchParams }) 
         <Button asChild variant="ghost" size="sm" className="h-8 w-fit px-2 text-xs text-muted-foreground hover:text-foreground">
           <Link href="/protected"><ArrowLeft className="mr-1 h-4 w-4" /> {roles.isAdmin ? "Roadmap" : "Home"}</Link>
         </Button>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-foreground">
-          <ClipboardCheck className="h-6 w-6 text-emerald-700 dark:text-emerald-400" /> Check-in
-        </h1>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-foreground">
+            <ClipboardCheck className="h-6 w-6 text-emerald-700 dark:text-emerald-400" /> Check-in
+          </h1>
+          <HelpLink href="/protected/help/registrar#check-in" />
+        </div>
         <p className="text-sm text-muted-foreground">
           {season.name}. Tap a player to check them in; tap again to undo. Players without a bib show &quot;+ Bib&quot;.
           Not on the list? <Link href="/protected/players/new" className="font-medium text-foreground underline">Add a walk-up</Link>.

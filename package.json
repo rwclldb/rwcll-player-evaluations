@@ -44,6 +44,7 @@
     "e2e:evaluation-navigation": "node scripts/e2e-evaluation-navigation.cjs",
     "e2e:offline-scoring": "node scripts/e2e-offline-scoring.cjs",
     "test:csv-imports": "node scripts/test-csv-imports.cjs",
+    "test:help-content": "node scripts/test-help-content.cjs",
     "test:bib-from-registration-runtime": "node scripts/test-bib-from-registration-runtime.cjs",
     "test:coach-kids-stars-runtime": "node scripts/test-coach-kids-stars-runtime.cjs",
     "test:reimport-sync-runtime": "node scripts/test-reimport-sync-runtime.cjs",
