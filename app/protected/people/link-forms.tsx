@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Copy, Link2 } from "lucide-react";
+import { Copy, Eye, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { invitePerson, signInLink, type FormResult } from "./actions";
+import { invitePerson, previewLink, signInLink, type FormResult } from "./actions";
 
 const input = "mt-1 block h-10 w-full rounded-md border border-input bg-background px-3 text-base text-foreground sm:text-sm";
 
@@ -53,6 +53,21 @@ export function InviteForm({ seasonId, seasonName, disabled }: { seasonId: numbe
         <Button type="submit" disabled={disabled || pending} className="h-10">{pending ? "Working..." : "Invite"}</Button>
       </div>
       <div className="sm:col-span-2"><LinkBox result={result} /></div>
+    </form>
+  );
+}
+
+// Per-person: a one-time link to see the app as this person, read-only (open it in a private window).
+export function ViewAsButton({ userId, seasonId }: { userId: string; seasonId: number | null }) {
+  const [result, action, pending] = useActionState(previewLink, null);
+  return (
+    <form action={action} className="contents">
+      <input type="hidden" name="userId" value={userId} />
+      <input type="hidden" name="seasonId" value={seasonId ?? ""} />
+      <Button type="submit" variant="ghost" size="sm" className="h-8 text-xs" disabled={pending} title="See the app as this person sees it (read-only)">
+        <Eye className="mr-1 h-3.5 w-3.5" /> View as
+      </Button>
+      {result && <div className="w-full"><LinkBox result={result} /></div>}
     </form>
   );
 }

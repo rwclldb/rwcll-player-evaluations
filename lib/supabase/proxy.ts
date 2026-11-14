@@ -59,6 +59,15 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // An admin's "View as" preview is read-only: refuse every server action (all of the app's writes go through them).
+  // Score and note saves are refused in the database too. Ending the preview is a GET route, so it still works.
+  if (user && request.method === "POST" && request.headers.has("next-action")) {
+    const { data: preview } = await supabase.rpc("current_preview");
+    if (preview) {
+      return new NextResponse("Admin preview is read-only: nothing is saved.", { status: 403, headers: { "content-type": "text/plain" } });
+    }
+  }
+
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
   // If you're creating a new response object with NextResponse.next() make sure to:
   // 1. Pass the request in it, like so:

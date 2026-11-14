@@ -7,6 +7,7 @@ import { CoachKidBadge } from "@/components/coach-kid-badge";
 import { useOnline, useUnsent } from "@/components/offline-sync";
 import { enqueue, isNetworkError, removeFromQueue, type SavePayload } from "@/lib/offline-queue";
 import { saveScores } from "./actions";
+import { inPreviewBrowser, PREVIEW_MESSAGE } from "@/lib/preview";
 import { RatingInputs } from "./rating-inputs";
 
 // The scoring screen for one age group. Everything (players, your scores, notes) is loaded once, so moving between
@@ -153,6 +154,11 @@ export function ScoringSession(props: {
       noteKind, note: noteKind ? String(form.get("note") ?? "") : null,
     };
     const label = `${bibLabel(player)} ${player.name} (age ${player.leagueAge})`;
+    // An admin's "View as" preview never saves, and never keeps scores on the device to send later.
+    if (inPreviewBrowser()) {
+      setNotice({ text: PREVIEW_MESSAGE, tone: "error" });
+      return;
+    }
 
     const keepOnPhone = (error?: string): Notice | null => {
       try {

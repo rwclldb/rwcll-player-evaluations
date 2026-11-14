@@ -201,6 +201,11 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - **Scoring progress** (`/protected/progress`, admin; migration 20261116090000, test `test:scoring-progress-runtime`): per age group, each assigned coach and evaluator with a progress bar (done = saved + not evaluated, out of players registered at that age), last save time, not-evaluated and draft counts, and players checked in today. Open age groups first; a banner counts who has started and names anyone quiet for 15+ minutes. Refreshes every 30 seconds. Counts only (`admin_scoring_progress(season)`). Linked from the Evaluation day roadmap step "Watch scoring progress".
 - **Show-password eye** (`components/password-input.tsx`): sign-in, set-password and Your account password boxes have an eye button to show the typed password. Shown only on touch screens (`@media (pointer: coarse)`), per the user's request.
 
+- **View as (read-only preview)** (People → "View as", migration 20261116120000, test `test:view-as-runtime`):
+  - For accounts with a role that have signed in at least once; never admins or yourself. `previewLink` makes a one-time magic link and records a SHA-256 of its token (`admin_create_preview`); the admin opens it in a private window. `/auth/confirm` calls `start_preview_from_token`, which marks that sign-in session (JWT `session_id`) as a preview in `preview_sessions`, whatever the link's `next`, and puts back the person's real `last_sign_in_at`.
+  - Read-only: `proxy.ts` refuses every server action from a preview session (403), and `save_evaluation`, `save_private_note` and `save_shared_note` refuse too (`private.in_preview()`). The header shows a purple banner (`current_preview()`) with End preview (`/auth/end-preview`, a GET route: `end_preview` and sign-out) in place of Sign out.
+  - The `rwcll_preview` cookie only words messages ("Admin preview is read-only: nothing is saved", `app/protected/error.tsx`, the scoring screen) and stops the offline queue; normal sign-in, sign-out and ordinary links clear it. Audited: `account_preview_link_created`, `account_preview_started`.
+
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)

@@ -206,6 +206,27 @@ export async function signInLink(_prev: FormResult, formData: FormData): Promise
   return { ok: true, message: `Sign-in link for ${data.user.email} (works once; don't share it with anyone else):`, link: confirmLink(await appOrigin(), res.data.properties.hashed_token, "recovery") };
 }
 
+// "View as": a one-time sign-in link for this person that opens a read-only preview (see migration 20261116120000).
+// The database records the link first, so signing in with it always marks that session read-only.
+export async function previewLink(_prev: FormResult, formData: FormData): Promise<FormResult> {
+  const { supabase } = await requireAdmin();
+  const userId = String(formData.get("userId") ?? "");
+  const admin = createAdminClient();
+  const { data, error } = await admin.auth.admin.getUserById(userId);
+  if (error || !data.user?.email) return { ok: false, message: error?.message ?? "Account not found." };
+  const res = await admin.auth.admin.generateLink({ type: "magiclink", email: data.user.email });
+  if (res.error) return { ok: false, message: res.error.message };
+  const token = res.data.properties.hashed_token;
+  const { error: recordError } = await supabase.rpc("admin_create_preview", { p_target_user_id: userId, p_token_hash: token });
+  if (recordError) return { ok: false, message: recordError.message };
+  const link = `${await appOrigin()}/auth/confirm?token_hash=${encodeURIComponent(token)}&type=magiclink&next=/protected`;
+  return {
+    ok: true,
+    message: `Read-only preview of ${data.user.email}. Copy the link and open it in a private (incognito) window; opening it in this window signs you out of your admin account here. It works once, within an hour.`,
+    link,
+  };
+}
+
 export async function grantRole(formData: FormData) {
   const { supabase } = await requireAdmin();
   const role = String(formData.get("role") ?? "") as Role;

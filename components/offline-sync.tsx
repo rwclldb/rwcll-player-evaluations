@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { CloudOff, RefreshCw } from "lucide-react";
 import { saveScores } from "@/app/protected/evaluations/actions";
+import { inPreviewBrowser } from "@/lib/preview";
 import {
   isNetworkError, markQueueError, onQueueChange, queueSnapshot, readQueue, removeFromQueue, type QueuedSave,
 } from "@/lib/offline-queue";
@@ -36,6 +37,7 @@ export function useOnline(): boolean {
 /** Sends unsent saves, one at a time. Stops at the first network failure. Returns how many were sent. */
 export async function sendQueued(userId: string, items: QueuedSave[], includeRefused: boolean): Promise<number> {
   let sent = 0;
+  if (inPreviewBrowser()) return 0; // an admin's read-only preview sends nothing
   for (const item of items) {
     if (item.error && !item.retryable && !includeRefused) continue;
     try {

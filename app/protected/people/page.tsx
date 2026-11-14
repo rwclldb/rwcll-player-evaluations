@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, hasAdminKey } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
 import { deleteAccount, grantRole, resendInvite, revokeRole, setCoachDivisions, setDisabled, updateAccount } from "./actions";
-import { InviteForm, SignInLinkButton } from "./link-forms";
+import { InviteForm, SignInLinkButton, ViewAsButton } from "./link-forms";
 import { PeopleImport } from "./people-import";
 import type { ExistingPerson, SeasonRole } from "@/lib/people-sync";
 import { CsvTemplatePanel } from "@/components/csv-template";
@@ -228,6 +228,10 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
                   );
                 })()}
                 {!st.disabled && <SignInLinkButton userId={u.id} seasonId={season?.id ?? null} />}
+                {/* View as: people with a role who have signed in at least once, never admins or yourself. */}
+                {!st.disabled && u.id !== me?.id && u.last_sign_in_at && mine.length > 0 && !roles.some((r) => r.user_id === u.id && r.role_name === "administrator") && (
+                  <ViewAsButton userId={u.id} seasonId={season?.id ?? null} />
+                )}
                 {!u.last_sign_in_at && !st.disabled && (
                   <form action={resendInvite}>
                     <input type="hidden" name="userId" value={u.id} />

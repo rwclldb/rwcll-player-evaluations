@@ -2,7 +2,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { PREVIEW_COOKIE } from "@/lib/preview";
 import { redirect } from "next/navigation";
 
 export async function createSeason(formData: FormData) {
@@ -38,6 +40,7 @@ export async function loginAction(formData: FormData) {
   const password = formData.get("password") as string;
   const supabase = await createClient();
 
+  (await cookies()).delete(PREVIEW_COOKIE); // a normal sign-in is never an admin preview
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -53,6 +56,7 @@ export async function loginAction(formData: FormData) {
 export async function signOutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  (await cookies()).delete(PREVIEW_COOKIE);
   return redirect("/auth/login");
 }
 

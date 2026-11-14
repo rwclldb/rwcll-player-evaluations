@@ -48,9 +48,18 @@ export async function AppHeader({ user }: { user: User }) {
     ...(roles.scores || !roles.registrarSeason ? EVALUATOR_LINKS : []),
   ];
   const email = user.email ?? "";
+  // An admin's "View as" preview of this account (read-only), or null.
+  const { data: preview } = await supabase.rpc("current_preview");
+  const previewInfo = preview as { target_name: string; admin_name: string } | null;
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-card/95 shadow-sm backdrop-blur">
+      {previewInfo && (
+        <div role="status" className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-violet-600 px-4 py-2 text-center text-sm text-white">
+          <span><b>Admin preview:</b> you&apos;re seeing the app as {previewInfo.target_name}. Read-only; nothing you do is saved.</span>
+          <a href="/auth/end-preview" className="rounded-md bg-white/15 px-2.5 py-1 font-semibold hover:bg-white/25">End preview</a>
+        </div>
+      )}
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-4">
           <Link href="/protected" className="group flex shrink-0 items-center gap-2">
@@ -85,14 +94,18 @@ export async function AppHeader({ user }: { user: User }) {
             <UserRound className="h-4 w-4 shrink-0" />
             <span className="hidden truncate font-mono text-xs 2xl:inline">{email}</span>
           </Link>
-          <form action={signOutAction}>
-            <Button variant="outline" size="sm" type="submit">
-              Sign Out
-            </Button>
-          </form>
+          {previewInfo ? (
+            <Button asChild variant="outline" size="sm"><a href="/auth/end-preview">End preview</a></Button>
+          ) : (
+            <form action={signOutAction}>
+              <Button variant="outline" size="sm" type="submit">
+                Sign Out
+              </Button>
+            </form>
+          )}
           <ThemeSwitcher />
         </div>
-        <MobileMenu links={links} email={email} />
+        <MobileMenu links={links} email={email} preview={Boolean(previewInfo)} />
       </div>
     </header>
   );

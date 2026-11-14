@@ -48,7 +48,7 @@ export function DesktopNav({ links }: { links: NavLink[] }) {
 }
 
 // Phones, tablets and small laptops (below xl): one menu button holding the links, account, theme and sign out.
-export function MobileMenu({ links, email }: { links: NavLink[]; email: string }) {
+export function MobileMenu({ links, email, preview = false }: { links: NavLink[]; email: string; preview?: boolean }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const themes = [
@@ -113,9 +113,16 @@ export function MobileMenu({ links, email }: { links: NavLink[]; email: string }
             </span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => void signOutAction()} className="min-h-11 gap-2 text-base">
-          <LogOut className="h-4 w-4" /> Sign out
-        </DropdownMenuItem>
+        {preview ? (
+          <DropdownMenuItem asChild>
+            {/* A full page load (not client navigation): the route ends the preview and signs this window out. */}
+            <a href="/auth/end-preview" className="min-h-11 gap-2 text-base"><LogOut className="h-4 w-4" /> End preview</a>
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem onSelect={() => void signOutAction()} className="min-h-11 gap-2 text-base">
+            <LogOut className="h-4 w-4" /> Sign out
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
