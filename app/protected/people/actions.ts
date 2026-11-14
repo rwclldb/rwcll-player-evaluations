@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
+import { appOrigin } from "@/lib/app-origin";
 import { redirect } from "next/navigation";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
@@ -38,13 +38,6 @@ async function findUserByEmail(admin: SupabaseClient, email: string): Promise<Us
   return undefined;
 }
 
-// The app's own address, so links work on localhost, previews and the main site.
-async function appOrigin() {
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") || host?.startsWith("127.") ? "http" : "https");
-  return host ? `${proto}://${host}` : "";
-}
 
 // A one-time link handled by the app's own /auth/confirm route (no email template needed).
 const confirmLink = (origin: string, tokenHash: string, type: "invite" | "recovery") =>

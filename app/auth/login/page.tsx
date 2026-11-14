@@ -4,7 +4,7 @@ import { LoginForm } from "@/components/login-form";
 async function LoginContent({
   searchParams,
 }: {
-  searchParams: Promise<{ message?: string }>;
+  searchParams: Promise<{ message?: string; next?: string }>;
 }) {
   const params = await searchParams;
   return <LoginForm searchParams={params} />;
@@ -13,7 +13,7 @@ async function LoginContent({
 export default function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ message?: string }>;
+  searchParams: Promise<{ message?: string; next?: string }>;
 }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">

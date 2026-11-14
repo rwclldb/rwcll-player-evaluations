@@ -206,6 +206,9 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
   - Read-only: `proxy.ts` refuses every server action from a preview session (403), and `save_evaluation`, `save_private_note` and `save_shared_note` refuse too (`private.in_preview()`). The header shows a purple banner (`current_preview()`) with End preview (`/auth/end-preview`, a GET route: `end_preview` and sign-out) in place of Sign out.
   - The `rwcll_preview` cookie only words messages ("Admin preview is read-only: nothing is saved", `app/protected/error.tsx`, the scoring screen) and stops the offline queue; normal sign-in, sign-out and ordinary links clear it. Audited: `account_preview_link_created`, `account_preview_started`.
 
+- **QR codes** (`/protected/qr`, admins and registrars; no migration; `qrcode` package, `lib/qr.ts`, test `test:qr-and-redirects`): a printable sheet with a large "Scan to open RWCLL Evaluations" code, the coach quick start, and one code per age group that opens its scoring list (`registrar_timetable` for the list). Codes use the app's own address (`lib/app-origin.ts`), so print them from the hosted site; the page warns on localhost. Printed help guides carry an "open the app" code (print only). Linked from the registrar home and the Evaluation week rosters step.
+- **Back to the scanned page after signing in**: when signed out, `proxy.ts` sends people to `/auth/login?next=<page>`; the sign-in form passes it on and `loginAction` returns there. `lib/safe-next.ts` only allows `/protected...` paths (no other sites, `//`, backslashes or line breaks). A wrong password keeps `next`.
+
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)

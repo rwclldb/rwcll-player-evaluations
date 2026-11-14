@@ -11,7 +11,7 @@ import { loginAction } from "@/app/actions";
 export function LoginForm({
   searchParams,
 }: {
-  searchParams?: { message?: string };
+  searchParams?: { message?: string; next?: string };
 }) {
   return (
     <Card className="w-full max-w-md mx-auto border-border bg-card">
@@ -23,6 +23,8 @@ export function LoginForm({
       </CardHeader>
       <CardContent>
         <form action={loginAction} className="space-y-4">
+          {/* Where to go after signing in (a scanned QR code, for example). Checked again on the server. */}
+          {searchParams?.next && <input type="hidden" name="next" value={searchParams.next} />}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" name="email" type="email" placeholder="coach@rwcll.org" required />

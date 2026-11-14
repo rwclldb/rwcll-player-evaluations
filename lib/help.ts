@@ -19,6 +19,7 @@ const signingIn: HelpSection = {
     "Accounts are set up by the league. You'll get either an invitation email or a sign-in link from a league admin.",
     { steps: [
       "Open the link and choose a password (at least 8 characters). On a phone, tap the eye in the password box to see what you typed.",
+      "To open the app on a phone, you can also scan a QR code from the league (on printed guides and at the field). If you're not signed in yet, you sign in first and then land on that page.",
       "After that, sign in with your email and password. On a phone, add the site to your home screen so it's one tap away.",
       "Forgot your password? Use [[Forgot password?]] on the sign-in page, or ask a league admin for a new sign-in link.",
     ] },
@@ -239,6 +240,7 @@ export const GUIDES: HelpGuide[] = [
           { list: [
             "[[Rosters]]: one page per age group with Check-in and Notes columns. Sort by [[Bib number]] or [[Last name, first name]] and tap [[Print]].",
             "[[Who scores when]]: each age group's time and place with its coaches and evaluators, [[By age group]] or [[By person]] (handy to give each coach their times). Tap [[Print]].",
+            "[[QR codes]]: printable codes that open the app, each age group's scoring list, and the coach quick start. Post them at the fields. Print them from the league's website, not a test computer.",
           ] },
         ],
       },

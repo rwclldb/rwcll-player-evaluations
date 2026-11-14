@@ -5,12 +5,17 @@ import { Button } from "@/components/ui/button";
 import { guideFor } from "@/lib/help";
 import { PrintButton } from "../../roster/print-button";
 import { GuideView } from "../guide-view";
+import { appOrigin } from "@/lib/app-origin";
+import { qrSvg } from "@/lib/qr";
 
 // One guide. Every signed-in person can read every guide (admins hand them out); the guides hold no league data.
 export default async function GuidePage({ params }: { params: Promise<{ guide: string }> }) {
   const { guide: key } = await params;
   const guide = guideFor(key);
   if (!guide) notFound();
+  // Printed guides carry a code to open the app, so a coach can scan the paper.
+  const appUrl = `${await appOrigin()}/protected`;
+  const qr = { svg: await qrSvg(appUrl), url: appUrl };
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <style>{"@media print { @page { size: portrait; margin: 0.6in; } }"}</style>
@@ -20,7 +25,7 @@ export default async function GuidePage({ params }: { params: Promise<{ guide: s
         </Button>
         <PrintButton label="Print or save as PDF" />
       </div>
-      <GuideView guide={guide} />
+      <GuideView guide={guide} qr={qr} />
     </div>
   );
 }

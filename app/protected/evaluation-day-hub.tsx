@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, ClipboardCheck, FileSpreadsheet, Printer, UserPlus, Users, type LucideIcon } from "lucide-react";
+import { CalendarClock, ClipboardCheck, FileSpreadsheet, Printer, QrCode, UserPlus, Users, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { leagueToday } from "@/lib/roadmap";
 
@@ -11,6 +11,7 @@ const CARDS: { href: string; title: string; text: string; icon: LucideIcon }[] =
   { href: "/protected/timetable", title: "Who scores when", text: "Each age group's time, place, coaches and evaluators.", icon: CalendarClock },
   { href: "/protected/players", title: "Players", text: "Find a player, fix a name, birthdate, age group or bib.", icon: Users },
   { href: "/protected/import-batches", title: "Registration imports", text: "Upload the Sports Connect export or a bib list, and review it.", icon: FileSpreadsheet },
+  { href: "/protected/qr", title: "QR codes", text: "Print codes that open the app or an age group's scoring list.", icon: QrCode },
 ];
 
 export const longDate = (iso: string) =>

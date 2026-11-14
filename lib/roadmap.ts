@@ -205,7 +205,7 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
           key: "rosters", title: "Print check-in rosters",
           status: "info",
           detail: "One page per age group, sorted by bib or name, with Check-in and Notes columns.",
-          links: [{ href: "/protected/roster?age=all", label: "All ages" }, { href: "/protected/roster?age=all&sort=name", label: "By name" }, { href: "/protected/timetable", label: "Who scores when" }],
+          links: [{ href: "/protected/roster?age=all", label: "All ages" }, { href: "/protected/roster?age=all&sort=name", label: "By name" }, { href: "/protected/timetable", label: "Who scores when" }, { href: "/protected/qr", label: "QR codes" }],
         },
         {
           key: "prior-switch", title: "Board decision: prior-year ratings while scoring",

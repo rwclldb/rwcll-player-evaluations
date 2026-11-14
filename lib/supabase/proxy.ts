@@ -56,6 +56,9 @@ export async function updateSession(request: NextRequest) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
+    // Come back here after signing in (for example a scanned QR code for an age group).
+    const wanted = request.nextUrl.pathname.startsWith("/protected") ? request.nextUrl.pathname + request.nextUrl.search : "";
+    url.search = wanted ? `?next=${encodeURIComponent(wanted)}` : "";
     return NextResponse.redirect(url);
   }
 

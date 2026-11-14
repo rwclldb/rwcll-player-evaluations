@@ -29,9 +29,15 @@ function Block({ block }: { block: HelpBlock }) {
   );
 }
 
-export function GuideView({ guide }: { guide: HelpGuide }) {
+export function GuideView({ guide, qr }: { guide: HelpGuide; qr?: { svg: string; url: string } }) {
   return (
     <article className="space-y-6 text-sm leading-relaxed text-slate-700 dark:text-slate-300 print:text-[11pt] print:!text-black">
+      {qr && (
+        <figure className="float-right ml-4 hidden w-28 text-center text-[9pt] text-black print:block">
+          <div dangerouslySetInnerHTML={{ __html: qr.svg }} />
+          <figcaption>Scan to open the app</figcaption>
+        </figure>
+      )}
       <header className="space-y-2">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground print:text-black">RWCLL Player Evaluations · {guide.audience}</p>
         <h1 className="text-2xl font-bold text-foreground sm:text-3xl print:text-black">{guide.title}</h1>

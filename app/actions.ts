@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { PREVIEW_COOKIE } from "@/lib/preview";
+import { safeNext } from "@/lib/safe-next";
 import { redirect } from "next/navigation";
 
 export async function createSeason(formData: FormData) {
@@ -38,6 +39,7 @@ export async function createSeason(formData: FormData) {
 export async function loginAction(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const next = safeNext(formData.get("next"));
   const supabase = await createClient();
 
   (await cookies()).delete(PREVIEW_COOKIE); // a normal sign-in is never an admin preview
@@ -47,10 +49,10 @@ export async function loginAction(formData: FormData) {
   });
 
   if (error) {
-    return redirect(`/auth/login?message=${encodeURIComponent(error.message)}`);
+    return redirect(`/auth/login?message=${encodeURIComponent(error.message)}${next !== "/protected" ? `&next=${encodeURIComponent(next)}` : ""}`);
   }
 
-  return redirect("/protected");
+  return redirect(next);
 }
 
 export async function signOutAction() {
