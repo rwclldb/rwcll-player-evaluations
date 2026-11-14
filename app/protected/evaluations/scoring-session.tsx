@@ -15,7 +15,8 @@ import { RatingInputs } from "./rating-inputs";
 // players and saving work with no signal: saves that can't be sent are kept on this device and sent later.
 
 export type ScoringCategory = { id: number; code: string; name: string; category_group: string; sort_order: number };
-export type ScoringPlayer = { id: number; bib: number | null; name: string; leagueAge: number; birthDate: string | null; coachKid: boolean; here: boolean; exempt: ExemptScope | null };
+// No birthdate: coaches and evaluators see the Little League age only (birthdate protection).
+export type ScoringPlayer = { id: number; bib: number | null; name: string; leagueAge: number; coachKid: boolean; here: boolean; exempt: ExemptScope | null };
 export type MyScores = { status: string; scores: Record<string, number>; answers: Record<string, string> };
 export type PriorYear = { prior_overall: number | null; prior_ratings: number; prior_skills: Record<string, number> };
 
@@ -259,7 +260,7 @@ export function ScoringSession(props: {
               {player.here && <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Here</span>}
             </h2>
             <p className="text-xs text-muted-foreground">
-              LL age {player.leagueAge}{player.birthDate ? ` · born ${player.birthDate}` : ""} · player {index + 1} of {players.length}
+              LL age {player.leagueAge} · player {index + 1} of {players.length}
             </p>
           </div>
           <StatusChip status={statusOf(player.id)} />

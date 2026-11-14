@@ -78,6 +78,13 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - A new season carries forward division setup only. No teams, coach assignments, or current evaluations carry forward. Historical end-of-season coach ratings are the one thing that feeds the next season.
 - Closed seasons can be reopened only by an explicit, audited admin action.
 
+**Birthdates (a child's name plus exact birthdate is sensitive; decided 2026-11-17)**
+- Never shown in lists, to anyone. Lists show the LL age and a marker: "✓ DOB" (on file) or "! No DOB".
+- Never shown to coaches or evaluators anywhere; they see the Little League age only.
+- Admins and registrars see one birthdate at a time: on the player edit page (hidden until Show or Change) or with Show on an import row. Every reveal is audited (`birthdate_revealed`).
+- Nobody reads birthdate columns directly: `players.date_of_birth`, staged import birth dates and `source_data` have no SELECT grant; use `has_birth_date`, `reveal_birthdate` and `import_batch_candidates`. New columns on players, sports_connect_import_rows, bib_import_rows or historical_evaluation_import_rows need their own `GRANT SELECT (...)`.
+- The audit log never stores birthdates; handled import rows forget them. No column encryption for now (Supabase encrypts storage and backups; matching needs the dates in the database).
+
 **Player identity and imports**
 - Internal player ID is independent of name, birthdate, and Sports Connect ID.
 - Sports Connect Player IDs are matching evidence, not proof. The same child can show up with different IDs.
@@ -220,6 +227,12 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
   - Admins and registrars record and remove them on the player edit page (`set_player_exemption`, `revoke_player_exemption`; details via `registration_exemption`). Players page: Exempt badge and filter (`season_exemptions`).
   - Everyone who can see the age group gets only the scope (`session_exemptions`): "Exempt" badge on the scoring list and page, the draft report (badge, CSV "Exempt" column, PDF), check-in.
   - Check-in: players exempt from attending are left out of "Not here yet", the "X of Y here" count (home and check-in) and makeup-day lists (`checkin_list` returns `exempt_scope`). Scoring Progress leaves players exempt from evaluation out of "of N players".
+
+- **Birthdate protection** (migration 20261117120000, test `test:birthdate-protection-runtime`):
+  - Column privileges: no SELECT on `players.date_of_birth`, staged rows' `birth_date` / `birth_date_text`, or `source_data` of bib and prior-year uploads; each table has a generated `has_birth_date`. `reveal_birthdate(kind, id, context)` returns one birthdate to admins and registrars (prior-year rows: admins) and logs `birthdate_revealed`. `import_batch_candidates(batch)` compares names and birthdates in the database for the import batch and Row Review pages (every player, not the first 1,000). `checkin_list` no longer returns birthdates; the scoring screen shows LL age only.
+  - Screens: `DobMarker` ("✓ DOB" / "! No DOB") on Players, the walk-up page, import pages and the upload preview; `RevealBirthdate` ("Show", logged) on import rows, bib rows, prior-year rows and re-import birthdate changes; the player edit page's `BirthdateField` stays hidden until Show or Change and sends `birthDateMode=keep` so `admin_save_registration(..., p_keep_date_of_birth)` keeps the stored birthdate without reading it. Printed rosters have no birthdate column. Change history shows "Birthdate changed" / "Birthdate shown".
+  - Copies: an `audit_log` insert trigger replaces birthdate values with "(hidden)" (and adds `date_of_birth_changed`); 660 existing entries were scrubbed once (the immutability trigger was switched off for that statement only; logged as `audit_birthdates_hidden`). Staged Sports Connect, bib and prior-year rows forget birthdates once handled. Re-import comparisons keep an md5 of the app's birthdate, not the dates. Ignored Sports Connect rows lose theirs too, so a reopened row commits without a birthdate.
+  - The upload preview's "download issues" CSV still includes the file's own birthdate value, to fix it in Sports Connect.
 
 ## Tracked additions (confirmed requirements, not yet built)
 

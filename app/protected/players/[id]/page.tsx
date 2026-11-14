@@ -4,8 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, History } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { leagueAgeForBirthDate } from "@/lib/sports-connect-preview";
-import { type RegistrationRow, usDate } from "@/lib/players";
+import { type RegistrationRow } from "@/lib/players";
+import { BirthdateField } from "./birthdate-field";
 import { removeExemption, saveExemption, saveRegistration, setCoachKid } from "../actions";
 import { EXEMPT_LABEL, type ExemptScope } from "@/components/exempt-badge";
 
@@ -14,6 +14,12 @@ type SearchParams = Promise<{ message?: string; error?: string }>;
 type AuditRow = { id: number; action: string; reason: string | null; before_data: Record<string, unknown> | null; after_data: Record<string, unknown> | null; created_at: string };
 
 const input = "mt-1 block h-11 w-full rounded-md border border-input bg-background px-3 text-base text-foreground sm:text-sm";
+// What each kind of history entry is called.
+const HISTORY_LABELS: Record<string, string> = {
+  registration_added_on_site: "Added on site", birthdate_revealed: "Birthdate shown", player_checked_in: "Checked in",
+  player_check_in_undone: "Check-in undone", registration_bib_set: "Bib set", player_exemption_set: "Exemption recorded",
+  player_exemption_revoked: "Exemption removed", coach_kid_set: "Coach's kid changed", registration_synced_from_import: "Updated from import",
+};
 const LABELS: Record<string, string> = {
   first_name: "First name", last_name: "Last name", date_of_birth: "Birthdate", league_age: "Age group", evaluation_number: "Bib",
 };
@@ -28,7 +34,7 @@ async function EditContent({ params, searchParams }: { params: Params; searchPar
   const psId = Number(id);
   if (!Number.isSafeInteger(psId) || psId <= 0) notFound();
   const { data } = await supabase.from("player_seasons")
-    .select("id, season_id, evaluation_number, league_age, league_age_source, registration_source, external_player_id, external_registration_id, is_coach_kid, players(id, first_name, last_name, date_of_birth), seasons(name, is_closed)")
+    .select("id, season_id, evaluation_number, league_age, league_age_source, registration_source, external_player_id, external_registration_id, is_coach_kid, players(id, first_name, last_name, has_birth_date), seasons(name, is_closed)")
     .eq("id", psId).maybeSingle();
   if (!data) notFound();
   const reg = data as unknown as RegistrationRow & { external_registration_id: string | null; seasons: { name: string; is_closed: boolean } | null };
@@ -41,7 +47,6 @@ async function EditContent({ params, searchParams }: { params: Params; searchPar
   ]);
   const exemption = ((exemptionData ?? []) as { scope: ExemptScope; reason: string; approved_by_name: string | null; recorded_by_name: string | null; recorded_at: string }[])[0];
   const history = (auditData ?? []) as AuditRow[];
-  const chartAge = leagueAgeForBirthDate(reg.players?.date_of_birth);
   const locked = hasScores === true;
 
   return (
@@ -131,10 +136,7 @@ async function EditContent({ params, searchParams }: { params: Params; searchPar
             <input name="lastName" required defaultValue={reg.players?.last_name} className={input} />
           </label>
           <label className="text-sm font-medium text-foreground">Birthdate
-            <input name="birthDate" defaultValue={usDate(reg.players?.date_of_birth)} placeholder="MM/DD/YYYY" className={input} />
-            <span className="mt-1 block text-xs font-normal text-muted-foreground">
-              {chartAge !== null ? `Age chart: league age ${chartAge}.` : reg.players?.date_of_birth ? "Not on the age chart." : "Missing. Set the age group by hand."}
-            </span>
+            <BirthdateField playerSeasonId={reg.id} hasBirthDate={Boolean(reg.players?.has_birth_date)} className={input} />
           </label>
           <label className="text-sm font-medium text-foreground">Age group (league age)
             <input name="leagueAge" inputMode="numeric" defaultValue={reg.league_age ?? ""} disabled={locked} className={input} />
@@ -164,11 +166,15 @@ async function EditContent({ params, searchParams }: { params: Params; searchPar
           <ul className="space-y-2 text-xs">
             {history.map((h) => (
               <li key={h.id} className="rounded border border-border bg-card p-2">
-                <p className="text-muted-foreground">{new Date(h.created_at).toLocaleString("en-US")} · {h.action === "registration_added_on_site" ? "Added on site" : "Edited"}{h.reason ? ` · ${h.reason}` : ""}</p>
+                <p className="text-muted-foreground">{new Date(h.created_at).toLocaleString("en-US")} · {HISTORY_LABELS[h.action] ?? "Edited"}{h.reason && h.action !== "birthdate_revealed" ? ` · ${h.reason}` : h.reason ? ` (${h.reason})` : ""}</p>
                 {h.before_data && h.after_data && (
                   <p className="mt-1 text-foreground">
-                    {Object.keys(LABELS).filter((k) => JSON.stringify(h.before_data?.[k]) !== JSON.stringify(h.after_data?.[k]))
-                      .map((k) => `${LABELS[k]}: ${String(h.before_data?.[k] ?? "—")} → ${String(h.after_data?.[k] ?? "—")}`).join("; ")}
+                    {[
+                      // Birthdates are never stored in the history (birthdate protection), only that one changed.
+                      ...(h.after_data?.date_of_birth_changed ? ["Birthdate changed"] : []),
+                      ...Object.keys(LABELS).filter((k) => k !== "date_of_birth" && JSON.stringify(h.before_data?.[k]) !== JSON.stringify(h.after_data?.[k]))
+                        .map((k) => `${LABELS[k]}: ${String(h.before_data?.[k] ?? "—")} → ${String(h.after_data?.[k] ?? "—")}`),
+                    ].join("; ")}
                   </p>
                 )}
               </li>

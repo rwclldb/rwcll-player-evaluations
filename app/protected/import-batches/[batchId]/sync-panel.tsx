@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { applyTickedChanges, keepAppValues } from "./sync-actions";
+import { RevealBirthdate } from "@/components/reveal-birthdate";
 
 type Change = { field: string; label: string; current: string; incoming: string; auto: boolean; applied?: boolean; blocked?: string | null; note?: string | null };
 type SyncRow = {
@@ -12,7 +13,8 @@ type Missing = { player_season_id: number; player_name: string; external_player_
 
 const field = "mt-1 block h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground";
 const shown = (value: string) => value || "—";
-const summary = (changes: Change[]) => changes.map((c) => `${c.label} ${shown(c.current)} → ${shown(c.incoming)}`).join("; ");
+// Birthdates are never stored or listed here (birthdate protection), only that one changed.
+const summary = (changes: Change[]) => changes.map((c) => c.field === "birth_date" ? "Birthdate changed" : `${c.label} ${shown(c.current)} → ${shown(c.incoming)}`).join("; ");
 
 function PlayerLink({ row }: { row: SyncRow }) {
   // The name the app has now (a waiting or kept name change still shows the old one).
@@ -86,9 +88,13 @@ export async function SyncPanel({ batchId, message, error }: { batchId: number; 
                           : <input type="checkbox" name="change" value={`${row.id}:${c.field}`} aria-label={`Apply ${c.label} for ${row.first_name} ${row.last_name}`} className="h-5 w-5" />}
                       </td>
                       <td className="py-1 pr-3">{c.label}</td>
-                      <td className="py-1 pr-3 font-mono">{shown(c.current)}</td>
+                      <td className="py-1 pr-3 font-mono">
+                        {c.field === "birth_date"
+                          ? (row.existing_player_season_id ? <RevealBirthdate kind="registration" id={row.existing_player_season_id} context="Re-import changes" /> : "—")
+                          : shown(c.current)}
+                      </td>
                       <td className="py-1 font-mono">
-                        {shown(c.incoming)}
+                        {c.field === "birth_date" ? <RevealBirthdate kind="import_row" id={row.id} context="Re-import changes" /> : shown(c.incoming)}
                         {c.blocked && <span className="block font-sans text-xs text-amber-800 dark:text-amber-300">{c.blocked}</span>}
                         {c.note && <span className="block font-sans text-xs text-muted-foreground">{c.note}</span>}
                       </td>

@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { CoachKidBadge } from "@/components/coach-kid-badge";
 import { ExemptBadge, type ExemptScope } from "@/components/exempt-badge";
-import { type RegistrationRow, usDate } from "@/lib/players";
+import { type RegistrationRow } from "@/lib/players";
+import { DobMarker } from "@/components/dob-marker";
 
 type SearchParams = Promise<{ season?: string; q?: string; show?: string; age?: string; message?: string; error?: string }>;
 
@@ -35,7 +36,7 @@ async function PlayersContent({ searchParams }: { searchParams: SearchParams }) 
 
   const { data, error } = season
     ? await supabase.from("player_seasons")
-        .select("id, season_id, evaluation_number, league_age, league_age_source, registration_source, external_player_id, is_coach_kid, players(id, first_name, last_name, date_of_birth)")
+        .select("id, season_id, evaluation_number, league_age, league_age_source, registration_source, external_player_id, is_coach_kid, players(id, first_name, last_name, has_birth_date)")
         .eq("season_id", season.id)
     : { data: [], error: null };
   const { data: exemptData } = season ? await supabase.rpc("season_exemptions", { p_season_id: season.id }) : { data: [] };
@@ -135,7 +136,7 @@ async function PlayersContent({ searchParams }: { searchParams: SearchParams }) 
             <tr>
               <th className="px-3 py-2">Bib</th>
               <th className="px-3 py-2">Player</th>
-              <th className="px-3 py-2">Birthdate</th>
+              <th className="px-3 py-2">DOB</th>
               <th className="px-3 py-2">Age</th>
               <th className="hidden px-3 py-2 sm:table-cell">Player Id</th>
               <th className="px-3 py-2"><span className="sr-only">Notes</span></th>
@@ -152,7 +153,7 @@ async function PlayersContent({ searchParams }: { searchParams: SearchParams }) 
                   {r.is_coach_kid && <span className="ml-2 align-middle"><CoachKidBadge /></span>}
                   {exempt.has(r.id) && <span className="ml-2 align-middle"><ExemptBadge scope={exempt.get(r.id)!} /></span>}
                 </td>
-                <td className="px-3 py-2 font-mono text-xs">{usDate(r.players?.date_of_birth ?? null) || <span className="font-sans text-amber-700 dark:text-amber-400">missing</span>}</td>
+                <td className="px-3 py-2"><DobMarker has={r.players?.has_birth_date} /></td>
                 <td className="px-3 py-2">{r.league_age ?? <span className="text-xs text-amber-700 dark:text-amber-400">not set</span>}</td>
                 <td className="hidden px-3 py-2 font-mono text-xs text-muted-foreground sm:table-cell">{r.external_player_id ?? "—"}</td>
                 <td className="px-3 py-2 text-xs">

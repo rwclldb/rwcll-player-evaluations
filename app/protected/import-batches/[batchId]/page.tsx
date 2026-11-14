@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BulkPanel } from "./bulk-panel";
+import { DobMarker } from "@/components/dob-marker";
+import { RevealBirthdate } from "@/components/reveal-birthdate";
 import { SyncPanel } from "./sync-panel";
 import { 
   ArrowLeft, 
@@ -26,8 +28,7 @@ type StagedRow = {
   external_player_id: string | null;
   first_name: string;
   last_name: string;
-  birth_date_text: string;
-  birth_date: string | null;
+  has_birth_date: boolean;
   source_program: string;
   source_division: string;
   registration_number: string | null;
@@ -37,52 +38,8 @@ type StagedRow = {
   review_state: string;
 };
 
-type ExistingPlayer = {
-  id: number;
-  first_name: string;
-  last_name: string;
-  date_of_birth: string | null;
-};
-
-type MatchCandidate = {
-  player: ExistingPlayer;
-  reason: string;
-  strength: number;
-};
-
-function normalizedName(first: string, last: string): string {
-  return `${first} ${last}`.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase("en-US");
-}
-
-function buildCandidateIndex(players: ExistingPlayer[]) {
-  const byName = new Map<string, ExistingPlayer[]>();
-  const byBirthDate = new Map<string, ExistingPlayer[]>();
-  for (const player of players) {
-    const name = normalizedName(player.first_name, player.last_name);
-    if (name) byName.set(name, [...(byName.get(name) ?? []), player]);
-    if (player.date_of_birth) byBirthDate.set(player.date_of_birth, [...(byBirthDate.get(player.date_of_birth) ?? []), player]);
-  }
-  return { byName, byBirthDate };
-}
-
-function candidatesFor(row: StagedRow, index: ReturnType<typeof buildCandidateIndex>): MatchCandidate[] {
-  const rowName = normalizedName(row.first_name, row.last_name);
-  const possible = new Map<number, ExistingPlayer>();
-  for (const player of index.byName.get(rowName) ?? []) possible.set(player.id, player);
-  if (row.birth_date) {
-    for (const player of index.byBirthDate.get(row.birth_date) ?? []) possible.set(player.id, player);
-  }
-  return [...possible.values()]
-    .map((player) => {
-      const sameName = Boolean(rowName) && rowName === normalizedName(player.first_name, player.last_name);
-      const sameBirthDate = Boolean(row.birth_date) && Boolean(player.date_of_birth) && row.birth_date === player.date_of_birth;
-      if (sameName && sameBirthDate) return { player, reason: "Name and birth date match", strength: 3 };
-      if (sameName) return { player, reason: "Name matches; birth date differs or is missing", strength: 2 };
-      return { player, reason: "Birth date matches; name differs", strength: 1 };
-    })
-    .sort((a, b) => b.strength - a.strength || a.player.id - b.player.id)
-    .slice(0, 3);
-}
+// Possible existing players, worked out in the database (import_batch_candidates) so no birthdates reach the page.
+type MatchCandidate = { row_id: number; player_id: number; first_name: string; last_name: string; has_birth_date: boolean; reason: string; strength: number };
 
 function flagsOf(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -175,31 +132,15 @@ async function ImportBatchDetailContent({ batchId, bulkMessage, bulkError, syncM
   // Fetch staged rows for this batch
   const { data: rows, error: rowsError } = await supabase
     .from("sports_connect_import_rows")
-    .select("id, source_row_number, external_player_id, first_name, last_name, birth_date_text, birth_date, source_program, source_division, registration_number, payment_status, league_age, review_flags, review_state")
+    .select("id, source_row_number, external_player_id, first_name, last_name, has_birth_date, source_program, source_division, registration_number, payment_status, league_age, review_flags, review_state")
     .eq("import_batch_id", numericId)
     .order("source_row_number", { ascending: true })
     .limit(5000);
 
-  // Fetch existing players in chunks of 1000 up to 10,000 for candidate matching
-  const candidatePlayers: ExistingPlayer[] = [];
-  let playersError: { message: string } | null = null;
-
-  for (let offset = 0; offset < 10000; offset += 1000) {
-    const { data: playerPage, error: playerPageError } = await supabase
-      .from("players")
-      .select("id, first_name, last_name, date_of_birth")
-      .order("id", { ascending: true })
-      .range(offset, offset + 999);
-
-    if (playerPageError) {
-      playersError = playerPageError;
-      break;
-    }
-    candidatePlayers.push(...((playerPage ?? []) as ExistingPlayer[]));
-    if (!playerPage || playerPage.length < 1000) break;
-  }
-
-  const candidateIndex = buildCandidateIndex(candidatePlayers);
+  // Possible existing players for each open row (top 3), compared on name and birthdate in the database.
+  const { data: candidateData, error: playersError } = await supabase.rpc("import_batch_candidates", { p_batch_id: numericId });
+  const candidatesByRow = new Map<number, MatchCandidate[]>();
+  for (const c of (candidateData ?? []) as MatchCandidate[]) candidatesByRow.set(c.row_id, [...(candidatesByRow.get(c.row_id) ?? []), c]);
 
   return (
     <div className="space-y-6">
@@ -244,7 +185,7 @@ async function ImportBatchDetailContent({ batchId, bulkMessage, bulkError, syncM
         </div>
       ) : (
         <p className="text-xs font-mono text-muted-foreground">
-          Candidate matching compares names and birth dates against up to 10,000 existing player records. Sports Connect IDs are not treated as permanent player identities. Review every suggestion manually.
+          Possible matches compare names and birthdates against every player the league knows, without showing birthdates. Sports Connect IDs are not treated as permanent player identities. Review every suggestion manually.
         </p>
       )}
 
@@ -339,14 +280,14 @@ async function ImportBatchDetailContent({ batchId, bulkMessage, bulkError, syncM
                 <tbody className="divide-y divide-border">
                   {(rows as StagedRow[]).map((row) => {
                     const flags = flagsOf(row.review_flags);
-                    const candidates = playersError ? [] : candidatesFor(row, candidateIndex);
+                    const candidates = playersError ? [] : (candidatesByRow.get(row.id) ?? []).slice(0, 3);
 
                     return (
                       <tr key={row.id} className="hover:bg-accent/50 transition-colors align-top">
                         <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{row.source_row_number}</td>
                         <td className="px-4 py-3 font-mono text-xs text-emerald-700 dark:text-emerald-400 font-semibold">{row.external_player_id || "—"}</td>
                         <td className="px-4 py-3 font-medium text-foreground text-xs">{row.first_name} {row.last_name}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-slate-700 dark:text-slate-300">{row.birth_date_text || row.birth_date || "—"}</td>
+                        <td className="px-4 py-3 text-xs">{row.has_birth_date ? <RevealBirthdate kind="import_row" id={row.id} context="Import batch page" label="✓ Show" /> : <DobMarker has={false} />}</td>
                         <td className="px-4 py-3 font-mono text-xs text-slate-700 dark:text-slate-300">{row.league_age ?? "Review"}</td>
                         <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{row.source_program || "—"}</td>
                         <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{row.source_division || "—"}</td>
@@ -372,14 +313,12 @@ async function ImportBatchDetailContent({ batchId, bulkMessage, bulkError, syncM
                           ) : candidates.length ? (
                             <div className="space-y-1.5">
                               {candidates.map((candidate) => (
-                                <div key={candidate.player.id} className="rounded border border-border bg-background p-2 text-xs">
+                                <div key={candidate.player_id} className="rounded border border-border bg-background p-2 text-xs">
                                   <p className="font-semibold text-foreground flex items-center gap-1 font-mono">
                                     <UserSearch className="h-3 w-3 text-emerald-700 dark:text-emerald-400 shrink-0" />
-                                    #{candidate.player.id} &bull; {candidate.player.first_name} {candidate.player.last_name}
+                                    #{candidate.player_id} &bull; {candidate.first_name} {candidate.last_name}
                                   </p>
-                                  <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
-                                    DOB: {candidate.player.date_of_birth || "unknown"}
-                                  </p>
+                                  <p className="mt-0.5"><DobMarker has={candidate.has_birth_date} /></p>
                                   <p className="text-[11px] text-amber-800 dark:text-amber-300 font-mono mt-0.5">
                                     {candidate.reason}
                                   </p>

@@ -8,7 +8,8 @@ export type RegistrationRow = {
   registration_source: string;
   external_player_id: string | null;
   is_coach_kid: boolean;
-  players: { id: number; first_name: string; last_name: string; date_of_birth: string | null } | null;
+  // Birthdates are never read in lists (birthdate protection); has_birth_date says whether one is on file.
+  players: { id: number; first_name: string; last_name: string; has_birth_date: boolean } | null;
 };
 
 export const usDate = (iso: string | null | undefined) => {

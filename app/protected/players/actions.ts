@@ -27,12 +27,15 @@ export async function saveRegistration(formData: FormData) {
   const bib = optionalInt(formData.get("bib"));
   if (age === "bad") go(back, "error", "League age must be a whole number.");
   if (bib === "bad") go(back, "error", "Bib must be a whole number.");
-  const dobRaw = String(formData.get("birthDate") ?? "").trim();
+  // "keep": the page never loaded the birthdate; the database keeps the stored one (birthdate protection).
+  const keepBirthDate = formData.get("birthDateMode") === "keep";
+  const dobRaw = keepBirthDate ? "" : String(formData.get("birthDate") ?? "").trim();
   const dob = dobRaw ? isoDateOrNull(dobRaw) : null;
   if (dobRaw && !dob) go(back, "error", "Birthdate must be a real date (MM/DD/YYYY or YYYY-MM-DD).");
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("admin_save_registration", {
+    p_keep_date_of_birth: keepBirthDate,
     p_player_season_id: psId,
     p_first_name: String(formData.get("firstName") ?? ""),
     p_last_name: String(formData.get("lastName") ?? ""),

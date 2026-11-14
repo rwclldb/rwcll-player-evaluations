@@ -4,12 +4,12 @@ import { redirect } from "next/navigation";
 import { ArrowLeft, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { usDate } from "@/lib/players";
+import { DobMarker } from "@/components/dob-marker";
 import { getMyRoles, runsEvaluationDay } from "@/lib/my-roles";
 import { addOnSitePlayer } from "../actions";
 
 type SearchParams = Promise<{ first?: string; last?: string; message?: string; error?: string }>;
-type KnownPlayer = { id: number; first_name: string; last_name: string; date_of_birth: string | null; player_seasons: { season_id: number; league_age: number | null }[] };
+type KnownPlayer = { id: number; first_name: string; last_name: string; has_birth_date: boolean; player_seasons: { season_id: number; league_age: number | null }[] };
 
 // Treat % and _ in typed names literally.
 const like = (s: string) => s.replace(/[\\%_]/g, (c) => "\\" + c);
@@ -30,7 +30,7 @@ async function NewPlayerContent({ searchParams }: { searchParams: SearchParams }
   const last = (sp.last ?? "").trim();
   let known: KnownPlayer[] = [];
   if (last) {
-    const { data } = await supabase.from("players").select("id, first_name, last_name, date_of_birth, player_seasons(season_id, league_age)")
+    const { data } = await supabase.from("players").select("id, first_name, last_name, has_birth_date, player_seasons(season_id, league_age)")
       .ilike("last_name", like(last)).ilike("first_name", first ? `${like(first)}%` : "%").limit(20);
     known = (data ?? []) as KnownPlayer[];
   }
@@ -67,7 +67,7 @@ async function NewPlayerContent({ searchParams }: { searchParams: SearchParams }
             <legend className="text-xs text-muted-foreground">Player</legend>
             {known.filter((p) => p.player_seasons.some((r) => openSeasonIds.has(r.season_id))).map((p) => (
               <p key={p.id} className="rounded border border-border p-2 text-sm text-muted-foreground">
-                {p.first_name} {p.last_name}{p.date_of_birth ? `, born ${usDate(p.date_of_birth)}` : ""} is already registered this season.{" "}
+                {p.first_name} {p.last_name} is already registered this season.{" "}
                 <Link href={isAdmin ? `/protected/players?q=${encodeURIComponent(`${p.first_name} ${p.last_name}`)}` : "/protected/check-in"} className="text-foreground underline">{isAdmin ? "Find them" : "Check them in"}</Link>
               </p>
             ))}
@@ -75,7 +75,7 @@ async function NewPlayerContent({ searchParams }: { searchParams: SearchParams }
               <label key={p.id} className="flex items-start gap-2 rounded border border-border p-2 text-sm">
                 <input type="radio" name="existingPlayerId" value={p.id} className="mt-1" />
                 <span>
-                  Use {p.first_name} {p.last_name}{p.date_of_birth ? `, born ${usDate(p.date_of_birth)}` : ", no birthdate"}
+                  Use {p.first_name} {p.last_name} <DobMarker has={p.has_birth_date} />
                   <span className="block text-xs text-muted-foreground">
                     {p.player_seasons.length ? `Registered: ${p.player_seasons.map((r) => `${seasonName(r.season_id)}${r.league_age ? ` (age ${r.league_age})` : ""}`).join(", ")}` : "No registrations"}
                   </span>

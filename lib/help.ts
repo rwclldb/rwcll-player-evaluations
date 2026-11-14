@@ -209,6 +209,7 @@ export const GUIDES: HelpGuide[] = [
         title: "Fixing a player's details",
         blocks: [
           "Open [[Players]], search, and open the player. You can fix the name, birthdate, age group and bib, and mark a coach's kid. Name, birthdate and age-group changes need a short reason. Tap [[Save changes]].",
+          "Birthdates are private: lists only show **✓ DOB** (on file) or **No DOB**. On a player's page the birthdate stays hidden until you tap [[Show]] (which is recorded) or [[Change]] to type a new one. Coaches and evaluators only ever see the Little League age.",
           "Once anyone has scored the player, the age group can't change. Every change is recorded and shown at the bottom of the page.",
           "**Exemptions**: when the league excuses a player, open [[Record an exemption]] on their page, choose what they're excused from (attending, being evaluated, or both), give the reason and, if someone else decided, who approved it, then tap [[Record exemption]]. Coaches and evaluators see only that the player is exempt, not the reason. [[Change or remove the exemption]] replaces or removes it (with a reason); the old one stays in the history. [[Players]] has an [[Exempt]] filter.",
         ],

@@ -1,3 +1,5 @@
+import { DobMarker } from "@/components/dob-marker";
+import { RevealBirthdate } from "@/components/reveal-birthdate";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -22,8 +24,7 @@ type Row = {
   external_player_id: string | null;
   first_name: string;
   last_name: string;
-  birth_date_text: string | null;
-  birth_date: string | null;
+  has_birth_date: boolean;
   source_program: string | null;
   source_division: string | null;
   registration_number: string | null;
@@ -38,12 +39,8 @@ type Row = {
   duplicate_player_id_resolution_reason: string | null;
 };
 
-type Player = {
-  id: number;
-  first_name: string;
-  last_name: string;
-  date_of_birth: string | null;
-};
+// Possible existing players, worked out in the database so no birthdates reach the page (birthdate protection).
+type MatchCandidate = { row_id: number; player_id: number; first_name: string; last_name: string; has_birth_date: boolean; reason: string; strength: number };
 
 function flags(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string").slice(0, 30) : [];
@@ -139,19 +136,15 @@ async function ImportBatchReviewContent({ params, searchParams }: { params: Prom
   // Fetch staged rows
   const { data: rows, error: rowsError } = await supabase
     .from("sports_connect_import_rows")
-    .select("id, source_row_number, external_player_id, first_name, last_name, birth_date_text, birth_date, source_program, source_division, registration_number, payment_status, league_age, review_flags, review_state, matched_player_id, committed_player_season_id, duplicate_player_id_resolved_at, duplicate_player_id_resolved_by, duplicate_player_id_resolution_reason")
+    .select("id, source_row_number, external_player_id, first_name, last_name, has_birth_date, source_program, source_division, registration_number, payment_status, league_age, review_flags, review_state, matched_player_id, committed_player_season_id, duplicate_player_id_resolved_at, duplicate_player_id_resolved_by, duplicate_player_id_resolution_reason")
     .eq("import_batch_id", id)
     .order("source_row_number", { ascending: true })
     .limit(5000);
 
-  // Fetch candidates for matching
-  const { data: players, error: playersError } = await supabase
-    .from("players")
-    .select("id, first_name, last_name, date_of_birth")
-    .order("id", { ascending: true })
-    .limit(1000);
-
-  const candidates = (players ?? []) as Player[];
+  // Possible matches for each open row, compared on name and birthdate in the database (every player, not just 1,000).
+  const { data: candidateData, error: playersError } = await supabase.rpc("import_batch_candidates", { p_batch_id: id });
+  const candidatesByRow = new Map<number, MatchCandidate[]>();
+  for (const c of (candidateData ?? []) as MatchCandidate[]) candidatesByRow.set(c.row_id, [...(candidatesByRow.get(c.row_id) ?? []), c]);
   const allRows = (rows ?? []) as Row[];
   const counts = Object.fromEntries(VIEWS.map((v) => [v.key, allRows.filter((r) => v.test(r.review_state)).length])) as Record<ViewKey, number>;
   const shownRows = allRows.filter((r) => view.test(r.review_state));
@@ -170,7 +163,7 @@ async function ImportBatchReviewContent({ params, searchParams }: { params: Prom
   ];
 
   const { data: committedPlayers } = committedPlayerIds.length
-    ? await supabase.from("players").select("id, first_name, last_name, date_of_birth").in("id", committedPlayerIds)
+    ? await supabase.from("players").select("id, first_name, last_name").in("id", committedPlayerIds)
     : { data: [] };
 
   const committedPlayerByRegistrationId = new Map(
@@ -243,15 +236,7 @@ async function ImportBatchReviewContent({ params, searchParams }: { params: Prom
             </Card>
           )}
           {shownRows.map((rowData) => {
-            const name = `${rowData.first_name} ${rowData.last_name}`.trim().toLocaleLowerCase("en-US");
-            const date = rowData.birth_date;
-            const matches = candidates
-              .filter(
-                (p) =>
-                  `${p.first_name} ${p.last_name}`.trim().toLocaleLowerCase("en-US") === name ||
-                  (date && p.date_of_birth === date)
-              )
-              .slice(0, 10);
+            const matches = candidatesByRow.get(rowData.id) ?? [];
 
             const committedRegistrationId = rowData.committed_player_season_id;
             const committedPlayer =
@@ -290,7 +275,7 @@ async function ImportBatchReviewContent({ params, searchParams }: { params: Prom
                     </div>
                     <div>
                       <span className="text-muted-foreground block font-mono text-[11px]">Birth Date</span>
-                      <span className="text-foreground font-mono">{rowData.birth_date_text || rowData.birth_date || "—"}</span>
+                      <span className="text-foreground">{rowData.has_birth_date ? <RevealBirthdate kind="import_row" id={rowData.id} context="Import row review" label="✓ Show" /> : <DobMarker has={false} />}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground block font-mono text-[11px]">Program / Division</span>
@@ -329,8 +314,8 @@ async function ImportBatchReviewContent({ params, searchParams }: { params: Prom
                     committedPlayerLabel={committedPlayerLabel}
                     committedPlayerSeasonId={rowData.committed_player_season_id}
                     candidates={matches.map((p) => ({
-                      id: p.id,
-                      label: `#${p.id} · ${p.first_name} ${p.last_name}${p.date_of_birth ? ` · ${p.date_of_birth}` : ""}`,
+                      id: p.player_id,
+                      label: `#${p.player_id} · ${p.first_name} ${p.last_name} · ${p.reason}`,
                     }))}
                     hasDuplicatePlayerIdFlag={flags(rowData.review_flags).includes("Duplicate Player ID in file")}
                     duplicatePlayerIdResolvedAt={rowData.duplicate_player_id_resolved_at}
@@ -346,7 +331,7 @@ async function ImportBatchReviewContent({ params, searchParams }: { params: Prom
       )}
 
       <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
-        Candidate list is limited to the first 1,000 visible players and up to 10 suggestions per row. A suggestion is not an identity match; verify manually.
+        Up to 10 possible matches per row, compared on name and birthdate against every player the league knows. A suggestion is not an identity match; verify manually.
       </p>
     </div>
   );

@@ -92,7 +92,8 @@ SELECT public.stage_sports_connect_import((SELECT season_id FROM ctx), 'second.c
   AS b2 \gset
 RESET ROLE;
 
-CREATE FUNCTION pg_temp.row_of(p_batch bigint, p_pid text) RETURNS public.sports_connect_import_rows LANGUAGE sql AS $$
+-- Reads as the owner: signed-in users can't read every column (birthdate protection).
+CREATE FUNCTION pg_temp.row_of(p_batch bigint, p_pid text) RETURNS public.sports_connect_import_rows LANGUAGE sql SECURITY DEFINER AS $$
   SELECT * FROM public.sports_connect_import_rows WHERE import_batch_id = p_batch AND external_player_id = p_pid;
 $$;
 SELECT pg_temp.check((pg_temp.row_of(:b2, 'S1')).review_state = 'up_to_date' AND (pg_temp.row_of(:b2, 'S1')).sync_changes = '[]'::jsonb,

@@ -4,18 +4,18 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { usDate } from "@/lib/players";
+import { RevealBirthdate } from "@/components/reveal-birthdate";
 import { dismissPriorYear, importPriorYear, recheckPriorYear } from "../actions";
 
 type Params = Promise<{ batchId: string }>;
 type SearchParams = Promise<{ message?: string; error?: string }>;
 type Row = {
   id: number; source_row_number: number; source_player_id: string | null; first_name: string | null; last_name: string | null;
-  birth_date: string | null; source_season_label: string; source_division_name: string; source_team_label: string | null;
+  has_birth_date: boolean; source_season_label: string; source_division_name: string; source_team_label: string | null;
   source_coach_name: string | null; ratings: Record<string, number>; candidate_player_ids: number[]; resolved_player_id: number | null;
   review_state: string; match_status: string; match_message: string | null; review_reason: string | null;
 };
-type Candidate = { id: number; first_name: string; last_name: string; date_of_birth: string | null; player_seasons: { season_id: number; league_age: number | null; evaluation_number: number | null; external_player_id: string | null }[] };
+type Candidate = { id: number; first_name: string; last_name: string; has_birth_date: boolean; player_seasons: { season_id: number; league_age: number | null; evaluation_number: number | null; external_player_id: string | null }[] };
 
 const SHORT: Record<string, string> = {
   hitting: "Hit", throwing: "Thr", grounders: "Grd", fly_balls: "Fly", running_awareness: "Run",
@@ -35,19 +35,20 @@ async function BatchContent({ params, searchParams }: { params: Params; searchPa
     .eq("id", id).eq("import_type", "historical_evaluations").maybeSingle();
   if (!batch) notFound();
   const { data } = await supabase.from("historical_evaluation_import_rows")
-    .select("id, source_row_number, source_player_id, first_name, last_name, birth_date, source_season_label, source_division_name, source_team_label, source_coach_name, ratings, candidate_player_ids, resolved_player_id, review_state, match_status, match_message, review_reason")
+    .select("id, source_row_number, source_player_id, first_name, last_name, has_birth_date, source_season_label, source_division_name, source_team_label, source_coach_name, ratings, candidate_player_ids, resolved_player_id, review_state, match_status, match_message, review_reason")
     .eq("import_batch_id", id).order("source_row_number");
   const rows = (data ?? []) as Row[];
   const candidateIds = [...new Set(rows.flatMap((r) => [...r.candidate_player_ids, ...(r.resolved_player_id ? [r.resolved_player_id] : [])]))];
   const { data: candData } = candidateIds.length
-    ? await supabase.from("players").select("id, first_name, last_name, date_of_birth, player_seasons(season_id, league_age, evaluation_number, external_player_id)").in("id", candidateIds)
+    ? await supabase.from("players").select("id, first_name, last_name, has_birth_date, player_seasons(season_id, league_age, evaluation_number, external_player_id)").in("id", candidateIds)
     : { data: [] };
   const players = new Map(((candData ?? []) as Candidate[]).map((p) => [p.id, p]));
   const describe = (playerId: number) => {
     const p = players.get(playerId);
     if (!p) return `Player ${playerId}`;
     const reg = p.player_seasons.find((r) => r.season_id === batch.season_id);
-    return [`${p.first_name} ${p.last_name}`, p.date_of_birth ? `born ${usDate(p.date_of_birth)}` : "no birthdate",
+    // No birthdates in lists (birthdate protection); the match status says whether name and birthdate matched.
+    return [`${p.first_name} ${p.last_name}`, p.has_birth_date ? "birthdate on file" : "no birthdate",
       reg?.external_player_id ? `Id ${reg.external_player_id}` : "", reg?.league_age ? `age ${reg.league_age}` : "", reg?.evaluation_number ? `bib ${reg.evaluation_number}` : ""]
       .filter(Boolean).join(" · ");
   };
@@ -62,7 +63,7 @@ async function BatchContent({ params, searchParams }: { params: Params; searchPa
 
   const fileLine = (r: Row) => (
     <span className="text-xs text-muted-foreground">
-      File: {r.first_name} {r.last_name}{r.birth_date ? `, ${usDate(r.birth_date)}` : ""}{r.source_player_id ? `, Id ${r.source_player_id}` : ""}
+      File: {r.first_name} {r.last_name}{r.has_birth_date && <>, birthdate <RevealBirthdate kind="prior_row" id={r.id} context="Prior-year review" /></>}{r.source_player_id ? `, Id ${r.source_player_id}` : ""}
       {" · "}{r.source_season_label} {r.source_division_name}{r.source_team_label ? ` (${r.source_team_label})` : ""}{r.source_coach_name ? `, coach ${r.source_coach_name}` : ""}
     </span>
   );

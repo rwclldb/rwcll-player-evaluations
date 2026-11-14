@@ -27,7 +27,7 @@ type PlayerSeason = {
   league_age: number | null;
   evaluation_number: number | null;
   registration_payment_status: string | null;
-  players: { first_name: string; last_name: string; date_of_birth: string | null } | null;
+  players: { first_name: string; last_name: string; has_birth_date: boolean } | null;
 };
 
 type Session = { id: number; league_age: number | null; status: string };
@@ -86,7 +86,7 @@ async function PlayerReportContent({ params }: Props) {
 
   const registrationResult = await supabase
     .from("player_seasons")
-    .select("id, player_id, season_id, league_age, evaluation_number, registration_payment_status, players(first_name, last_name, date_of_birth)")
+    .select("id, player_id, season_id, league_age, evaluation_number, registration_payment_status, players(first_name, last_name, has_birth_date)")
     .eq("id", playerSeasonId)
     .maybeSingle();
 
@@ -250,7 +250,7 @@ async function PlayerReportContent({ params }: Props) {
               Age {registration.league_age ?? "Not Set"}
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-              DOB: {registration.players?.date_of_birth || "Not recorded"}
+              Birthdate: {registration.players?.has_birth_date ? "on file" : "not recorded"} (see the player&apos;s page)
             </p>
           </CardContent>
         </Card>

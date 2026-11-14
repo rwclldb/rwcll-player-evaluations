@@ -1,5 +1,6 @@
 "use client";
 
+import { DobMarker } from "@/components/dob-marker";
 import { useMemo, useState, useRef, type ChangeEvent, type DragEvent } from "react";
 import { stageSportsConnectImport } from "./actions";
 import {
@@ -417,7 +418,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
                   <table className="w-full text-left text-sm">
                     <thead className="bg-background text-xs font-mono uppercase tracking-wider text-muted-foreground border-b border-border">
                       <tr>
-                        {["Line", "Player ID", "Player", "Birth Date", "Age", "Division", "Payment", "Registration #", "Coach's Kid", "Review Flags"].map((heading) => (
+                        {["Line", "Player ID", "Player", "DOB", "Age", "Division", "Payment", "Registration #", "Coach's Kid", "Review Flags"].map((heading) => (
                           <th key={heading} className="px-4 py-3 font-semibold">{heading}</th>
                         ))}
                       </tr>
@@ -428,7 +429,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
                           <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{row.line}</td>
                           <td className="px-4 py-3 font-mono text-xs text-emerald-700 dark:text-emerald-400 font-semibold">{row.playerId || "—"}</td>
                           <td className="px-4 py-3 font-medium text-foreground text-xs">{row.firstName} {row.lastName}</td>
-                          <td className="px-4 py-3 font-mono text-xs text-slate-700 dark:text-slate-300">{row.birthDate || "—"}</td>
+                          <td className="px-4 py-3 text-xs">{/* Never list birthdates (birthdate protection) */}<DobMarker has={Boolean(row.birthDate)} /></td>
                           <td className="px-4 py-3 font-mono text-xs text-slate-700 dark:text-slate-300">{row.leagueAge ?? "Review"}</td>
                           <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{row.division || "—"}</td>
                           <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{row.paymentStatus || "—"}</td>

@@ -18,7 +18,7 @@ type AssignedSession = { id: number; season_id: number; league_age: number | nul
 type Season = { id: number; name: string };
 type EligibleRegistration = {
   id: number; evaluation_number: number | null; league_age: number; is_coach_kid: boolean;
-  players: { first_name: string; last_name: string; date_of_birth: string | null } | null;
+  players: { first_name: string; last_name: string } | null;
 };
 type MyEvaluation = {
   player_season_id: number; status: string;
@@ -85,7 +85,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
     // Evaluation eligibility is based on season and Little League age, not payment status.
     const [regResult, evalResult, priorResult, assignmentResult, notesResult, hereResult] = await Promise.all([
       supabase.from("player_seasons")
-        .select("id, evaluation_number, league_age, is_coach_kid, players(first_name, last_name, date_of_birth)")
+        .select("id, evaluation_number, league_age, is_coach_kid, players(first_name, last_name)")
         .eq("season_id", selectedSession.season_id).eq("league_age", selectedSession.league_age),
       supabase.from("evaluations")
         .select("player_season_id, status, ratings(score, rating_categories(code)), experience_answers(question_code, answer)")
@@ -116,7 +116,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
       noteKind,
       players: registrations.map((r) => ({
         id: r.id, bib: r.evaluation_number, name: playerName(r), leagueAge: r.league_age,
-        birthDate: r.players?.date_of_birth ?? null, coachKid: r.is_coach_kid, here: here.has(r.id), exempt: exempt.get(r.id) ?? null,
+        coachKid: r.is_coach_kid, here: here.has(r.id), exempt: exempt.get(r.id) ?? null,
       })),
       mine: Object.fromEntries(((evalResult.data ?? []) as unknown as MyEvaluation[]).map((e) => [e.player_season_id, {
         status: e.status,

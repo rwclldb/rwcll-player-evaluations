@@ -4,14 +4,14 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { usDate } from "@/lib/players";
+import { RevealBirthdate } from "@/components/reveal-birthdate";
 import { applyBibUpload, recheckBibUpload } from "../../actions";
 
 type Params = Promise<{ batchId: string }>;
 type SearchParams = Promise<{ message?: string; error?: string }>;
 type Row = {
   id: number; source_row_number: number; external_player_id: string | null; first_name: string | null; last_name: string | null;
-  birth_date: string | null; bib_raw: string | null; evaluation_number: number | null; status: string; change_kind: string | null;
+  has_birth_date: boolean; bib_raw: string | null; evaluation_number: number | null; status: string; change_kind: string | null;
   current_evaluation_number: number | null; message: string | null; matched_player_season_id: number | null;
   player_seasons: { players: { first_name: string; last_name: string } | null } | null;
 };
@@ -22,7 +22,13 @@ const who = (r: Row) => {
   const name = [r.last_name, r.first_name].filter(Boolean).join(", ");
   return name || (r.external_player_id ? `Player Id ${r.external_player_id}` : "(no name)");
 };
-const detail = (r: Row) => [r.external_player_id ? `Id ${r.external_player_id}` : "", usDate(r.birth_date)].filter(Boolean).join(" · ");
+// Birthdates are never listed (birthdate protection); a row that has one gets a logged "Show".
+const detail = (r: Row) => (
+  <>
+    {r.external_player_id ? `Id ${r.external_player_id}` : ""}
+    {r.has_birth_date && <>{r.external_player_id ? " · " : ""}birthdate <RevealBirthdate kind="bib_row" id={r.id} context="Bib upload review" /></>}
+  </>
+);
 
 function Group({ title, tone, rows, children, note }: { title: string; tone: string; rows: Row[]; children: (r: Row) => React.ReactNode; note?: string }) {
   if (rows.length === 0) return null;
@@ -53,7 +59,7 @@ async function BatchContent({ params, searchParams }: { params: Params; searchPa
   const { data: batch } = await supabase.from("import_batches").select("id, source_file_name, created_at, season_id, seasons(name)").eq("id", id).eq("import_type", "bibs").maybeSingle();
   if (!batch) notFound();
   const { data } = await supabase.from("bib_import_rows")
-    .select("id, source_row_number, external_player_id, first_name, last_name, birth_date, bib_raw, evaluation_number, status, change_kind, current_evaluation_number, message, matched_player_season_id, player_seasons(players(first_name, last_name))")
+    .select("id, source_row_number, external_player_id, first_name, last_name, has_birth_date, bib_raw, evaluation_number, status, change_kind, current_evaluation_number, message, matched_player_season_id, player_seasons(players(first_name, last_name))")
     .eq("import_batch_id", id).order("source_row_number");
   const rows = (data ?? []) as unknown as Row[];
   const ready = rows.filter((r) => r.status === "ready");

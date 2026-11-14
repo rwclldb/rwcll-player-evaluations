@@ -8,7 +8,7 @@ import { ExemptBadge, type ExemptScope } from "@/components/exempt-badge";
 import { setBib, toggleCheckIn } from "./actions";
 
 export type CheckInRow = {
-  player_season_id: number; first_name: string; last_name: string; date_of_birth: string | null; league_age: number;
+  player_season_id: number; first_name: string; last_name: string; league_age: number;
   evaluation_number: number | null; is_coach_kid: boolean; event_id: number; event_type: "primary" | "makeup";
   start_time: string; end_time: string; location: string; checked_in_at: string | null; exempt_scope: ExemptScope | null;
 };
