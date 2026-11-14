@@ -6,6 +6,9 @@
 //   npm run fixtures:load                             load into an empty local DB (refuses if players exist)
 //   npm run fixtures:load -- --reset --demo           board demo: scored league mid-evaluation-day (docs/DEMO-SCRIPT.md)
 //                                                     [--demo-date=YYYY-MM-DD] (default: today, Pacific)
+//                                                     [--board-seats=N] (default 6: board1@example.com... score age 8)
+//   Live-site demo (you run it): npm run fixtures:load -- --hosted --confirm-project=<ref> --demo
+//                                (docs/board-demo/LIVE-DEMO-SCRIPT.md)
 //   npm run fixtures:load -- --reset --bare           wipe, then only admin accounts + seasons: walk through setup in the app
 //                                                     (docs/TEST-PLAN-SEASON-SETUP.xlsx)
 //
@@ -85,7 +88,10 @@ if (HOSTED) {
   if (!isLocal(status.API_URL)) fail(`supabase status API_URL is not local: ${status.API_URL}`);
   password = process.env.FIXTURE_PASSWORD || envLocal.FIXTURE_PASSWORD;
 }
-if (DEMO && HOSTED) fail("--demo is for a local laptop demo only.");
+// Board seats (demo only): coach accounts board1@example.com ... assigned to age 8, for board members to score
+// on their own phones during a live-site demo. --board-seats=0 to skip.
+const BOARD_SEATS = DEMO ? Number((argv.find((a) => a.startsWith("--board-seats=")) ?? "--board-seats=6").split("=")[1]) : 0;
+if (!Number.isInteger(BOARD_SEATS) || BOARD_SEATS < 0 || BOARD_SEATS > 20) fail("--board-seats must be a whole number from 0 to 20");
 if (!password || password.length < 8) fail("Set FIXTURE_PASSWORD (8+ characters). It becomes the password for every test account.");
 
 // ---------- CSV helper (fixture files are simple RFC 4180) ----------
@@ -96,6 +102,17 @@ function readCsv(file) {
   return rows.filter((r) => r.some((c) => c !== "")).map((cells) => Object.fromEntries(headers.map((h, i) => [h.trim(), (cells[i] ?? "").trim()])));
 }
 const usToIso = (us) => { const m = (us ?? "").match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); return m ? `${m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}` : null; };
+
+// Create a sign-in account, or reuse one that survived a wipe (hosted `db reset` keeps sign-ins): its password is
+// reset to FIXTURE_PASSWORD and its display name restored.
+async function ensureUser(svc, existingUsers, email, password, displayName) {
+  const found = existingUsers?.users?.find((u) => u.email === email);
+  let id = found?.id;
+  if (id) await must(svc.auth.admin.updateUserById(id, { password, email_confirm: true }), `reset password ${email}`);
+  else id = (await must(svc.auth.admin.createUser({ email, password, email_confirm: true }), `create user ${email}`)).user.id;
+  await must(svc.from("user_profiles").upsert({ user_id: id, display_name: displayName }), `profile ${email}`);
+  return id;
+}
 
 async function must(promise, what) {
   const { data, error } = await promise;
@@ -133,13 +150,12 @@ async function main() {
   const userId = {};
   const { data: existingUsers } = await svc.auth.admin.listUsers({ perPage: 1000 });
   for (const p of people.filter((p) => p.email && (!BARE || p.role_spring_2027 === "administrator"))) {
-    const found = existingUsers?.users?.find((u) => u.email === p.email);
-    if (found) { userId[p.fictional_person_key] = found.id; continue; }
-    const data = await must(svc.auth.admin.createUser({ email: p.email, password, email_confirm: true }), `create user ${p.email}`);
-    userId[p.fictional_person_key] = data.user.id;
-    await must(svc.from("user_profiles").upsert({ user_id: data.user.id, display_name: `${p.first_name} ${p.last_name}` }), `profile ${p.email}`);
+    userId[p.fictional_person_key] = await ensureUser(svc, existingUsers, p.email, password, `${p.first_name} ${p.last_name}`);
   }
-  log(`SIMULATED accounts: ${Object.keys(userId).length} users created (password from FIXTURE_PASSWORD)`);
+  for (let i = 1; i <= (BARE ? 0 : BOARD_SEATS); i++) {
+    userId[`BRD-${i}`] = await ensureUser(svc, existingUsers, `board${i}@example.com`, password, `Board Member ${i}`);
+  }
+  log(`SIMULATED accounts: ${Object.keys(userId).length} users ready (password from FIXTURE_PASSWORD)${BOARD_SEATS ? `, including ${BOARD_SEATS} board seats` : ""}`);
 
   // ---------- seasons (SIMULATED: no season-creation workflow yet) ----------
   const s2026 = await must(svc.from("seasons").insert({ name: "Spring 2026", start_date: "2026-01-01", end_date: "2026-06-30", is_closed: true }).select("id").single(), "create Spring 2026");
@@ -148,6 +164,7 @@ async function main() {
   const roleRows = people.filter((p) => userId[p.fictional_person_key] && p.role_spring_2027 !== "none").map((p) => ({
     user_id: userId[p.fictional_person_key], role_name: p.role_spring_2027, season_id: p.role_spring_2027 === "administrator" ? null : s2027.id, created_by: adminId,
   }));
+  for (let i = 1; i <= (BARE ? 0 : BOARD_SEATS); i++) roleRows.push({ user_id: userId[`BRD-${i}`], role_name: "coach", season_id: s2027.id, created_by: adminId });
   await must(svc.from("user_roles").insert(roleRows), "assign roles");
   const { count: divCount } = await svc.from("season_divisions").select("id", { count: "exact", head: true }).eq("season_id", s2027.id);
   log(`SIMULATED seasons: Spring 2026 (id ${s2026.id}, closed), Spring 2027 (id ${s2027.id}, ${divCount} divisions attached); ${roleRows.length} roles`);
@@ -273,7 +290,8 @@ PASS: bare league loaded: ${Object.keys(userId).length} admin accounts, Spring 2
       { evaluation_session_id: session.id, event_type: "primary", event_date: DEMO ? DEMO_DATE : "2027-01-23", start_time: SLOTS[age][0], end_time: SLOTS[age][1], location: "Fixture Park, Field 1", created_by: adminId },
       { evaluation_session_id: session.id, event_type: "makeup", event_date: DEMO ? addDays(DEMO_DATE, 7) : "2027-01-30", start_time: "10:00", end_time: "12:00", location: "Fixture Park, Field 2", notes: "Makeup for all ages", created_by: adminId },
     ]), `events age ${age}`);
-    const rows = [...COACHES[age].map((k) => [k, "coach"]), ...IES(age).map((k) => [k, "independent_evaluator"])].map(([k, t]) => ({ evaluation_session_id: session.id, evaluator_user_id: userId[k], evaluator_type: t, assigned_by: adminId }));
+    const seats = age === 8 ? Array.from({ length: BOARD_SEATS }, (_, i) => `BRD-${i + 1}`) : [];
+    const rows = [...COACHES[age].map((k) => [k, "coach"]), ...seats.map((k) => [k, "coach"]), ...IES(age).map((k) => [k, "independent_evaluator"])].map(([k, t]) => ({ evaluation_session_id: session.id, evaluator_user_id: userId[k], evaluator_type: t, assigned_by: adminId }));
     await must(svc.from("evaluator_assignments").insert(rows), `assignments age ${age}`);
     assignments += rows.length;
   }
@@ -377,8 +395,8 @@ async function stageDemo({ svc, admin, s2027, sessionByAge, userId, adminId, reg
   await must(svc.from("seasons").update({ show_prior_year_during_evaluations: true }).eq("id", s2027.id), "prior-year switch");
 
   // A registrar for check-in.
-  const registrar = await must(svc.auth.admin.createUser({ email: "registrar.riley@example.com", password, email_confirm: true }), "create registrar");
-  await must(svc.from("user_profiles").upsert({ user_id: registrar.user.id, display_name: "Riley Registrar" }), "registrar profile");
+  const { data: existingUsers } = await svc.auth.admin.listUsers({ perPage: 1000 });
+  const registrar = { user: { id: await ensureUser(svc, existingUsers, "registrar.riley@example.com", password, "Riley Registrar") } };
   await must(svc.from("user_roles").insert({ user_id: registrar.user.id, role_name: "registrar", season_id: s2027.id, created_by: adminId }), "registrar role");
 
   // Check-in at today's primary event: about three quarters of ages 7 and 8 are here.
@@ -412,6 +430,7 @@ async function stageDemo({ svc, admin, s2027, sessionByAge, userId, adminId, reg
   log(`DEMO staged for ${DEMO_DATE} (makeup ${addDays(DEMO_DATE, 7)}): ${saved} scores; ages 7-8 open, 9-12 released, 13-16 locked;`);
   log(`  ${checkins.length} check-ins, 1 exemption, ${kids.length} coach's kids, 1 possible duplicate (walk-up bib 990), prior-year shown while scoring.`);
   log("  Registrar: registrar.riley@example.com. Avery (coach.avery@example.com) has age 7 left to score.");
+  if (BOARD_SEATS) log(`  Board seats: board1@example.com to board${BOARD_SEATS}@example.com, coaches assigned to age 8 (open).`);
   log("\nPASS: demo league loaded. Follow docs/DEMO-SCRIPT.md. Re-run it the morning of the demo so the event date is today.");
 }
 

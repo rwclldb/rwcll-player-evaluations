@@ -397,6 +397,7 @@ Use this to test on phones with the fictional league. Hosted data is disposable 
    npm run fixtures:load -- --hosted --confirm-project=<your project ref> --open-sessions
    ```
    Use `--scored` instead of `--open-sessions` to also load all 1,230 Spring 2027 evaluations for testing draft reports. The loader refuses to run if the hosted database already has players.
+   Use `--demo` instead for the board demo on the live site (evaluation day dated today, six board seats `board1@example.com`...; see `docs/board-demo/LIVE-DEMO-SCRIPT.md`). Sign-in accounts left over from an earlier load are reused, with their password reset to `FIXTURE_PASSWORD`.
 4. **Sign in on your phone** with any fixture account, for example `coach.avery@example.com` or `eval.kendall@example.com`, using the `FIXTURE_PASSWORD` you chose. Each account's age groups are listed in `rwcll-fictional-test-league/README.md`.
 
 To start over, repeat step 1, then step 3.
