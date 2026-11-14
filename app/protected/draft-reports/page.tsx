@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { ArrowLeft, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getMyRoles, onlyRegistrar } from "@/lib/my-roles";
 import { DraftReportTable, type DraftReportRow, type ReportNote } from "./draft-report-table";
 
 type ReportSession = {
@@ -20,6 +22,7 @@ export default async function DraftReportsPage({
 }) {
   const params = await searchParams;
   const supabase = await createClient();
+  if (onlyRegistrar(await getMyRoles(supabase))) redirect("/protected");
   const { data: isAdmin } = await supabase.rpc("is_admin");
   const administrator = isAdmin === true;
 

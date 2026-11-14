@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getMyRoles, onlyRegistrar } from "@/lib/my-roles";
 import { saveEvaluation } from "./actions";
 import { RatingInputs } from "./rating-inputs";
 import { DirtyTracker, GuardedLink } from "./unsaved-guard";
@@ -67,6 +68,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return redirect("/auth/login");
+  if (onlyRegistrar(await getMyRoles(supabase))) return redirect("/protected");
   const userId = user.id;
 
   // Administrators do not score; they are sent back to the workspace.
@@ -104,6 +106,8 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
   let evaluations: EvaluationRecord[] = [];
   let priorYear: PriorYear[] = [];
   let notes: PlayerNote[] = [];
+  // Players the registrar checked in today (the "Here" marker).
+  let hereToday = new Set<number>();
   let evaluatorType: string | null = null;
   let loadError: string | null = null;
 
@@ -117,7 +121,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
       (a, b) => (a.evaluation_number ?? Infinity) - (b.evaluation_number ?? Infinity) || playerName(a).localeCompare(playerName(b)),
     );
 
-    const [evalResult, priorResult, assignmentResult, notesResult] = await Promise.all([
+    const [evalResult, priorResult, assignmentResult, notesResult, hereResult] = await Promise.all([
       supabase.from("evaluations").select("id, player_season_id, status")
         .eq("evaluation_session_id", selectedSession.id).eq("evaluator_user_id", userId),
       // Empty unless the season's prior-year switch is on.
@@ -126,7 +130,9 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
         .eq("evaluation_session_id", selectedSession.id).eq("evaluator_user_id", userId).maybeSingle(),
       // Only the viewer's own notes are used on this screen.
       supabase.rpc("player_notes", { p_session_id: selectedSession.id }),
+      supabase.rpc("session_checked_in_today", { p_session_id: selectedSession.id }),
     ]);
+    hereToday = new Set(((hereResult.data ?? []) as number[]).map(Number));
     if (evalResult.error) loadError = `Could not load your evaluations: ${evalResult.error.message}`;
     evaluations = (evalResult.data ?? []) as EvaluationRecord[];
     priorYear = (priorResult.data ?? []) as PriorYear[];
@@ -379,7 +385,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
                   <Button type="submit" className="min-h-11"><Search className="mr-1 h-4 w-4" /> Go</Button>
                 </form>
                 <p className="text-xs text-muted-foreground">
-                  {submittedCount} of {registrations.length} players done (saved or not evaluated). A player marked &quot;Draft (not counted)&quot; stays out of reports until you open it and save.
+                  {submittedCount} of {registrations.length} players done (saved or not evaluated).{hereToday.size > 0 && ` ${hereToday.size} checked in today ("Here").`} A player marked &quot;Draft (not counted)&quot; stays out of reports until you open it and save.
                   {priorYear.length > 0 && " Prior-year ratings are shown on each player's page."}
                 </p>
                 <ul className="divide-y divide-border rounded-lg border border-border">
@@ -388,6 +394,9 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
                       <Link href={`${sessionUrl}&player=${r.id}`} className="flex min-h-12 items-center gap-3 px-3 py-2 hover:bg-accent">
                         <span className="w-14 shrink-0 font-mono text-base font-bold text-foreground">{r.evaluation_number ?? "—"}</span>
                         <span className="min-w-0 flex-1 truncate text-sm text-foreground">{playerName(r)}</span>
+                        {hereToday.has(r.id) && (
+                          <span title="Checked in today" className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Here</span>
+                        )}
                         {r.is_coach_kid && <CoachKidBadge short />}
                         {notedPlayers.has(r.id) && <StickyNote className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-label="Has your note" />}
                         <span className="hidden text-xs text-muted-foreground sm:inline">Age {r.league_age}</span>

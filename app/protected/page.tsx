@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { leagueToday, STAGES, type RoadmapData, type StageKey } from "@/lib/roadmap";
 import { AdminRoadmap, Seasons } from "./admin-roadmap";
 import { MySchedule, type ScheduleRow } from "./my-schedule";
+import { EvaluationDayHub } from "./evaluation-day-hub";
+import { getMyRoles } from "@/lib/my-roles";
 
 type SearchParams = Promise<{ season?: string; stage?: string }>;
 
@@ -45,13 +47,18 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
     return <AdminRoadmap data={roadmap} viewing={viewing} seasons={seasons} />;
   }
 
-  const [{ data: schedule }, { data: account }] = await Promise.all([supabase.rpc("my_evaluation_schedule"), supabase.rpc("my_account")]);
+  const [{ data: schedule }, { data: account }, roles] = await Promise.all([
+    supabase.rpc("my_evaluation_schedule"), supabase.rpc("my_account"), getMyRoles(supabase),
+  ]);
   const name = (account as { display_name: string | null } | null)?.display_name || user.email;
+  // Registrars get the Evaluation Day hub; coaches and evaluators get their schedule and shortcuts (some people are both).
+  const scores = roles.scores || !roles.registrarSeason;
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <p className="text-sm text-muted-foreground">Welcome, <span className="font-medium text-foreground">{name}</span></p>
-      <MySchedule rows={(schedule ?? []) as ScheduleRow[]} />
-      <div className="grid gap-3 sm:grid-cols-3">
+      {roles.registrarSeason && <EvaluationDayHub season={roles.registrarSeason} />}
+      {scores && <MySchedule rows={(schedule ?? []) as ScheduleRow[]} />}
+      {scores && <div className="grid gap-3 sm:grid-cols-3">
         {SHORTCUTS.map(({ href, title, text, icon: Icon }) => (
           <Link key={href} href={href}
             className="group rounded-2xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-emerald-500/50 hover:shadow-md">
@@ -62,7 +69,7 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
             <p className="mt-0.5 text-xs text-muted-foreground">{text}</p>
           </Link>
         ))}
-      </div>
+      </div>}
     </div>
   );
 }

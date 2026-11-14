@@ -16,7 +16,7 @@ import { PEOPLE_TEMPLATE } from "@/lib/csv-templates";
 type SearchParams = Promise<{ season?: string; q?: string; message?: string; error?: string }>;
 type RoleRow = { user_id: string; role_name: string; season_id: number | null };
 
-const ROLE_LABEL: Record<string, string> = { administrator: "Admin", coach: "Coach", independent_evaluator: "Evaluator" };
+const ROLE_LABEL: Record<string, string> = { administrator: "Admin", coach: "Coach", independent_evaluator: "Evaluator", registrar: "Registrar" };
 const input = "mt-1 block h-10 w-full rounded-md border border-input bg-background px-3 text-base text-foreground sm:text-sm";
 
 function status(u: User) {
@@ -207,7 +207,7 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
                 {(() => {
                   // Offer only roles this account can take: not one it has, and never coach + evaluator together.
                   const has = new Set(mine.map((r) => r.role_name));
-                  const addable = (["coach", "independent_evaluator", "administrator"] as const).filter((role) =>
+                  const addable = (["coach", "independent_evaluator", "registrar", "administrator"] as const).filter((role) =>
                     !has.has(role) &&
                     !(role === "coach" && has.has("independent_evaluator")) &&
                     !(role === "independent_evaluator" && has.has("coach")));

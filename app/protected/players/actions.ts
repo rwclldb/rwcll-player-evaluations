@@ -72,6 +72,10 @@ export async function addOnSitePlayer(formData: FormData) {
   });
   if (error) go(back, "error", error.message);
   revalidatePath("/protected/players");
+  revalidatePath("/protected/check-in");
+  // Registrars go back to check-in; admins see the new player's page.
+  const { data: isAdmin } = await supabase.rpc("is_admin");
+  if (isAdmin !== true) go("/protected/check-in", "message", `${String(formData.get("firstName") ?? "").trim()} ${String(formData.get("lastName") ?? "").trim()} added as a walk-up. Find them below to check them in.`);
   go(`/protected/players/${data}`, "message", "Player added on site. Link them to Sports Connect later by approving the match during registration import review.");
 }
 

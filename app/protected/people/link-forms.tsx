@@ -39,6 +39,7 @@ export function InviteForm({ seasonId, seasonName, disabled }: { seasonId: numbe
         <select name="role" className={input} defaultValue="coach">
           <option value="coach">Coach ({seasonName})</option>
           <option value="independent_evaluator">Independent evaluator ({seasonName})</option>
+          <option value="registrar">Registrar: check-in and registrations ({seasonName})</option>
           <option value="administrator">League admin (all seasons)</option>
         </select>
       </label>

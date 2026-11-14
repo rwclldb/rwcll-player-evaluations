@@ -5,6 +5,7 @@ import { ArrowLeft, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { usDate } from "@/lib/players";
+import { getMyRoles, runsEvaluationDay } from "@/lib/my-roles";
 import { addOnSitePlayer } from "../actions";
 
 type SearchParams = Promise<{ first?: string; last?: string; message?: string; error?: string }>;
@@ -17,8 +18,9 @@ const input = "mt-1 block h-11 w-full rounded-md border border-input bg-backgrou
 async function NewPlayerContent({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams;
   const supabase = await createClient();
-  const { data: isAdmin } = await supabase.rpc("is_admin");
-  if (isAdmin !== true) redirect("/protected");
+  const roles = await getMyRoles(supabase);
+  if (!runsEvaluationDay(roles)) redirect("/protected");
+  const isAdmin = roles.isAdmin;
 
   const { data: seasonData } = await supabase.from("seasons").select("id, name, is_closed, start_date").eq("is_closed", false).order("start_date", { ascending: false });
   const seasons = seasonData ?? [];
@@ -39,7 +41,7 @@ async function NewPlayerContent({ searchParams }: { searchParams: SearchParams }
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex flex-col gap-3 border-b border-border pb-5">
         <Button asChild variant="ghost" size="sm" className="h-8 w-fit px-2 text-xs text-muted-foreground hover:text-foreground">
-          <Link href="/protected/players"><ArrowLeft className="mr-1 h-4 w-4" /> All players</Link>
+          <Link href={isAdmin ? "/protected/players" : "/protected/check-in"}><ArrowLeft className="mr-1 h-4 w-4" /> {isAdmin ? "All players" : "Check-in"}</Link>
         </Button>
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground"><UserPlus className="h-6 w-6 text-emerald-700 dark:text-emerald-400" /> Add a player on site</h1>
         <p className="text-sm text-muted-foreground">
@@ -66,7 +68,7 @@ async function NewPlayerContent({ searchParams }: { searchParams: SearchParams }
             {known.filter((p) => p.player_seasons.some((r) => openSeasonIds.has(r.season_id))).map((p) => (
               <p key={p.id} className="rounded border border-border p-2 text-sm text-muted-foreground">
                 {p.first_name} {p.last_name}{p.date_of_birth ? `, born ${usDate(p.date_of_birth)}` : ""} is already registered this season.{" "}
-                <Link href={`/protected/players?q=${encodeURIComponent(`${p.first_name} ${p.last_name}`)}`} className="text-foreground underline">Find them</Link>
+                <Link href={isAdmin ? `/protected/players?q=${encodeURIComponent(`${p.first_name} ${p.last_name}`)}` : "/protected/check-in"} className="text-foreground underline">{isAdmin ? "Find them" : "Check them in"}</Link>
               </p>
             ))}
             {known.filter((p) => !p.player_seasons.some((r) => openSeasonIds.has(r.season_id))).map((p) => (

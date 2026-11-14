@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { ArrowLeft, Lock, MessageSquare, StickyNote } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getMyRoles, onlyRegistrar } from "@/lib/my-roles";
 import { Button } from "@/components/ui/button";
 import { saveNote } from "./actions";
 
@@ -36,6 +37,7 @@ async function MyNotesContent({ searchParams }: { searchParams: SearchParams }) 
   // Admins don't score, so they have no notes of their own.
   const { data: isAdmin } = await supabase.rpc("is_admin");
   if (isAdmin === true) return redirect("/protected");
+  if (onlyRegistrar(await getMyRoles(supabase))) return redirect("/protected");
 
   const { data, error } = await supabase.rpc("my_notes");
   const notes = (data ?? []) as MyNote[];

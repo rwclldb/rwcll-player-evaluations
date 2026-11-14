@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { TopbarClock } from "@/components/topbar-clock";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { DesktopNav, MobileMenu, type NavLink } from "@/components/app-nav";
+import { getMyRoles } from "@/lib/my-roles";
 
 const ADMIN_LINKS: NavLink[] = [
   { href: "/protected", label: "Roadmap" },
@@ -29,10 +30,21 @@ const EVALUATOR_LINKS: NavLink[] = [
   { href: "/protected/my-notes", label: "My Notes" },
 ];
 
+// Registrars: evaluation day only. No scores, notes or draft reports.
+const REGISTRAR_LINKS: NavLink[] = [
+  { href: "/protected/check-in", label: "Check-in" },
+  { href: "/protected/players/new", label: "Walk-ups" },
+  { href: "/protected/roster", label: "Rosters" },
+  { href: "/protected/timetable", label: "Who scores when" },
+];
+
 export async function AppHeader({ user }: { user: User }) {
   const supabase = await createClient();
-  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
-  const links = !roleError && isAdmin === true ? ADMIN_LINKS : EVALUATOR_LINKS;
+  const roles = await getMyRoles(supabase);
+  const links = roles.isAdmin ? ADMIN_LINKS : [
+    ...(roles.registrarSeason ? REGISTRAR_LINKS : []),
+    ...(roles.scores || !roles.registrarSeason ? EVALUATOR_LINKS : []),
+  ];
   const email = user.email ?? "";
 
   return (

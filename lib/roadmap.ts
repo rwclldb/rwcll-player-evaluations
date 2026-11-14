@@ -205,7 +205,7 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
           key: "rosters", title: "Print check-in rosters",
           status: "info",
           detail: "One page per age group, sorted by bib or name, with Check-in and Notes columns.",
-          links: [{ href: "/protected/roster?age=all", label: "All ages" }, { href: "/protected/roster?age=all&sort=name", label: "By name" }],
+          links: [{ href: "/protected/roster?age=all", label: "All ages" }, { href: "/protected/roster?age=all&sort=name", label: "By name" }, { href: "/protected/timetable", label: "Who scores when" }],
         },
         {
           key: "prior-switch", title: "Board decision: prior-year ratings while scoring",
@@ -225,6 +225,12 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
           status: "info",
           detail: `${scored} of ${players} players have an independent evaluator score. Per age group below.`,
           links: [{ href: "/protected/evaluation-review", label: "Data Review", primary: true }],
+        },
+        {
+          key: "checkin", title: "Check players in",
+          status: "info",
+          detail: "Registrars (or you) tap each player as they arrive, add missing bibs, and coaches see who's here. Give someone the Registrar role on People.",
+          links: [{ href: "/protected/check-in", label: "Check-in", primary: true }, { href: "/protected/timetable", label: "Who scores when" }],
         },
         {
           key: "walkups", title: "Add a walk-up player",

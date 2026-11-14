@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CoachKidBadge } from "@/components/coach-kid-badge";
 import { createClient } from "@/lib/supabase/server";
 import { PrintButton } from "./print-button";
+import { getMyRoles, runsEvaluationDay } from "@/lib/my-roles";
 
 type Registration = {
   id: number;
@@ -22,11 +23,13 @@ export default async function RosterPage({
 }) {
   const params = await searchParams;
   const supabase = await createClient();
-  const { data: isAdmin } = await supabase.rpc("is_admin");
-  if (isAdmin !== true) redirect("/protected");
+  // Admins and registrars (who see only their own season).
+  const roles = await getMyRoles(supabase);
+  if (!runsEvaluationDay(roles)) redirect("/protected");
 
-  const { data: seasons } = await supabase.from("seasons").select("id, name, is_closed, start_date").order("start_date", { ascending: false });
-  const season = (seasons ?? []).find((s) => String(s.id) === params.seasonId) ?? (seasons ?? []).find((s) => !s.is_closed) ?? seasons?.[0];
+  const { data: seasonData } = await supabase.from("seasons").select("id, name, is_closed, start_date").order("start_date", { ascending: false });
+  const seasons = roles.isAdmin ? seasonData ?? [] : (seasonData ?? []).filter((s) => s.id === roles.registrarSeason?.id);
+  const season = seasons.find((s) => String(s.id) === params.seasonId) ?? seasons.find((s) => !s.is_closed) ?? seasons[0];
   const sort = params.sort === "name" ? "name" : "bib";
   const age = params.age === "all" || !params.age ? "all" : Number(params.age);
 
@@ -63,7 +66,7 @@ export default async function RosterPage({
       <style>{"@media print { @page { size: portrait; margin: 0.5in; } }"}</style>
       <div className="flex flex-col gap-3 border-b border-border pb-5 print:hidden">
         <Button asChild variant="ghost" size="sm" className="h-8 w-fit px-2 text-xs text-muted-foreground hover:text-foreground">
-          <Link href="/protected"><ArrowLeft className="mr-1 h-4 w-4" /> Roadmap</Link>
+          <Link href="/protected"><ArrowLeft className="mr-1 h-4 w-4" /> {roles.isAdmin ? "Roadmap" : "Home"}</Link>
         </Button>
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           <ClipboardList className="h-7 w-7 text-emerald-700 dark:text-emerald-400" /> Evaluation-Day Roster
