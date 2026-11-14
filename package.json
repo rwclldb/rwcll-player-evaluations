@@ -54,7 +54,8 @@
     "test:registrar-runtime": "node scripts/test-registrar-runtime.cjs",
     "test:registrar-imports-runtime": "node scripts/test-registrar-imports-runtime.cjs",
     "test:scoring-progress-runtime": "node scripts/test-scoring-progress-runtime.cjs",
-    "test:view-as-runtime": "node scripts/test-view-as-runtime.cjs"
+    "test:view-as-runtime": "node scripts/test-view-as-runtime.cjs",
+    "test:roadmap-invites-runtime": "node scripts/test-roadmap-invites-runtime.cjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.1",

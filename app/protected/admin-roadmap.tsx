@@ -6,6 +6,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { createSeason } from "@/app/actions";
+import { PendingSignins, type PendingPerson } from "./pending-signins";
 import {
   STAGES, buildSteps, daysBetween, formatDate, formatTime, readinessProblems, stageIndex, stepProgress,
   type RoadmapData, type RoadmapSession, type StageKey, type Step, type StepStatus,
@@ -121,7 +122,7 @@ function Stepper({ d, viewing }: { d: RoadmapData; viewing: StageKey }) {
   );
 }
 
-function StepCard({ step, n }: { step: Step; n: number }) {
+function StepCard({ step, n, extra }: { step: Step; n: number; extra?: React.ReactNode }) {
   const st = STATUS[step.status];
   const StatusIcon = st.icon;
   const Icon = STEP_ICON[step.key] ?? Circle;
@@ -153,6 +154,7 @@ function StepCard({ step, n }: { step: Step; n: number }) {
             ))}
           </div>
         )}
+        {extra}
       </div>
       <StatusIcon aria-hidden className={`hidden h-7 w-7 shrink-0 sm:block ${st.dot} ${step.status === "done" ? "fill-emerald-500/15" : ""}`} />
     </li>
@@ -249,7 +251,12 @@ export function Seasons({ seasons }: { seasons: SeasonItem[] }) {
   );
 }
 
-export function AdminRoadmap({ data, viewing, seasons }: { data: RoadmapData; viewing: StageKey; seasons: SeasonItem[] }) {
+// Steps that list who hasn't signed in yet, with invite and sign-in-link buttons.
+const SIGN_IN_STEPS = new Set(["people", "signin", "help"]);
+
+export function AdminRoadmap({ data, viewing, seasons, pending = [], seasonId }: {
+  data: RoadmapData; viewing: StageKey; seasons: SeasonItem[]; pending?: PendingPerson[]; seasonId?: number;
+}) {
   const stage = STAGES[stageIndex(viewing)];
   const steps = buildSteps(data, viewing);
   const { done, total } = stepProgress(steps);
@@ -324,7 +331,10 @@ export function AdminRoadmap({ data, viewing, seasons }: { data: RoadmapData; vi
           )}
 
           <ol className="space-y-3">
-            {steps.map((s, i) => <StepCard key={s.key} step={s} n={i + 1} />)}
+            {steps.map((s, i) => (
+              <StepCard key={s.key} step={s} n={i + 1}
+                extra={SIGN_IN_STEPS.has(s.key) && seasonId ? <PendingSignins people={pending} seasonId={seasonId} returnTo={`/protected?season=${seasonId}&stage=${viewing}`} /> : undefined} />
+            ))}
           </ol>
         </section>
 

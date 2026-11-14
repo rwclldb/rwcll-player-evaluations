@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { appOrigin } from "@/lib/app-origin";
+import { safeNext } from "@/lib/safe-next";
 import { redirect } from "next/navigation";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
@@ -15,6 +16,9 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const go = (path: string, kind: "message" | "error", text: string): never =>
   redirect(`${path}${path.includes("?") ? "&" : "?"}${kind}=${encodeURIComponent(text)}`);
 const back = (formData: FormData) => {
+  // Forms on other pages (the roadmap's "Not signed in yet" list) come back to where they were.
+  const returnTo = String(formData.get("returnTo") ?? "");
+  if (returnTo) return safeNext(returnTo);
   const season = Number(formData.get("seasonId"));
   return Number.isSafeInteger(season) && season > 0 ? `/protected/people?season=${season}` : "/protected/people";
 };

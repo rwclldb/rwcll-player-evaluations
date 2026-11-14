@@ -5,11 +5,12 @@ import { Award, ClipboardList, NotebookPen, type LucideIcon } from "lucide-react
 import { createClient } from "@/lib/supabase/server";
 import { leagueToday, STAGES, type RoadmapData, type StageKey } from "@/lib/roadmap";
 import { AdminRoadmap, Seasons } from "./admin-roadmap";
+import type { PendingPerson } from "./pending-signins";
 import { MySchedule, type ScheduleRow } from "./my-schedule";
 import { EvaluationDayHub } from "./evaluation-day-hub";
 import { getMyRoles } from "@/lib/my-roles";
 
-type SearchParams = Promise<{ season?: string; stage?: string }>;
+type SearchParams = Promise<{ season?: string; stage?: string; message?: string; error?: string }>;
 
 const SHORTCUTS: { href: string; title: string; text: string; icon: LucideIcon }[] = [
   { href: "/protected/evaluations", title: "Score players", text: "Pick an age group, find a bib, and enter ratings.", icon: ClipboardList },
@@ -44,7 +45,14 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
     }
     const roadmap = data as RoadmapData;
     const viewing = (STAGES.some((s) => s.key === sp.stage) ? sp.stage : roadmap.stage) as StageKey;
-    return <AdminRoadmap data={roadmap} viewing={viewing} seasons={seasons} />;
+    const { data: pending } = await supabase.rpc("admin_people_not_signed_in", { p_season_id: season.id });
+    return (
+      <>
+        {sp.message && <div role="status" className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">{sp.message}</div>}
+        {sp.error && <div role="alert" className="mb-4 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-700 dark:text-rose-300">{sp.error}</div>}
+        <AdminRoadmap data={roadmap} viewing={viewing} seasons={seasons} pending={(pending ?? []) as PendingPerson[]} seasonId={season.id} />
+      </>
+    );
   }
 
   const [{ data: schedule }, { data: account }, roles] = await Promise.all([
