@@ -70,7 +70,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 **Attendance and sessions**
 - All registered players are expected at evaluations, including injured players (they attend but need not perform).
 - Each session has one primary event and any number of makeup events. Attendance is tracked per event, separately from performance.
-- Exemptions need an explicit admin decision, reason, approver, timestamp, and scope.
+- Exemptions need an explicit decision, reason, approver, timestamp, and scope (attendance, evaluation, or both). Admins and registrars record them (decided 2026-11-17); everyone who can see the player sees "Exempt" and the scope, only admins and registrars see the reason and approver.
 
 **Seasons, ages, divisions**
 - Active divisions: AA, AAA, Majors, Juniors, Seniors. Requested division from Sports Connect is not a final assignment.
@@ -212,6 +212,14 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - **Invites on the roadmap** (migration 20261116150000, test `test:roadmap-invites-runtime`): the roadmap steps "Invite coaches and evaluators", "Make sure everyone can sign in" and "Help someone sign in" list who hasn't signed in yet (`admin_people_not_signed_in(season)`: coaches, evaluators and registrars, not disabled), with roles and invite date, an **Email invite again** and a **Sign-in link** button per person, and "Copy all emails". Open by default when 5 or fewer. People actions accept `returnTo` (checked by `safeNext`) so they come back to the roadmap. The roadmap's `not_signed_in` now counts registrars and each person once; `unassigned` still leaves registrars out.
 
 - **Draft report PDF** (no migration; `jspdf` + `jspdf-autotable`, loaded only when the button is used; `lib/draft-report-pdf.ts`): a PDF button next to CSV and Print downloads the table as shown (same sort order and My stars filter). Landscape Letter; heading with the sort, the filter and when it was made; a legend; per row star, bib, player (CK), evaluator, coach (high/low dropped) and prior-year overalls, then each core skill plus pitching and catching as "E / C (trimmed) / P"; flags. Header row repeats on each page. Made in the browser, so no server load.
+
+## Built 2026-11-17 (local only; migration not on hosted)
+
+- **Exemptions** (migration 20261117090000, test `test:exemptions-runtime`):
+  - `player_exemptions`: one active per registration, scope `attendance` / `evaluation` / `both`, reason (5+ characters), optional "approved by" name, who recorded it and when. Replacing or removing keeps the old row (`revoked_at`, `revoke_reason`). Audited `player_exemption_set` / `player_exemption_revoked`. No direct table access.
+  - Admins and registrars record and remove them on the player edit page (`set_player_exemption`, `revoke_player_exemption`; details via `registration_exemption`). Players page: Exempt badge and filter (`season_exemptions`).
+  - Everyone who can see the age group gets only the scope (`session_exemptions`): "Exempt" badge on the scoring list and page, the draft report (badge, CSV "Exempt" column, PDF), check-in.
+  - Check-in: players exempt from attending are left out of "Not here yet", the "X of Y here" count (home and check-in) and makeup-day lists (`checkin_list` returns `exempt_scope`). Scoring Progress leaves players exempt from evaluation out of "of N players".
 
 ## Tracked additions (confirmed requirements, not yet built)
 

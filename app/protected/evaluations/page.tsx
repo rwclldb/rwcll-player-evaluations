@@ -99,6 +99,8 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
       // Players the registrar checked in today (the "Here" marker).
       supabase.rpc("session_checked_in_today", { p_session_id: selectedSession.id }),
     ]);
+    const { data: exemptData } = await supabase.rpc("session_exemptions", { p_session_id: selectedSession.id });
+    const exempt = new Map(((exemptData ?? []) as { player_season_id: number; scope: "attendance" | "evaluation" | "both" }[]).map((x) => [x.player_season_id, x.scope]));
     if (regResult.error) loadError = `Could not load players: ${regResult.error.message}`;
     if (evalResult.error) loadError = `Could not load your evaluations: ${evalResult.error.message}`;
     if (notesResult.error) loadError = `Could not load your notes: ${notesResult.error.message}`;
@@ -114,7 +116,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
       noteKind,
       players: registrations.map((r) => ({
         id: r.id, bib: r.evaluation_number, name: playerName(r), leagueAge: r.league_age,
-        birthDate: r.players?.date_of_birth ?? null, coachKid: r.is_coach_kid, here: here.has(r.id),
+        birthDate: r.players?.date_of_birth ?? null, coachKid: r.is_coach_kid, here: here.has(r.id), exempt: exempt.get(r.id) ?? null,
       })),
       mine: Object.fromEntries(((evalResult.data ?? []) as unknown as MyEvaluation[]).map((e) => [e.player_season_id, {
         status: e.status,

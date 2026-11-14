@@ -76,7 +76,7 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [ ] Implement private coach notes and separately controlled shared notes.
 - [ ] Implement draft/submitted/locked states, author/timestamp, and audit trail.
 - [ ] Implement per-player attendance for each primary/makeup event, independently of ratings.
-- [ ] Implement admin-approved exemptions with explicit scope, reason, approver, and timestamp.
+- [x] Implement admin-approved exemptions with explicit scope, reason, approver, and timestamp. (2026-11-17; admins and registrars)
 - [ ] Test permissions with separate admin, coach, and evaluator accounts, including coaches assigned to multiple teams.
 
 ## 5. Historical player evaluations and reporting

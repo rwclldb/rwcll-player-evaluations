@@ -5,6 +5,7 @@ import { ArrowLeft, Hash, Search, UserPlus, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { CoachKidBadge } from "@/components/coach-kid-badge";
+import { ExemptBadge, type ExemptScope } from "@/components/exempt-badge";
 import { type RegistrationRow, usDate } from "@/lib/players";
 
 type SearchParams = Promise<{ season?: string; q?: string; show?: string; age?: string; message?: string; error?: string }>;
@@ -16,6 +17,7 @@ const FILTERS = [
   { key: "noage", label: "No age group" },
   { key: "onsite", label: "Added on site" },
   { key: "coachkid", label: "Coach's kids" },
+  { key: "exempt", label: "Exempt" },
 ] as const;
 
 
@@ -36,6 +38,8 @@ async function PlayersContent({ searchParams }: { searchParams: SearchParams }) 
         .select("id, season_id, evaluation_number, league_age, league_age_source, registration_source, external_player_id, is_coach_kid, players(id, first_name, last_name, date_of_birth)")
         .eq("season_id", season.id)
     : { data: [], error: null };
+  const { data: exemptData } = season ? await supabase.rpc("season_exemptions", { p_season_id: season.id }) : { data: [] };
+  const exempt = new Map(((exemptData ?? []) as { player_season_id: number; scope: ExemptScope }[]).map((x) => [x.player_season_id, x.scope]));
   const all = ((data ?? []) as unknown as RegistrationRow[]).sort(
     (a, b) => (a.players?.last_name ?? "").localeCompare(b.players?.last_name ?? "") || (a.players?.first_name ?? "").localeCompare(b.players?.first_name ?? ""),
   );
@@ -46,6 +50,7 @@ async function PlayersContent({ searchParams }: { searchParams: SearchParams }) 
     noage: all.filter((r) => r.league_age === null).length,
     onsite: all.filter((r) => r.registration_source === "on_site").length,
     coachkid: all.filter((r) => r.is_coach_kid).length,
+    exempt: all.filter((r) => exempt.has(r.id)).length,
   };
   const show = FILTERS.some((f) => f.key === params.show) ? params.show! : "all";
   const q = (params.q ?? "").trim().toLowerCase();
@@ -55,6 +60,7 @@ async function PlayersContent({ searchParams }: { searchParams: SearchParams }) 
     if (show === "noage" && r.league_age !== null) return false;
     if (show === "onsite" && r.registration_source !== "on_site") return false;
     if (show === "coachkid" && !r.is_coach_kid) return false;
+    if (show === "exempt" && !exempt.has(r.id)) return false;
     if (params.age && String(r.league_age) !== params.age) return false;
     if (!q) return true;
     const hay = `${r.players?.first_name} ${r.players?.last_name} ${r.players?.last_name}, ${r.players?.first_name} ${r.evaluation_number ?? ""} ${r.external_player_id ?? ""}`.toLowerCase();
@@ -144,6 +150,7 @@ async function PlayersContent({ searchParams }: { searchParams: SearchParams }) 
                     {r.players?.last_name}, {r.players?.first_name}
                   </Link>
                   {r.is_coach_kid && <span className="ml-2 align-middle"><CoachKidBadge /></span>}
+                  {exempt.has(r.id) && <span className="ml-2 align-middle"><ExemptBadge scope={exempt.get(r.id)!} /></span>}
                 </td>
                 <td className="px-3 py-2 font-mono text-xs">{usDate(r.players?.date_of_birth ?? null) || <span className="font-sans text-amber-700 dark:text-amber-400">missing</span>}</td>
                 <td className="px-3 py-2">{r.league_age ?? <span className="text-xs text-amber-700 dark:text-amber-400">not set</span>}</td>

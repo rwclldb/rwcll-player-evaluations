@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { leagueAgeForBirthDate } from "@/lib/sports-connect-preview";
 import { type RegistrationRow, usDate } from "@/lib/players";
-import { saveRegistration, setCoachKid } from "../actions";
+import { removeExemption, saveExemption, saveRegistration, setCoachKid } from "../actions";
+import { EXEMPT_LABEL, type ExemptScope } from "@/components/exempt-badge";
 
 type Params = Promise<{ id: string }>;
 type SearchParams = Promise<{ message?: string; error?: string }>;
@@ -33,10 +34,12 @@ async function EditContent({ params, searchParams }: { params: Params; searchPar
   const reg = data as unknown as RegistrationRow & { external_registration_id: string | null; seasons: { name: string; is_closed: boolean } | null };
 
   // Through functions, so registrars see this player's history and score yes/no without reading the audit log or scores.
-  const [{ data: auditData }, { data: hasScores }] = await Promise.all([
+  const [{ data: auditData }, { data: hasScores }, { data: exemptionData }] = await Promise.all([
     supabase.rpc("registration_history", { p_player_season_id: psId }),
     supabase.rpc("registration_has_scores", { p_player_season_id: psId }),
+    supabase.rpc("registration_exemption", { p_player_season_id: psId }),
   ]);
+  const exemption = ((exemptionData ?? []) as { scope: ExemptScope; reason: string; approved_by_name: string | null; recorded_by_name: string | null; recorded_at: string }[])[0];
   const history = (auditData ?? []) as AuditRow[];
   const chartAge = leagueAgeForBirthDate(reg.players?.date_of_birth);
   const locked = hasScores === true;
@@ -68,6 +71,55 @@ async function EditContent({ params, searchParams }: { params: Params; searchPar
           {reg.is_coach_kid ? "Not a coach's kid" : "Mark as coach's kid"}
         </Button>
       </form>
+
+      {/* Exemption: what is waived, why, and who approved it. */}
+      <section className="space-y-3 rounded-lg border border-border bg-card p-4">
+        <div>
+          <p className="text-sm font-semibold text-foreground">Exemption: {exemption ? EXEMPT_LABEL[exemption.scope] : "None"}</p>
+          {exemption ? (
+            <p className="text-xs text-muted-foreground">
+              {exemption.reason}{exemption.approved_by_name ? ` · approved by ${exemption.approved_by_name}` : ""} · recorded by {exemption.recorded_by_name ?? "unknown"} on {new Date(exemption.recorded_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">Every registered player is expected at evaluations, including injured players. Record an exemption only when the league has decided to excuse this player.</p>
+          )}
+        </div>
+        {!reg.seasons?.is_closed && (
+          <details className="rounded-md border border-border" open={false}>
+            <summary className="cursor-pointer px-3 py-2 text-sm text-foreground">{exemption ? "Change or remove the exemption" : "Record an exemption"}</summary>
+            <div className="space-y-4 border-t border-border p-3">
+              <form action={saveExemption} className="space-y-3">
+                <input type="hidden" name="registrationId" value={reg.id} />
+                <fieldset className="space-y-1">
+                  <legend className="text-sm font-medium text-foreground">Excused from</legend>
+                  {(["attendance", "evaluation", "both"] as ExemptScope[]).map((s) => (
+                    <label key={s} className="flex items-center gap-2 text-sm text-foreground">
+                      <input type="radio" name="scope" value={s} required defaultChecked={exemption?.scope === s} className="h-4 w-4" />
+                      {s === "attendance" ? "Attending (doesn't have to come)" : s === "evaluation" ? "Being evaluated (doesn't need scores)" : "Both"}
+                    </label>
+                  ))}
+                </fieldset>
+                <label className="block text-sm font-medium text-foreground">Reason for the exemption
+                  <input name="reason" required minLength={5} placeholder="For example: out of town on evaluation day, board approved" className={input} />
+                </label>
+                <label className="block text-sm font-medium text-foreground">Approved by (optional)
+                  <input name="approvedBy" maxLength={200} defaultValue={exemption?.approved_by_name ?? ""} placeholder="Who made the decision, if not you (e.g. league president)" className={input} />
+                </label>
+                <Button type="submit" className="min-h-11">{exemption ? "Save new exemption" : "Record exemption"}</Button>
+              </form>
+              {exemption && (
+                <form action={removeExemption} className="flex flex-wrap items-end gap-2 border-t border-border pt-3">
+                  <input type="hidden" name="registrationId" value={reg.id} />
+                  <label className="min-w-48 flex-1 text-sm font-medium text-foreground">Reason for removing
+                    <input name="reason" required minLength={5} className={input} />
+                  </label>
+                  <Button type="submit" variant="outline" className="min-h-11">Remove exemption</Button>
+                </form>
+              )}
+            </div>
+          </details>
+        )}
+      </section>
 
       <form action={saveRegistration} className="space-y-4 rounded-lg border border-border bg-card p-4">
         <input type="hidden" name="playerSeasonId" value={reg.id} />

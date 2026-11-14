@@ -38,6 +38,7 @@ export default async function DraftReportsPage({
   let isCoach = false;
   let reportError: string | null = null;
   let coachKids: number[] = [];
+  let exemptions: { player_season_id: number; scope: "attendance" | "evaluation" | "both" }[] = [];
   let stars: number[] = [];
   if (selected) {
     const [report, noteResult, roleResult] = await Promise.all([
@@ -53,10 +54,13 @@ export default async function DraftReportsPage({
     // Coach's kids (shown to everyone who can open the report) and this viewer's private stars.
     const ids = rows.map((r) => r.player_season_id);
     if (ids.length) {
-      const [kidResult, starResult] = await Promise.all([
+      const [kidResult, starResult, exemptResult] = await Promise.all([
         supabase.from("player_seasons").select("id").in("id", ids).eq("is_coach_kid", true),
         supabase.from("player_stars").select("player_season_id").in("player_season_id", ids),
+        // Exemptions: who is excused and from what (no reasons), for everyone who can open the report.
+        supabase.rpc("session_exemptions", { p_session_id: selected.session_id }),
       ]);
+      exemptions = (exemptResult.data ?? []) as typeof exemptions;
       coachKids = (kidResult.data ?? []).map((k) => k.id as number);
       stars = (starResult.data ?? []).map((s) => s.player_season_id as number);
     }
@@ -129,6 +133,7 @@ export default async function DraftReportsPage({
               fileName={`draft-report-${selected.season_name.replace(/\s+/g, "-").toLowerCase()}-age-${selected.league_age}.csv`}
               administrator={administrator}
               coachKids={coachKids}
+              exemptions={exemptions}
               stars={stars}
               notes={notes}
               canWritePrivate={isCoach}

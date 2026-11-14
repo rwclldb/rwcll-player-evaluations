@@ -4,13 +4,17 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Search } from "lucide-react";
 import { CoachKidBadge } from "@/components/coach-kid-badge";
+import { ExemptBadge, type ExemptScope } from "@/components/exempt-badge";
 import { setBib, toggleCheckIn } from "./actions";
 
 export type CheckInRow = {
   player_season_id: number; first_name: string; last_name: string; date_of_birth: string | null; league_age: number;
   evaluation_number: number | null; is_coach_kid: boolean; event_id: number; event_type: "primary" | "makeup";
-  start_time: string; end_time: string; location: string; checked_in_at: string | null;
+  start_time: string; end_time: string; location: string; checked_in_at: string | null; exempt_scope: ExemptScope | null;
 };
+
+// Exempt from attending: not expected, so not "missing" (they can still be checked in if they come).
+const excused = (r: { exempt_scope: ExemptScope | null }) => r.exempt_scope === "attendance" || r.exempt_scope === "both";
 
 const time = (t: string) => {
   const [h, m] = t.split(":").map(Number);
@@ -48,9 +52,11 @@ export function CheckInList({ rows: initial, isMakeup }: { rows: CheckInRow[]; i
   const shown = rows.filter((r) =>
     (age === "all" || r.league_age === age) &&
     (q ? (/^\d+$/.test(q) ? String(r.evaluation_number ?? "").startsWith(q) : `${r.first_name} ${r.last_name} ${r.last_name}, ${r.first_name}`.toLowerCase().includes(q))
-       : show === "all" || !r.checked_in_at || recent.has(r.player_season_id)));
+       : show === "all" || (!r.checked_in_at && !excused(r)) || recent.has(r.player_season_id)));
   const inAge = rows.filter((r) => age === "all" || r.league_age === age);
   const here = inAge.filter((r) => r.checked_in_at).length;
+  const expected = inAge.filter((r) => !excused(r) || r.checked_in_at).length;
+  const excusedCount = inAge.length - expected;
 
   function tap(r: CheckInRow) {
     const name = `${r.first_name} ${r.last_name}`;
@@ -96,7 +102,7 @@ export function CheckInList({ rows: initial, isMakeup }: { rows: CheckInRow[]; i
           {ages.map((a) => <button key={a} type="button" className={pill(age === a)} onClick={() => { setAge(a); setRecent(new Set()); }}>{a}</button>)}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-          <span className="font-medium text-foreground">{here} of {inAge.length} here{isMakeup ? " (makeup: only players who still need evaluating)" : ""}</span>
+          <span className="font-medium text-foreground">{here} of {expected} here{excusedCount ? ` · ${excusedCount} exempt from attending` : ""}{isMakeup ? " (makeup: only players who still need evaluating)" : ""}</span>
           {!q && (
             <span className="flex gap-1">
               <button type="button" className={pill(show === "waiting")} onClick={() => setShow("waiting")}>Not here yet</button>
@@ -136,6 +142,7 @@ export function CheckInList({ rows: initial, isMakeup }: { rows: CheckInRow[]; i
                     <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                       Age {r.league_age} · {time(r.start_time)}
                       {r.is_coach_kid && <CoachKidBadge short />}
+                      {r.exempt_scope && <ExemptBadge scope={r.exempt_scope} />}
                       {done && <span className="font-medium text-emerald-700 dark:text-emerald-300">Here</span>}
                     </span>
                   </span>

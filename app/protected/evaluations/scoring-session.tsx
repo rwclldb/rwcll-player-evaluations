@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import { ChevronLeft, ChevronRight, CloudOff, History, Lock, MessageSquare, Search, StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CoachKidBadge } from "@/components/coach-kid-badge";
+import { ExemptBadge, type ExemptScope } from "@/components/exempt-badge";
 import { useOnline, useUnsent } from "@/components/offline-sync";
 import { enqueue, isNetworkError, removeFromQueue, type SavePayload } from "@/lib/offline-queue";
 import { saveScores } from "./actions";
@@ -14,7 +15,7 @@ import { RatingInputs } from "./rating-inputs";
 // players and saving work with no signal: saves that can't be sent are kept on this device and sent later.
 
 export type ScoringCategory = { id: number; code: string; name: string; category_group: string; sort_order: number };
-export type ScoringPlayer = { id: number; bib: number | null; name: string; leagueAge: number; birthDate: string | null; coachKid: boolean; here: boolean };
+export type ScoringPlayer = { id: number; bib: number | null; name: string; leagueAge: number; birthDate: string | null; coachKid: boolean; here: boolean; exempt: ExemptScope | null };
 export type MyScores = { status: string; scores: Record<string, number>; answers: Record<string, string> };
 export type PriorYear = { prior_overall: number | null; prior_ratings: number; prior_skills: Record<string, number> };
 
@@ -254,7 +255,7 @@ export function ScoringSession(props: {
           <div>
             <p className="font-mono text-3xl font-bold text-foreground">{bibLabel(player)}</p>
             <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold text-foreground">
-              {player.name}{player.coachKid && <CoachKidBadge />}
+              {player.name}{player.coachKid && <CoachKidBadge />}{player.exempt && <ExemptBadge scope={player.exempt} />}
               {player.here && <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Here</span>}
             </h2>
             <p className="text-xs text-muted-foreground">
@@ -378,6 +379,7 @@ export function ScoringSession(props: {
                   <span className="min-w-0 flex-1 truncate text-sm text-foreground">{p.name}</span>
                   {p.here && <span title="Checked in today" className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Here</span>}
                   {p.coachKid && <CoachKidBadge short />}
+                  {p.exempt && <ExemptBadge scope={p.exempt} short />}
                   {noteOf(p.id) && <StickyNote className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-label="Has your note" />}
                   <span className="hidden text-xs text-muted-foreground sm:inline">Age {p.leagueAge}</span>
                   <StatusChip status={statusOf(p.id)} />

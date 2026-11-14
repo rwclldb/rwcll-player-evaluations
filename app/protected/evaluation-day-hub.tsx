@@ -27,8 +27,10 @@ export async function EvaluationDayHub({ season }: { season: { id: number; name:
   let progress: { here: number; total: number } | null = null;
   if (next?.event_date === today) {
     const { data: list } = await supabase.rpc("checkin_list", { p_season_id: season.id, p_date: today });
-    const rows = (list ?? []) as { checked_in_at: string | null }[];
-    progress = { here: rows.filter((r) => r.checked_in_at).length, total: rows.length };
+    const rows = (list ?? []) as { checked_in_at: string | null; exempt_scope: string | null }[];
+    // Players exempt from attending aren't expected (unless they came anyway).
+    const expected = rows.filter((r) => r.checked_in_at || !(r.exempt_scope === "attendance" || r.exempt_scope === "both"));
+    progress = { here: rows.filter((r) => r.checked_in_at).length, total: expected.length };
   }
 
   return (

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { safeCsvCell } from "@/lib/sports-connect-preview";
 import { saveNote } from "@/app/protected/my-notes/actions";
 import { CoachKidBadge } from "@/components/coach-kid-badge";
+import { EXEMPT_LABEL, ExemptBadge, type ExemptScope } from "@/components/exempt-badge";
 import { toggleStar } from "./actions";
 import { downloadPdf } from "@/lib/draft-report-pdf";
 
@@ -68,11 +69,13 @@ function flags(r: DraftReportRow, administrator: boolean) {
 
 // notes: what the database lets this viewer see (player_notes). canWritePrivate: coaches get a private-note box.
 // coachKids: registrations marked as a coach's kid. stars: this viewer's private stars (toggled here).
-export function DraftReportTable({ rows, title, fileName, administrator, notes = [], canWritePrivate = false, returnTo, coachKids = [], stars = [] }: {
+export function DraftReportTable({ rows, title, fileName, administrator, notes = [], canWritePrivate = false, returnTo, coachKids = [], stars = [], exemptions = [] }: {
   rows: DraftReportRow[]; title: string; fileName: string; administrator: boolean;
   notes?: ReportNote[]; canWritePrivate?: boolean; returnTo: string; coachKids?: number[]; stars?: number[];
+  exemptions?: { player_season_id: number; scope: ExemptScope }[];
 }) {
   const kids = useMemo(() => new Set(coachKids), [coachKids]);
+  const exempt = useMemo(() => new Map(exemptions.map((x) => [x.player_season_id, x.scope])), [exemptions]);
   const [starred, setStarred] = useState<Set<number>>(() => new Set(stars));
   const [onlyStars, setOnlyStars] = useState(false);
   const [starError, setStarError] = useState<string | null>(null);
@@ -122,12 +125,13 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
   );
 
   function downloadCsv() {
-    const head = ["Bib", "Last Name", "First Name", "Coach's Kid", "Starred", "Age", "Evaluator Overall", "Evaluator Skills Rated", "Evaluators", "Coach Overall",
+    const head = ["Bib", "Last Name", "First Name", "Coach's Kid", "Exempt", "Starred", "Age", "Evaluator Overall", "Evaluator Skills Rated", "Evaluators", "Coach Overall",
       "Coach Overall (high/low dropped)", "Coach Skills Rated", "Coaches",
       "Prior-Year Overall", "Prior-Year Ratings", ...SKILLS.flatMap(([, l]) => [`Evaluator ${l}`, `Coach ${l}`, `Coach ${l} (high/low dropped)`, `Prior ${l}`]),
       "Evaluator Pitching", "Coach Pitching", "Coach Pitching (high/low dropped)", "Evaluator Catching", "Coach Catching", "Coach Catching (high/low dropped)", "Flags"];
     const lines = sorted.map((r) => [
-      r.evaluation_number ?? "", r.last_name, r.first_name, kids.has(r.player_season_id) ? "Yes" : "", starred.has(r.player_season_id) ? "Yes" : "", r.league_age, fmt(r.evaluator_overall), r.evaluator_skills_rated, r.evaluator_evaluations,
+      r.evaluation_number ?? "", r.last_name, r.first_name, kids.has(r.player_season_id) ? "Yes" : "",
+      exempt.has(r.player_season_id) ? EXEMPT_LABEL[exempt.get(r.player_season_id)!] : "", starred.has(r.player_season_id) ? "Yes" : "", r.league_age, fmt(r.evaluator_overall), r.evaluator_skills_rated, r.evaluator_evaluations,
       fmt(r.coach_overall), fmt(r.skill_averages?.coach_trimmed_overall), r.coach_skills_rated, r.coach_evaluations, fmt(r.prior_overall), r.prior_ratings,
       ...SKILLS.flatMap(([c]) => [fmt(r.skill_averages?.evaluator?.[c]), fmt(r.skill_averages?.coach?.[c]), fmt(r.skill_averages?.coach_trimmed?.[c]), fmt(r.skill_averages?.prior?.[c])]),
       fmt(r.skill_averages?.evaluator?.pitching), fmt(r.skill_averages?.coach?.pitching), fmt(r.skill_averages?.coach_trimmed?.pitching),
@@ -170,7 +174,7 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
         rows: sorted.map((r) => [
           starred.has(r.player_season_id) ? "*" : "",
           String(r.evaluation_number ?? "—"),
-          `${r.last_name}, ${r.first_name}${kids.has(r.player_season_id) ? "  CK" : ""}`,
+          `${r.last_name}, ${r.first_name}${kids.has(r.player_season_id) ? "  CK" : ""}${exempt.has(r.player_season_id) ? `\n${EXEMPT_LABEL[exempt.get(r.player_season_id)!]}` : ""}`,
           `${fmt(r.evaluator_overall)}${r.evaluator_evaluations ? `\n${r.evaluator_evaluations} eval.` : ""}`,
           `${fmt(r.coach_overall)}${trimmedOverall(r) === null ? "" : ` (${fmt(trimmedOverall(r))})`}${r.coach_evaluations ? `\n${r.coach_evaluations} coach${r.coach_evaluations === 1 ? "" : "es"}` : ""}`,
           fmt(r.prior_overall),
@@ -258,6 +262,7 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
                           {notesFor.has(r.player_season_id) && <StickyNote className="ml-1 h-3.5 w-3.5 text-amber-600 dark:text-amber-400 print:hidden" aria-label="Has notes" />}
                         </button>
                         {kids.has(r.player_season_id) && <CoachKidBadge />}
+                        {exempt.has(r.player_season_id) && <ExemptBadge scope={exempt.get(r.player_season_id)!} />}
                       </div>
                     </td>
                     {overallCell(num(r.evaluator_overall), r.evaluator_skills_rated, r.evaluator_evaluations, "evaluator")}

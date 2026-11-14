@@ -47,6 +47,7 @@ const scoring = (who: "coach" | "evaluator"): HelpSection => ({
       "**Saved**: your scores are in. **Not evaluated**: you marked the player as not evaluated. **Not started**: nothing saved yet.",
       "**Here**: the registrar checked the player in today.",
       "**CK**: a coach's kid. Score them like everyone else; the league decides how coach's kids are drafted.",
+      "**Exempt**: the league excused the player from attending, from being evaluated, or both. You can still score them if they take part.",
       "**Prior-year coach rating** (blue box): last season's coach ratings, when the league has turned them on.",
     ] },
     { tip: "If you tap a rating and then move to another player without saving, the app asks before throwing the change away." },
@@ -186,6 +187,7 @@ export const GUIDES: HelpGuide[] = [
             "On makeup days, the list shows only players who weren't checked in earlier and haven't been scored.",
             "No bib yet? Tap [[+ Bib]], type the number and tap [[Save]]. A bib already in use is refused with the name of who has it.",
             "Several people can check in at once; the list refreshes every 30 seconds.",
+            "Players marked **Exempt from attending** aren't expected: they're left out of [[Not here yet]], the count and makeup days. Check them in if they come anyway.",
           ] },
         ],
       },
@@ -208,6 +210,7 @@ export const GUIDES: HelpGuide[] = [
         blocks: [
           "Open [[Players]], search, and open the player. You can fix the name, birthdate, age group and bib, and mark a coach's kid. Name, birthdate and age-group changes need a short reason. Tap [[Save changes]].",
           "Once anyone has scored the player, the age group can't change. Every change is recorded and shown at the bottom of the page.",
+          "**Exemptions**: when the league excuses a player, open [[Record an exemption]] on their page, choose what they're excused from (attending, being evaluated, or both), give the reason and, if someone else decided, who approved it, then tap [[Record exemption]]. Coaches and evaluators see only that the player is exempt, not the reason. [[Change or remove the exemption]] replaces or removes it (with a reason); the old one stays in the history. [[Players]] has an [[Exempt]] filter.",
         ],
       },
       {

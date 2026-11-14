@@ -134,6 +134,34 @@ export async function applyBibUpload(formData: FormData) {
 }
 
 // ---------- coach's kid flag ----------
+// Exemptions: admins and registrars record, replace or remove them (reason required; see migration 20261117090000).
+export async function saveExemption(formData: FormData) {
+  const registrationId = id(formData.get("registrationId"));
+  const back = `/protected/players/${registrationId}`;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_player_exemption", {
+    p_player_season_id: registrationId,
+    p_scope: String(formData.get("scope") ?? ""),
+    p_reason: String(formData.get("reason") ?? ""),
+    p_approved_by_name: String(formData.get("approvedBy") ?? ""),
+  });
+  if (error) go(back, "error", error.message);
+  revalidatePath("/protected/players");
+  revalidatePath("/protected/check-in");
+  go(back, "message", "Exemption saved.");
+}
+
+export async function removeExemption(formData: FormData) {
+  const registrationId = id(formData.get("registrationId"));
+  const back = `/protected/players/${registrationId}`;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("revoke_player_exemption", { p_player_season_id: registrationId, p_reason: String(formData.get("reason") ?? "") });
+  if (error) go(back, "error", error.message);
+  revalidatePath("/protected/players");
+  revalidatePath("/protected/check-in");
+  go(back, "message", "Exemption removed.");
+}
+
 export async function setCoachKid(formData: FormData) {
   const registrationId = id(formData.get("registrationId"));
   const back = `/protected/players/${registrationId}`;
