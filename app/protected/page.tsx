@@ -45,10 +45,11 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
     return <AdminRoadmap data={roadmap} viewing={viewing} seasons={seasons} />;
   }
 
-  const { data: schedule } = await supabase.rpc("my_evaluation_schedule");
+  const [{ data: schedule }, { data: account }] = await Promise.all([supabase.rpc("my_evaluation_schedule"), supabase.rpc("my_account")]);
+  const name = (account as { display_name: string | null } | null)?.display_name || user.email;
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <p className="text-sm text-muted-foreground">Welcome, <span className="font-medium text-foreground">{user.email}</span></p>
+      <p className="text-sm text-muted-foreground">Welcome, <span className="font-medium text-foreground">{name}</span></p>
       <MySchedule rows={(schedule ?? []) as ScheduleRow[]} />
       <div className="grid gap-3 sm:grid-cols-3">
         {SHORTCUTS.map(({ href, title, text, icon: Icon }) => (

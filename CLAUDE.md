@@ -162,6 +162,11 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
   - "Registered but not in this file" lists players missing from the export (`import_batch_missing_registrations`). Nothing is ever removed.
   - Row review has an "Already registered" tab and refuses decisions on those rows. Requested division isn't stored on registrations, so division changes aren't compared.
 
+## Built 2026-11-14 (local only; migration not on hosted)
+
+- **Your account** (`/protected/account`, migration 20261114090000, test `test:my-account-runtime`): every signed-in person opens it from the account icon in the header (email shown on wide screens) or "Your account" in the phone menu. Shows the sign-in email (read-only; admins change it on People), roles with seasons and coach divisions (`my_account()`), a name form (`set_my_display_name`, audited `account_name_changed` with the owner as actor), and a password change that checks the current password first (throwaway client, so session cookies are untouched), needs 8+ characters, and is logged as `account_password_changed` (`log_my_password_change`; the password is never stored). Home says "Welcome, <name>".
+- **Imports page** explains that uploading the full export again is safe.
+
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)

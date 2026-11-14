@@ -122,9 +122,13 @@ async function ImportBatchesContent() {
         </div>
       </div>
 
-      {/* Audit Banner */}
-      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-800 dark:text-amber-200/90 leading-relaxed">
-        <strong className="text-amber-800 dark:text-amber-300 font-semibold">Review only.</strong> Opening a batch reads its staged rows and flags. No player or registration records are changed here.
+      {/* How re-importing works */}
+      <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm leading-relaxed text-foreground">
+        <strong className="font-semibold">Upload the latest full export as often as you like.</strong>{" "}
+        Players already registered are compared with what the app has, never added twice: unchanged players are marked up to date, and any
+        changes (name, birthdate, bib and so on) wait for your tick in the &quot;Players already registered&quot; box on the batch page.
+        Only new players go through row review. Nothing is ever removed.
+        <span className="mt-1 block text-xs text-muted-foreground">Opening a batch here only reads it; nothing changes until you act on the batch page.</span>
       </div>
 
       {/* Import Batches Directory Table Card */}

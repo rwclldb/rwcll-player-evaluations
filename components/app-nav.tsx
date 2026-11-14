@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Laptop, LogOut, Menu, Moon, Sun } from "lucide-react";
+import { Laptop, LogOut, Menu, Moon, Sun, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -99,7 +99,15 @@ export function MobileMenu({ links, email }: { links: NavLink[]; email: string }
           ))}
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="truncate font-mono text-[11px] font-normal">{email}</DropdownMenuLabel>
+        <DropdownMenuItem asChild>
+          <Link href="/protected/account" className="min-h-11 gap-2">
+            <UserRound className="h-4 w-4 shrink-0" />
+            <span className="min-w-0">
+              <span className="block text-base">Your account</span>
+              <span className="block truncate font-mono text-[11px] text-muted-foreground">{email}</span>
+            </span>
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => void signOutAction()} className="min-h-11 gap-2 text-base">
           <LogOut className="h-4 w-4" /> Sign out
         </DropdownMenuItem>
