@@ -93,5 +93,6 @@ assert.match(actionSource, /supabase\.rpc\("is_admin"\)/);
 assert.match(actionSource, /stage_sports_connect_import/);
 const clientSource = fs.readFileSync(path.join(root, "app", "protected", "import-preview", "registration-import-preview.tsx"), "utf8");
 assert.match(clientSource, /Save Batch for Review/);
-assert.match(clientSource, /Does not write player or registration records/);
+assert.match(clientSource, /New players are added only after you review them/);
+assert.match(clientSource, /other changes wait for you on the batch page/);
 console.log("PASS: staging migration/action guard checks; admin-only staging, open-season check, row cap, audit log, and no player/registration writes.");

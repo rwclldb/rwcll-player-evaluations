@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BulkPanel } from "./bulk-panel";
+import { SyncPanel } from "./sync-panel";
 import { 
   ArrowLeft, 
   FileSpreadsheet, 
@@ -88,7 +89,15 @@ function flagsOf(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string").slice(0, 30);
 }
 
-async function ImportBatchDetailContent({ batchId, bulkMessage, bulkError }: { batchId: string; bulkMessage?: string; bulkError?: string }) {
+type Notices = { bulkMessage?: string; bulkError?: string; syncMessage?: string; syncError?: string };
+
+const STATE_LABELS: Record<string, string> = {
+  up_to_date: "Already registered, up to date",
+  has_changes: "Already registered, changes waiting",
+  changes_reviewed: "Already registered, changes reviewed",
+};
+
+async function ImportBatchDetailContent({ batchId, bulkMessage, bulkError, syncMessage, syncError }: { batchId: string } & Notices) {
   const numericId = Number(batchId);
   if (!Number.isSafeInteger(numericId) || numericId < 1) {
     return (
@@ -219,6 +228,8 @@ async function ImportBatchDetailContent({ batchId, bulkMessage, bulkError }: { b
           </Link>
         </Button>
       </div>
+
+      <SyncPanel batchId={batch.id} message={syncMessage} error={syncError} />
 
       <BulkPanel batchId={batch.id} message={bulkMessage} error={bulkError} />
 
@@ -354,7 +365,7 @@ async function ImportBatchDetailContent({ batchId, bulkMessage, bulkError }: { b
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-xs font-mono text-slate-700 dark:text-slate-300">{row.review_state}</td>
+                        <td className="px-4 py-3 text-xs font-mono text-slate-700 dark:text-slate-300">{STATE_LABELS[row.review_state] ?? row.review_state}</td>
                         <td className="px-4 py-3">
                           {playersError ? (
                             <span className="text-xs text-slate-600 dark:text-slate-400 italic">Unavailable</span>
@@ -401,7 +412,7 @@ export default async function ImportBatchDetailPage({
   searchParams,
 }: {
   params: Promise<{ batchId: string }>;
-  searchParams: Promise<{ bulkMessage?: string; bulkError?: string }>;
+  searchParams: Promise<Notices>;
 }) {
   return (
     <Suspense
@@ -414,8 +425,8 @@ export default async function ImportBatchDetailPage({
   );
 }
 
-async function ImportBatchParams({ params, searchParams }: { params: Promise<{ batchId: string }>; searchParams: Promise<{ bulkMessage?: string; bulkError?: string }> }) {
+async function ImportBatchParams({ params, searchParams }: { params: Promise<{ batchId: string }>; searchParams: Promise<Notices> }) {
   const { batchId } = await params;
   const sp = await searchParams;
-  return <ImportBatchDetailContent batchId={batchId} bulkMessage={sp.bulkMessage} bulkError={sp.bulkError} />;
+  return <ImportBatchDetailContent batchId={batchId} {...sp} />;
 }

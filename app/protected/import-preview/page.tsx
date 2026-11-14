@@ -67,7 +67,7 @@ async function ImportPreviewContent() {
             Sports Connect Import
           </h1>
           <p className="mt-1 text-xs font-mono text-muted-foreground">
-            Upload the registration export. You review every row before any player is added.
+            Upload the registration export. You review every new player before they are added. You can upload the full export again any time: players already registered are compared with what the app has, and only changes need you.
           </p>
         </div>
         <Button asChild variant="outline" size="sm" className="border-border bg-card text-xs text-slate-700 dark:text-slate-300 hover:bg-accent">

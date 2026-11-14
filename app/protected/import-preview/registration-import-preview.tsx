@@ -154,7 +154,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
       }
       setStagedBatchId(result.batchId);
       setStageMessage(
-        `Saved staging batch #${result.batchId} with ${result.rowCount} rows. No player or registration records were changed.`
+        `Saved staging batch #${result.batchId} with ${result.rowCount} rows. New players wait for your review. Players already registered are compared on the batch page.`
       );
     } catch (caught) {
       setStageMessage(
@@ -355,7 +355,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
                   Save Staging Batch
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Saves minimal rows for administrator review only. Does not write player or registration records.
+                  New players are added only after you review them. For players already registered, payment status, Registration Number and a missing bib are updated now; other changes wait for you on the batch page.
                 </p>
               </div>
               <Button

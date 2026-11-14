@@ -51,8 +51,12 @@ function flags(value: unknown): string[] {
 
 // Which rows the review list shows. Default hides rows that need nothing more: ignored (the admin chose not
 // to use them) and committed. Ignored rows can be reopened from the Ignored view.
+// Rows for players already registered this season; their changes are handled on the batch page.
+const SYNC_STATES = ["up_to_date", "has_changes", "changes_reviewed"];
+
 const VIEWS = [
-  { key: "open", label: "Needs work", test: (s: string) => s !== "ignored" && s !== "committed" },
+  { key: "open", label: "Needs work", test: (s: string) => s !== "ignored" && s !== "committed" && !SYNC_STATES.includes(s) },
+  { key: "registered", label: "Already registered", test: (s: string) => SYNC_STATES.includes(s) },
   { key: "ignored", label: "Ignored", test: (s: string) => s === "ignored" },
   { key: "committed", label: "Committed", test: (s: string) => s === "committed" },
   { key: "all", label: "All rows", test: () => true },
@@ -227,9 +231,9 @@ async function ImportBatchReviewContent({ params, searchParams }: { params: Prom
                 {v.label} <span className="ml-1 font-mono text-xs opacity-80">{counts[v.key]}</span>
               </Link>
             ))}
-            {view.key === "open" && counts.ignored + counts.committed > 0 && (
+            {view.key === "open" && counts.ignored + counts.committed + counts.registered > 0 && (
               <span className="text-xs text-muted-foreground">
-                Hiding {counts.ignored} ignored and {counts.committed} committed. To use an ignored row after all, open Ignored and click Reopen Ignored Row.
+                Hiding {counts.ignored} ignored, {counts.committed} committed and {counts.registered} already registered. To use an ignored row after all, open Ignored and click Reopen Ignored Row.
               </span>
             )}
           </nav>
@@ -310,7 +314,13 @@ async function ImportBatchReviewContent({ params, searchParams }: { params: Prom
                     </div>
                   )}
 
-                  {/* Decision Form */}
+                  {SYNC_STATES.includes(rowData.review_state) ? (
+                    <p className="rounded-md border border-border bg-background p-3 text-sm text-foreground">
+                      This player is already registered this season.{" "}
+                      {rowData.review_state === "has_changes" ? "Their changes wait for you" : "Nothing to decide here; see the details"} on the{" "}
+                      <Link href={`/protected/import-batches/${id}#registered`} className="font-medium underline">batch page</Link>.
+                    </p>
+                  ) : (
                   <ReviewDecisionForm
                     rowId={rowData.id}
                     batchId={id}
@@ -327,6 +337,7 @@ async function ImportBatchReviewContent({ params, searchParams }: { params: Prom
                     duplicatePlayerIdResolutionReason={rowData.duplicate_player_id_resolution_reason}
                     disabled={rowData.review_state === "committed" || Boolean(rowsError)}
                   />
+                  )}
                 </CardContent>
               </Card>
             );

@@ -154,6 +154,13 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 
 - **Coach's kids** (migration 20261113170000, test `test:coach-kids-stars-runtime`): `player_seasons.is_coach_kid`, per season, not linked to any coach. The app only records and shows it (league draft rules change often): a "Coach's kid" badge on the scoring list and page, Players page (with a "Coach's kids" filter), printed roster ("CK"), and draft report (badge, print, CSV column). Admins set it on a player's edit page (`admin_set_coach_kid`, audited) or through an optional "Coaches Kid" column (Yes/No) in the Sports Connect registration file; unclear values are flagged in the preview. Players are scored as usual.
 - **Private stars** (same migration): `player_stars`, toggled with `toggle_player_star`. On the draft report, a star before each name and a "My stars" filter; CSV has a Starred column. Only the owner can read their stars (admins can't). Allowed for players in age groups the person can open (scoring access, or released draft reports).
+- **Re-import sync** (migration 20261113180000, test `test:reimport-sync-runtime`): the full Sports Connect export can be staged again any time.
+  - At staging, `private.sync_import_batch` compares each row whose Player Id is already registered this season (and appears once in the file) with that registration. New `review_state` values: `up_to_date`, `has_changes`, `changes_reviewed`; the row stores `existing_player_season_id` and `sync_changes`.
+  - Applied automatically (audited `registration_synced_from_import`): payment status, Registration Number (when no other registration has it) and a missing bib from Registration Number.
+  - Waits for the admin's tick on the batch page's "Players already registered" panel (`apply_import_row_changes`): name, birthdate, age group (blocked once the player has scores), bib that differs (blocked if taken) and Coaches Kid. Unticked changes keep the app's values; "Keep app values" reviews a row without changes. A value edited in the app after staging is never overwritten.
+  - Same Player Id with a different name and birthdate stays in row review with a flag (probably another child). Rows whose Player Id and division were ignored in an earlier batch this season are ignored again (audited `sports_connect_import_rows_auto_ignored`).
+  - "Registered but not in this file" lists players missing from the export (`import_batch_missing_registrations`). Nothing is ever removed.
+  - Row review has an "Already registered" tab and refuses decisions on those rows. Requested division isn't stored on registrations, so division changes aren't compared.
 
 ## Tracked additions (confirmed requirements, not yet built)
 
