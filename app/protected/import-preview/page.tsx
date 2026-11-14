@@ -29,7 +29,7 @@ async function ImportPreviewContent() {
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
             <Link href="/protected">
-              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Return to workspace
+              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Home
             </Link>
           </Button>
         </div>
@@ -58,16 +58,16 @@ async function ImportPreviewContent() {
           <div className="flex items-center gap-2 mb-2">
             <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
               <Link href="/protected">
-                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to workspace
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Roadmap
               </Link>
             </Button>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <UploadCloud className="h-7 w-7 text-emerald-700 dark:text-emerald-400" />
-            Sports Connect Import Preview
+            Sports Connect Import
           </h1>
           <p className="mt-1 text-xs font-mono text-muted-foreground">
-            Phase 5.1 &bull; CSV preview and administrator-only staging
+            Upload the registration export. You review every row before any player is added.
           </p>
         </div>
         <Button asChild variant="outline" size="sm" className="border-border bg-card text-xs text-slate-700 dark:text-slate-300 hover:bg-accent">

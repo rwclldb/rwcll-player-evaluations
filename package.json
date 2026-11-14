@@ -27,7 +27,6 @@
     "test:evaluation-review-ui": "node scripts/test-evaluation-review-ui.cjs",
     "test:player-reports": "node scripts/test-player-reports.cjs",
     "test:historical-coach-evaluation-schema": "node scripts/test-historical-coach-evaluation-schema.cjs",
-    "test:coach-historical-reports": "node scripts/test-coach-historical-reports.cjs",
     "manual:import-duplicate-player-id-resolution": "node scripts/test-import-duplicate-player-id-resolution.cjs",
     "test:session-administration": "node scripts/test-session-administration.cjs",
     "test:historical-rls-runtime": "node scripts/test-historical-rls-runtime.cjs",

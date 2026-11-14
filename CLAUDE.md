@@ -146,9 +146,14 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - **Admin score correction** (migration 20261113120000, test `test:admin-correction-runtime`): Data Review shows "View / correct" on every evaluation card. The page (`/protected/evaluation-review/[evaluationId]`) shows the scorer, all scores, experience answers and status like the scoring screen, and saves through `admin_save_evaluation_correction` (reason required; before and after audited as `evaluation_admin_corrected`; original submitted time kept; returns false and writes nothing when unchanged). Works in Open, Locked and Released age groups (Released shows a warning that coaches can already see the report); refused in a closed season. The scorer is not notified. Cards show "Corrected by admin". The workflow guard now lets an authorized correction delete a single rating or answer in a locked session; deleting the evaluation stays blocked. The old `admin_correct_evaluation` is unused.
 - **1,000-row limit fixed** (`lib/supabase/fetch-all.ts`): Data Review, the admin Reports CSV export and the admin player report's age-group comparison now page through all rows (Supabase returns at most 1,000 per request). Data Review was showing 1,000 of 1,230 fixture evaluations and the export was truncated.
 
+- **Cleanup before demos (2026-11-13)** (migrations 20261113150000, 20261113160000):
+  - Coach reports retired: `/protected/coach-reports` deleted, `coach_historical_report` and `coach_historical_report_roster` dropped. Draft reports cover prior-year ratings for every rated player.
+  - Supabase starter leftovers deleted (tutorial, hero, logos, auth/logout buttons). Public sign-up removed entirely: `/auth/sign-up` only says accounts are managed by an administrator; no `signUpAction`, no `ALLOW_PUBLIC_SIGNUP`.
+  - Wording: menu "Reports" is now **Season Export**; page titles match the menu (Data Review, Season Export, Sports Connect Import); "Phase 5.x" text removed; back links say "Roadmap" on admin pages and "Home" on pages coaches use.
+  - **Edit a person** on People: Edit next to the name changes the name and sign-in email (`updateAccount`; email via the auth admin API, confirmed immediately, password unchanged; refused if the email is taken). Audited as `account_name_changed` / `account_email_changed`.
+
 ## Tracked additions (confirmed requirements, not yet built)
 
-- **Retire the team-scoped coach report** (`/protected/coach-reports`, `coach_historical_report*`). It's superseded by draft reports and no longer linked from the evaluation screen or the top menu (the pages and functions still exist).
 - **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)
 - **Possible-duplicate player flag.** Flag players with the same name and birthdate for admin review and merge.
 - **Shared test server.** Vercel + hosted Supabase is running; `SUPABASE_SECRET_KEY` is set on Vercel (2026-11-11). Hosted needs every 2026-11-11 migration and Site URL / Redirect URLs (user-run steps; see docs/FAQ.md). The hosted plan can't edit email templates, so the app doesn't depend on them.
@@ -159,7 +164,6 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 
 ## Known issues and open decisions
 
-- **Coach access to historical ratings is scoped to current team assignment** (`coach_historical_report_roster`, `coach_historical_report`). Decided 2026-11-10: replace with access to all rated players, as described under Tracked additions. Not yet built.
 - **One registration per Sports Connect Player Id per season** (`player_seasons_season_external_player_id_uidx`). Decided 2026-11-10: keep this rule. Repeated Ids are data errors, so the app flags them and holds later rows in import review.
 - Documentation drift: some docs still describe implemented migrations as proposed, describe division-based evaluation, or say pitching/catching is AAA-and-up only. Reconcile against actual code.
 - Remaining security checks: confirm admin reports and CSV export still work. (2026-11-13: the export now includes every row; check the content.)

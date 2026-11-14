@@ -6,7 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, hasAdminKey } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
-import { grantRole, resendInvite, revokeRole, setCoachDivisions, setDisabled } from "./actions";
+import { grantRole, resendInvite, revokeRole, setCoachDivisions, setDisabled, updateAccount } from "./actions";
 import { InviteForm, SignInLinkButton } from "./link-forms";
 import { PeopleImport } from "./people-import";
 import { CsvTemplatePanel } from "@/components/csv-template";
@@ -79,7 +79,7 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 border-b border-border pb-5">
         <Button asChild variant="ghost" size="sm" className="h-8 w-fit px-2 text-xs text-muted-foreground hover:text-foreground">
-          <Link href="/protected"><ArrowLeft className="mr-1 h-4 w-4" /> Back to workspace</Link>
+          <Link href="/protected"><ArrowLeft className="mr-1 h-4 w-4" /> Roadmap</Link>
         </Button>
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           <UserCog className="h-7 w-7 text-emerald-700 dark:text-emerald-400" /> People
@@ -138,7 +138,24 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
             return (
               <li key={u.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2">
                 <div className="min-w-48 flex-1">
-                  <p className="font-medium text-foreground">{names.get(u.id) || "(no name)"}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-foreground">{names.get(u.id) || "(no name)"}</p>
+                    <details className="group relative">
+                      <summary className="cursor-pointer list-none rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">Edit</summary>
+                      <form action={updateAccount} className="absolute left-0 z-10 mt-1 w-72 space-y-2 rounded-lg border border-border bg-card p-3 shadow-lg">
+                        <input type="hidden" name="userId" value={u.id} />
+                        <input type="hidden" name="seasonId" value={season?.id ?? ""} />
+                        <label className="block text-xs text-muted-foreground">Name
+                          <input name="name" defaultValue={names.get(u.id) ?? ""} maxLength={100} className={input} />
+                        </label>
+                        <label className="block text-xs text-muted-foreground">Sign-in email
+                          <input name="email" type="email" defaultValue={u.email ?? ""} required className={input} />
+                        </label>
+                        <p className="text-[11px] text-muted-foreground">A new email takes effect right away; they keep their password.</p>
+                        <Button type="submit" size="sm" className="h-8 w-full">Save</Button>
+                      </form>
+                    </details>
+                  </div>
                   <p className="font-mono text-xs text-muted-foreground">{u.email}</p>
                 </div>
                 <span className={`rounded px-1.5 py-0.5 text-xs ${st.tone}`}>{st.label}</span>

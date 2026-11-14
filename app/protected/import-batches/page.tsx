@@ -49,7 +49,7 @@ async function ImportBatchesContent() {
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
             <Link href="/protected">
-              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Return to workspace
+              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Home
             </Link>
           </Button>
         </div>
@@ -95,7 +95,7 @@ async function ImportBatchesContent() {
           <div className="flex items-center gap-2 mb-2">
             <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
               <Link href="/protected">
-                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to workspace
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Roadmap
               </Link>
             </Button>
           </div>
@@ -143,7 +143,7 @@ async function ImportBatchesContent() {
           {error ? (
             <div role="alert" className="p-6 text-xs text-rose-700 dark:text-rose-300 space-y-2">
               <strong className="text-rose-700 dark:text-rose-400 font-semibold">Could not load staged batches.</strong>
-              <p>Confirm that the Phase 5.0 staging migration has been applied to the intended local database and that the administrator role is configured.</p>
+              <p>Refresh the page. If it keeps happening, check that you are signed in with an administrator account.</p>
             </div>
           ) : batches.length === 0 ? (
             <div className="p-8 text-center space-y-3">

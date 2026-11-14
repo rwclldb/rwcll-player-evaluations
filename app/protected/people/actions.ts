@@ -233,3 +233,42 @@ export async function setCoachDivisions(formData: FormData) {
   const list = (data as { divisions?: string[] })?.divisions ?? [];
   go(back(formData), "message", list.length ? `Divisions saved: ${list.join(", ")}.` : "Divisions cleared.");
 }
+
+// Correct a person's name and/or sign-in email. Email changes take effect at once (no confirmation email):
+// the person signs in with the new address and the same password.
+export async function updateAccount(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const userId = String(formData.get("userId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!userId) go(back(formData), "error", "Account not found.");
+  if (name.length > 100) go(back(formData), "error", "Keep the name under 100 characters.");
+
+  const admin = createAdminClient();
+  const { data: found, error: findError } = await admin.auth.admin.getUserById(userId);
+  if (findError || !found.user) go(back(formData), "error", "Account not found.");
+  const user = found.user!;
+  const { data: profile } = await supabase.from("user_profiles").select("display_name").eq("user_id", userId).maybeSingle();
+  const oldName = (profile?.display_name as string | null) ?? "";
+  const changes: string[] = [];
+
+  if (name !== oldName) {
+    const { error } = await supabase.rpc("admin_set_display_name", { p_user_id: userId, p_display_name: name });
+    if (error) go(back(formData), "error", error.message);
+    await supabase.rpc("admin_log_account_event", { p_user_id: userId, p_action: "account_name_changed", p_detail: { before: oldName, after: name } });
+    changes.push(name ? `name is now ${name}` : "name cleared");
+  }
+
+  if (email && email !== (user.email ?? "").toLowerCase()) {
+    if (!EMAIL.test(email)) go(back(formData), "error", `"${email}" is not an email address.`);
+    if (await findUserByEmail(admin, email)) go(back(formData), "error", `${email} already has an account.`);
+    const { error } = await admin.auth.admin.updateUserById(userId, { email, email_confirm: true });
+    if (error) go(back(formData), "error", error.message);
+    await supabase.rpc("admin_log_account_event", { p_user_id: userId, p_action: "account_email_changed", p_detail: { before: user.email, after: email } });
+    changes.push(`signs in as ${email}`);
+  }
+
+  revalidatePath("/protected/people");
+  revalidatePath("/protected/assignments");
+  go(back(formData), "message", changes.length ? `Saved: ${changes.join("; ")}.` : "No changes.");
+}

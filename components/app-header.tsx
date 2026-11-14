@@ -17,7 +17,7 @@ const ADMIN_LINKS: NavLink[] = [
   { href: "/protected/import-batches", label: "Imports" },
   { href: "/protected/evaluation-review", label: "Data Review" },
   { href: "/protected/draft-reports", label: "Draft Reports" },
-  { href: "/protected/reports", label: "Reports" },
+  { href: "/protected/reports", label: "Season Export" },
 ];
 
 // Coaches and independent evaluators. The database decides what each may open on Draft Reports

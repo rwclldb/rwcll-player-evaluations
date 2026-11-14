@@ -280,7 +280,7 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
           key: "export", title: "Export or print for the draft",
           status: "info",
           detail: "CSV download and a print view for each age group.",
-          links: [{ href: "/protected/draft-reports", label: "Draft reports" }, { href: "/protected/reports", label: "Other reports" }],
+          links: [{ href: "/protected/draft-reports", label: "Draft reports" }, { href: "/protected/reports", label: "Season export" }],
         },
       ];
     }

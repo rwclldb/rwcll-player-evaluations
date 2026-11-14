@@ -61,7 +61,7 @@ export default async function RosterPage({
       <style>{"@media print { @page { size: portrait; margin: 0.5in; } }"}</style>
       <div className="flex flex-col gap-3 border-b border-border pb-5 print:hidden">
         <Button asChild variant="ghost" size="sm" className="h-8 w-fit px-2 text-xs text-muted-foreground hover:text-foreground">
-          <Link href="/protected"><ArrowLeft className="mr-1 h-4 w-4" /> Back to workspace</Link>
+          <Link href="/protected"><ArrowLeft className="mr-1 h-4 w-4" /> Roadmap</Link>
         </Button>
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           <ClipboardList className="h-7 w-7 text-emerald-700 dark:text-emerald-400" /> Evaluation-Day Roster

@@ -177,16 +177,16 @@ async function EvaluationReviewContent() {
           <div className="flex items-center gap-2 mb-2">
             <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
               <Link href="/protected">
-                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Back to workspace
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Roadmap
               </Link>
             </Button>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <ClipboardCheck className="h-7 w-7 text-emerald-700 dark:text-emerald-400" />
-            Administrator Evaluation Review
+            Data Review
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Read-only completion tracking by season, age, and evaluator. Missing ratings are not treated as zero.
+            Who has scored whom, by age group and scorer. Open any score to view or correct it. Missing ratings are not treated as zero.
           </p>
         </div>
       </div>

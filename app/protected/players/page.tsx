@@ -66,7 +66,7 @@ async function PlayersContent({ searchParams }: { searchParams: SearchParams }) 
     <div className="space-y-6">
       <div className="flex flex-col gap-3 border-b border-border pb-5">
         <Button asChild variant="ghost" size="sm" className="h-8 w-fit px-2 text-xs text-muted-foreground hover:text-foreground">
-          <Link href="/protected"><ArrowLeft className="mr-1 h-4 w-4" /> Back to workspace</Link>
+          <Link href="/protected"><ArrowLeft className="mr-1 h-4 w-4" /> Roadmap</Link>
         </Button>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">

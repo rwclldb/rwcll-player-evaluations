@@ -56,26 +56,6 @@ export async function signOutAction() {
   return redirect("/auth/login");
 }
 
-export async function signUpAction(formData: FormData) {
-  if (process.env.ALLOW_PUBLIC_SIGNUP !== "true") {
-    return redirect("/auth/sign-up");
-  }
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-  const supabase = await createClient();
-
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-  });
-
-  if (error) {
-    return redirect(`/auth/sign-up?message=${encodeURIComponent(error.message)}`);
-  }
-
-  return redirect("/auth/sign-up-success");
-}
-
 export async function forgotPasswordAction(formData: FormData) {
   const email = formData.get("email") as string;
   const supabase = await createClient();

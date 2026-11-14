@@ -21,8 +21,7 @@ assert.doesNotMatch(evaluatorPage, /isEligibleRegistrationStatus|\.not\("registr
 assert.doesNotMatch(reviewPage, /isEligibleRegistrationStatus/, "admin review must include all registration statuses");
 assert.match(eligibilityMigration, /registration_payment_status/, "eligibility migration must retain registration payment data while allowing all statuses");
 assert.match(workspacePage, /\/protected\/evaluation-review/, "administrator workspace must link to review page");
-assert.match(signUpPage, /ALLOW_PUBLIC_SIGNUP !== "true"/, "public self-registration must be disabled unless explicitly enabled");
-assert.match(actions, /if \(process\.env\.ALLOW_PUBLIC_SIGNUP !== "true"\)/, "server action must reject public self-registration when disabled");
+assert.doesNotMatch(signUpPage + actions, /auth\.signUp\(|SignUpForm|signUpAction/, "public self-registration must not exist");
 assert.match(signUpPage, /Account creation is managed by an administrator/, "disabled sign-up page must explain the account provisioning policy");
 assert.match(evaluatorPage, /dark:text-emerald-400/, "fixed accent colors must provide a dark-theme variant");
 

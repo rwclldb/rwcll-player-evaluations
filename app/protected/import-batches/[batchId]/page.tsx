@@ -122,7 +122,7 @@ async function ImportBatchDetailContent({ batchId, bulkMessage, bulkError }: { b
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
             <Link href="/protected">
-              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Return to workspace
+              <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Home
             </Link>
           </Button>
         </div>
@@ -153,7 +153,7 @@ async function ImportBatchDetailContent({ batchId, bulkMessage, bulkError }: { b
         </Button>
         <h1 className="text-2xl font-bold text-foreground">Batch Review Unavailable</h1>
         <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-700 dark:text-rose-300 font-mono">
-          Could not read this batch. Confirm the Phase 5.0 migration is installed in the intended database. No data was changed.
+          Could not read this batch. Refresh the page to try again. No data was changed.
         </div>
       </div>
     );

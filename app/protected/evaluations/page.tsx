@@ -192,7 +192,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
       <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <Button asChild variant="ghost" size="sm" className="mb-2 h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
-            <Link href="/protected"><ArrowLeft className="mr-1 h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Back to workspace</Link>
+            <Link href="/protected"><ArrowLeft className="mr-1 h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Home</Link>
           </Button>
           <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             <ClipboardList className="h-7 w-7 text-emerald-700 dark:text-emerald-400" /> Evaluator Workspace
