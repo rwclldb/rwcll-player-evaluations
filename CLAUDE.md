@@ -234,6 +234,8 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
   - Copies: an `audit_log` insert trigger replaces birthdate values with "(hidden)" (and adds `date_of_birth_changed`); 660 existing entries were scrubbed once (the immutability trigger was switched off for that statement only; logged as `audit_birthdates_hidden`). Staged Sports Connect, bib and prior-year rows forget birthdates once handled. Re-import comparisons keep an md5 of the app's birthdate, not the dates. Ignored Sports Connect rows lose theirs too, so a reopened row commits without a birthdate.
   - The upload preview's "download issues" CSV still includes the file's own birthdate value, to fix it in Sports Connect.
 
+- **Season close and reopen** (migration 20261117150000, test `test:season-close-runtime`): Season page `/protected/seasons/[id]` (admin; "Close…"/"Reopen…" on the roadmap's Seasons list, and the End of season "Close the season" step). Checklist from `admin_season_close_check` (open age groups block; the rest warn). `admin_close_season` / `admin_reopen_season` need a reason (10+) and the season name typed; audited `season_closed` (with the checklist) / `season_reopened`; `seasons.closed_at` / `closed_by`. A trigger refuses changing `is_closed` through the API (signed-in users), so every change goes through the audited functions. History from `admin_season_status_history`.
+
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)

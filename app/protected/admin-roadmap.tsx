@@ -230,6 +230,7 @@ export function Seasons({ seasons }: { seasons: SeasonItem[] }) {
               <Link href={`/protected?season=${s.id}`} className="text-sm font-semibold text-foreground hover:underline">{s.name}</Link>
               <span className="flex items-center gap-3">
                 <span className="font-mono text-xs text-muted-foreground">{s.start_date || "—"} – {s.end_date || "—"}</span>
+                <Link href={`/protected/seasons/${s.id}`} className="text-xs font-semibold text-primary hover:underline">{s.is_closed ? "Reopen…" : "Close…"}</Link>
                 <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${s.is_closed ? "bg-muted text-muted-foreground" : "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300"}`}>
                   {s.is_closed ? "Closed" : "Active"}
                 </span>

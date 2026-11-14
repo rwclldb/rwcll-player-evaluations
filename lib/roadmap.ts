@@ -295,7 +295,7 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
       return [
         { key: "teams", title: "Record teams from the draft", status: "later", detail: "Coming later: assign each player a division and team after the draft.", links: [] },
         { key: "rerate", title: "Coaches re-rate their own players", status: "later", detail: "Coming later. For now, collect ratings in a spreadsheet and use the Prior-year upload next season.", links: [{ href: "/protected/prior-year", label: "Prior-year upload" }] },
-        { key: "close", title: "Close the season", status: "later", detail: "Coming later: closing locks everything for good (reopening needs an audited admin action).", links: [] },
+        { key: "close", title: "Close the season", status: d.season.is_closed ? "done" : "todo", detail: d.season.is_closed ? "Closed. Nothing in it can change unless an admin reopens it (audited)." : "Freezes scores, imports, bibs and player edits. Needs a reason and the season's name typed; reopening is audited too.", links: [{ href: `/protected/seasons/${d.season.id}`, label: d.season.is_closed ? "Season page" : "Close the season" }] },
         { key: "next", title: "Set up next season", status: "info", detail: "Division setup carries forward. Teams, roles and evaluations don't.", links: [{ href: "#seasons", label: "Create a season" }] },
       ];
   }

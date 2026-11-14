@@ -55,7 +55,7 @@ A task is checked only after it is implemented **and tested**. A confirmed requi
 - [ ] Verify the complete migration chain on a clean/disposable local database and reconcile migration history with checked-in files.
 - [ ] Complete database-level RLS and authorization tests for all roles and data paths.
 - [ ] Implement and test secure aggregate outputs for assigned-team and division views; no individual rating access for coaches.
-- [ ] Verify season close/reopen permissions and audit behavior.
+- [x] Verify season close/reopen permissions and audit behavior (`test:season-close-runtime`, 2026-11-17).
 - [ ] Verify database backup/restore and retention procedures.
 
 ## 4. Evaluations, attendance, and permissions
