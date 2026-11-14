@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { grantRole, resendInvite, revokeRole, setCoachDivisions, setDisabled, updateAccount } from "./actions";
 import { InviteForm, SignInLinkButton } from "./link-forms";
 import { PeopleImport } from "./people-import";
+import type { ExistingPerson, SeasonRole } from "@/lib/people-sync";
 import { CsvTemplatePanel } from "@/components/csv-template";
 import { PEOPLE_TEMPLATE } from "@/lib/csv-templates";
 
@@ -69,6 +70,11 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
   const roles = (roleData ?? []) as RoleRow[];
   const names = new Map((profileData ?? []).map((p) => [p.user_id as string, (p.display_name as string | null) ?? ""]));
   const rolesFor = (id: string) => roles.filter((r) => r.user_id === id && (r.season_id === null || r.season_id === season?.id));
+  // Every account as the list import compares it (before the search filter below).
+  const existingPeople: ExistingPerson[] = users.filter((u) => u.email).map((u) => {
+    const r = roles.find((x) => x.user_id === u.id && x.season_id === season?.id && (x.role_name === "coach" || x.role_name === "independent_evaluator"));
+    return { email: u.email!.toLowerCase(), name: names.get(u.id) ?? "", role: (r?.role_name ?? null) as SeasonRole | null, divisions: divisionsOf(u.id).map((d) => d.name) };
+  });
   const q = (sp.q ?? "").trim().toLowerCase();
   users = users
     .filter((u) => !q || `${u.email} ${names.get(u.id) ?? ""}`.toLowerCase().includes(q))
@@ -125,7 +131,7 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
             Head coaches, assistants and managers become coaches. You&apos;ll see the list before anything is sent.
           </p>
           <CsvTemplatePanel template={PEOPLE_TEMPLATE} />
-          {season && !keyMissing && <PeopleImport seasonId={season.id} divisions={seasonDivisionNames} />}
+          {season && !keyMissing && <PeopleImport seasonId={season.id} divisions={seasonDivisionNames} existing={existingPeople} />}
         </section>
       </div>
 

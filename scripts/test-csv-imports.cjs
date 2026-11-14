@@ -91,5 +91,29 @@ check("Coaches Kid column: Yes/no/blank become true/false/blank",
 check("an unclear Coaches Kid value is flagged for review", kidPreview.rows[3].issues.some((i) => i.includes("Coaches Kid")) && !kidPreview.rows[0].issues.some((i) => i.includes("Coaches Kid")));
 check("Sports Connect template lists Coaches Kid", names(T.SPORTS_CONNECT_TEMPLATE).includes("Coaches Kid"));
 
+// Re-importing the coach/volunteer list: compare each row with the existing account.
+const PS = jiti(path.join(root, "lib/people-sync.ts"));
+const DIVS = ["AA", "AAA", "Majors", "Juniors", "Seniors"];
+const avery = { email: "avery@x.test", name: "Avery Smith", role: "coach", divisions: ["Juniors"] };
+const plan = (row, existing, hasDiv = true) => PS.planPersonRow({ name: "", role: "coach", fileDivisions: [], ...row }, existing, DIVS, hasDiv);
+let pp = plan({ name: "New Coach", fileDivisions: ["aa", "Tee Ball"] }, undefined);
+check("people: a new email is a new account with known divisions only", pp.status === "new" && JSON.stringify(pp.addDivisions) === "[\"AA\"]", pp);
+pp = plan({ name: "Avery Smith", fileDivisions: ["Juniors"] }, avery);
+check("people: same role, divisions and name is up to date", pp.status === "up_to_date", pp);
+pp = plan({ name: "avery  smith", fileDivisions: ["JUNIORS"] }, avery);
+check("people: case and spacing differences are not changes", pp.status === "up_to_date" && !pp.nameDiffers, pp);
+pp = plan({ name: "Avery Smith", fileDivisions: ["AA"] }, avery);
+check("people: a new division is added and a missing one is offered for removal", pp.status === "changes" && pp.addDivisions.join() === "AA" && pp.removeDivisions.join() === "Juniors", pp);
+pp = plan({ name: "Avery Smith" }, avery, false);
+check("people: a file without a division column never suggests removals", pp.status === "up_to_date" && pp.removeDivisions.length === 0, pp);
+pp = plan({ name: "Avery J. Smith", fileDivisions: ["Juniors"] }, avery);
+check("people: a different name is a change that waits for a tick", pp.status === "changes" && pp.nameDiffers && pp.currentName === "Avery Smith", pp);
+pp = plan({ name: "Kendall" }, { email: "k@x.test", name: "Kendall", role: "independent_evaluator", divisions: [] });
+check("people: an evaluator listed as a coach cannot be added", pp.status === "role_conflict", pp);
+pp = plan({ name: "Old Friend", fileDivisions: ["AAA"] }, { email: "o@x.test", name: "", role: null, divisions: [] });
+check("people: an account without a role this season gets the role", pp.status === "add_role" && pp.addDivisions.join() === "AAA", pp);
+const gone = PS.missingFromFile([avery, { email: "none@x.test", name: "No Role", role: null, divisions: [] }, { email: "k@x.test", name: "Kendall", role: "independent_evaluator", divisions: [] }], ["AVERY@x.test"]);
+check("people: people with a role who are not in the file are listed", gone.map((p) => p.email).join() === "k@x.test", gone);
+
 if (failed) { console.error(`FAIL: ${failed} CSV import check(s) failed`); process.exit(1); }
 console.log("PASS: CSV import parsing and templates");

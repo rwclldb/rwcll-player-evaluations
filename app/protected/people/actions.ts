@@ -54,7 +54,9 @@ type InviteResult = { status: "invited" | "role_added" | "already" | "error"; me
 
 // Invite one person (or, if the email already has an account, just add the role).
 // delivery "email": Supabase sends its invite email. "link": no email; the result carries a link to send yourself.
-async function invite(supabase: SupabaseClient, name: string, rawEmail: string, role: Role, seasonId: number | null, delivery: Delivery): Promise<InviteResult> {
+// nameMode "if_empty" (list re-imports) keeps a name the account already has; "set" replaces it.
+async function invite(supabase: SupabaseClient, name: string, rawEmail: string, role: Role, seasonId: number | null, delivery: Delivery,
+  nameMode: "set" | "if_empty" = "set"): Promise<InviteResult & { nameChanged?: boolean }> {
   const email = rawEmail.trim().toLowerCase();
   if (!EMAIL.test(email)) return { status: "error", message: `"${rawEmail}" is not an email address.` };
   if (!ROLES.includes(role)) return { status: "error", message: "Unknown role." };
@@ -80,14 +82,25 @@ async function invite(supabase: SupabaseClient, name: string, rawEmail: string, 
     status = "invited";
     await supabase.rpc("admin_log_account_event", { p_user_id: user.id, p_action: "account_invited", p_detail: { email, role, season_id: seasonId, delivery } });
   }
-  if (name.trim()) await supabase.rpc("admin_set_display_name", { p_user_id: user.id, p_display_name: name.trim() });
+  let nameChanged = false;
+  if (name.trim()) {
+    const { data: profile } = await supabase.from("user_profiles").select("display_name").eq("user_id", user.id).maybeSingle();
+    const current = (profile?.display_name as string | null)?.trim() ?? "";
+    if (current !== name.trim() && (nameMode === "set" || !current)) {
+      await supabase.rpc("admin_set_display_name", { p_user_id: user.id, p_display_name: name.trim() });
+      if (current && status !== "invited") {
+        nameChanged = true;
+        await supabase.rpc("admin_log_account_event", { p_user_id: user.id, p_action: "account_name_changed", p_detail: { from: current, to: name.trim(), source: "people list" } });
+      }
+    }
+  }
 
   const { data: before } = await supabase.from("user_roles").select("id").eq("user_id", user.id).eq("role_name", role)
     .filter("season_id", role === "administrator" ? "is" : "eq", role === "administrator" ? null : seasonId);
   const { error } = await supabase.rpc("admin_grant_role", { p_user_id: user.id, p_role: role, p_season_id: role === "administrator" ? null : seasonId });
   if (error) return { status: "error", message: `${email}: ${error.message}` };
   if (status === "role_added" && (before ?? []).length > 0) status = "already";
-  return { status, link, userId: user.id };
+  return { status, link, userId: user.id, nameChanged };
 }
 
 export type FormResult = { ok: boolean; message: string; link?: string } | null;
@@ -110,14 +123,26 @@ export async function invitePerson(_prev: FormResult, formData: FormData): Promi
   return { ok: true, message: result.status === "already" ? "That person already has this role." : "That email already has an account; the role was added." };
 }
 
-// Bulk: rows come from the CSV preview on the page as JSON [{name, email, role, divisions}].
-// Coaches' divisions (from the file's Division Name column) are added to what they already have.
+// A coach's division names this season, or null if they can't be read (then nothing is replaced).
+async function currentDivisions(supabase: SupabaseClient, userId: string, seasonId: number): Promise<string[] | null> {
+  const { data: rows, error } = await supabase.from("coach_divisions").select("division_id").eq("user_id", userId).eq("season_id", seasonId);
+  if (error) return null;
+  const ids = (rows ?? []).map((r) => r.division_id as number);
+  if (ids.length === 0) return [];
+  const { data: divs, error: divError } = await supabase.from("divisions").select("id, name").in("id", ids);
+  if (divError || (divs ?? []).length !== ids.length) return null;
+  return (divs ?? []).map((d) => d.name as string);
+}
+
+// Bulk: rows come from the CSV preview on the page as JSON [{name, email, role, divisions, removeDivisions, useFileName}].
+// Coaches' divisions (from the file's Division Name column) are added to what they already have; divisions the admin
+// ticked for removal are taken away. An existing account's name is replaced only when the admin ticked it.
 // With delivery "link" accounts are created without email; use each person's "Sign-in link" afterwards.
 export async function invitePeople(formData: FormData) {
   const { supabase } = await requireAdmin();
   const seasonId = Number(formData.get("seasonId")) || null;
   const delivery: Delivery = formData.get("delivery") === "link" ? "link" : "email";
-  let rows: { name: string; email: string; role: Role; divisions?: string[] }[] = [];
+  let rows: { name: string; email: string; role: Role; divisions?: string[]; removeDivisions?: string[]; useFileName?: boolean }[] = [];
   try { rows = JSON.parse(String(formData.get("rows") ?? "[]")); } catch { go(back(formData), "error", "Could not read the list."); }
   if (!Array.isArray(rows) || rows.length === 0) go(back(formData), "error", "No people selected.");
   if (rows.length > 200) go(back(formData), "error", "Invite at most 200 people at a time.");
@@ -125,16 +150,29 @@ export async function invitePeople(formData: FormData) {
   const tally = { invited: 0, role_added: 0, already: 0, error: 0 };
   const problems: string[] = [];
   let withDivisions = 0;
+  let removedDivisions = 0;
+  let namesChanged = 0;
   const skipped = new Set<string>();
   for (const r of rows) {
-    const res: InviteResult = await invite(supabase, String(r.name ?? ""), String(r.email ?? ""), r.role, seasonId, delivery)
+    const res: InviteResult & { nameChanged?: boolean } = await invite(supabase, String(r.name ?? ""), String(r.email ?? ""), r.role, seasonId, delivery,
+      r.useFileName === true ? "set" : "if_empty")
       .catch((e: Error) => ({ status: "error" as const, message: e.message }));
     tally[res.status]++;
+    if (res.nameChanged) namesChanged++;
     if (res.status === "error" && res.message) problems.push(res.message);
     const divisions = Array.isArray(r.divisions) ? r.divisions.map(String).filter(Boolean) : [];
-    if (res.status !== "error" && res.userId && r.role === "coach" && divisions.length && seasonId) {
+    const remove = new Set((Array.isArray(r.removeDivisions) ? r.removeDivisions : []).map((d) => String(d).toLowerCase()));
+    if (res.status !== "error" && res.userId && r.role === "coach" && (divisions.length || remove.size) && seasonId) {
+      // With removals, replace the list: what the coach has now plus the file's divisions, minus the ticked ones.
+      let names = divisions;
+      if (remove.size) {
+        const have = await currentDivisions(supabase, res.userId, seasonId);
+        if (!have) { problems.push(`${r.email}: could not read their current divisions, so none were changed.`); continue; }
+        removedDivisions += have.filter((d) => remove.has(d.toLowerCase())).length;
+        names = [...new Set([...have, ...divisions])].filter((d) => !remove.has(d.toLowerCase()));
+      }
       const { data, error } = await supabase.rpc("admin_set_coach_divisions", {
-        p_user_id: res.userId, p_season_id: seasonId, p_division_names: divisions, p_replace: false,
+        p_user_id: res.userId, p_season_id: seasonId, p_division_names: names, p_replace: remove.size > 0,
       });
       if (error) problems.push(`${r.email}: ${error.message}`);
       else {
@@ -147,6 +185,8 @@ export async function invitePeople(formData: FormData) {
   const created = delivery === "link" ? `${tally.invited} account(s) created (no email sent; use Sign-in link for each)` : `${tally.invited} invited by email`;
   const summary = `${created}, ${tally.role_added} existing account(s) given the role, ${tally.already} already set.`
     + (withDivisions ? ` Divisions recorded for ${withDivisions} coach(es).` : "")
+    + (removedDivisions ? ` ${removedDivisions} division(s) removed.` : "")
+    + (namesChanged ? ` ${namesChanged} name(s) updated.` : "")
     + (skipped.size ? ` Not divisions this season (ignored): ${[...skipped].join(", ")}.` : "");
   if (problems.length) go(back(formData), "error", `${summary} ${tally.error} problem(s): ${problems.slice(0, 5).join(" ")}${problems.length > 5 ? " ..." : ""}`);
   go(back(formData), "message", summary);
