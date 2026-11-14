@@ -46,7 +46,8 @@
     "test:bib-from-registration-runtime": "node scripts/test-bib-from-registration-runtime.cjs",
     "test:coach-kids-stars-runtime": "node scripts/test-coach-kids-stars-runtime.cjs",
     "test:reimport-sync-runtime": "node scripts/test-reimport-sync-runtime.cjs",
-    "test:my-account-runtime": "node scripts/test-my-account-runtime.cjs"
+    "test:my-account-runtime": "node scripts/test-my-account-runtime.cjs",
+    "test:account-delete-runtime": "node scripts/test-account-delete-runtime.cjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.1",

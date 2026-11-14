@@ -6,7 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, hasAdminKey } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
-import { grantRole, resendInvite, revokeRole, setCoachDivisions, setDisabled, updateAccount } from "./actions";
+import { deleteAccount, grantRole, resendInvite, revokeRole, setCoachDivisions, setDisabled, updateAccount } from "./actions";
 import { InviteForm, SignInLinkButton } from "./link-forms";
 import { PeopleImport } from "./people-import";
 import type { ExistingPerson, SeasonRole } from "@/lib/people-sync";
@@ -50,10 +50,13 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
       }
     } catch (e) { listError = (e as Error).message; }
   }
-  const [{ data: roleData }, { data: profileData }] = await Promise.all([
+  const [{ data: roleData }, { data: profileData }, { data: blockerData }] = await Promise.all([
     supabase.from("user_roles").select("user_id, role_name, season_id"),
     supabase.from("user_profiles").select("user_id, display_name"),
+    supabase.rpc("admin_account_delete_blockers"),
   ]);
+  // Why each account can't be deleted (no entry or an empty list means it can).
+  const deleteBlockers = new Map(((blockerData ?? []) as { user_id: string; blockers: string[] }[]).map((b) => [b.user_id, b.blockers]));
   const [{ data: divisionData }, { data: coachDivisionData }] = await Promise.all([
     supabase.from("season_divisions").select("division_id, divisions(name, sort_order)").eq("season_id", season?.id ?? -1),
     supabase.from("coach_divisions").select("user_id, division_id").eq("season_id", season?.id ?? -1),
@@ -240,6 +243,31 @@ async function PeopleContent({ searchParams }: { searchParams: SearchParams }) {
                     <Button type="submit" variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground">{st.disabled ? "Enable" : "Disable"}</Button>
                   </form>
                 )}
+                {u.id !== me?.id && (() => {
+                  const blockers = deleteBlockers.get(u.id) ?? ["this couldn't be checked"];
+                  return (
+                    <details className="relative">
+                      <summary className="flex h-8 cursor-pointer list-none items-center rounded-md px-2 text-xs text-muted-foreground hover:bg-accent hover:text-rose-700 dark:hover:text-rose-300">Delete…</summary>
+                      <div className="absolute right-0 z-10 mt-1 w-72 space-y-2 rounded-lg border border-border bg-card p-3 text-sm shadow-lg">
+                        {blockers.length > 0 ? (
+                          <p className="text-foreground">
+                            Can&apos;t delete: {blockers.join(" and ")}. Use <b>Disable</b> to stop them signing in; their history stays.
+                          </p>
+                        ) : (
+                          <form action={deleteAccount} className="space-y-2">
+                            <input type="hidden" name="userId" value={u.id} />
+                            <input type="hidden" name="seasonId" value={season?.id ?? ""} />
+                            <p className="text-foreground">
+                              Permanently delete <b className="break-all">{u.email}</b>? Their roles, divisions, age-group assignments, stars and private notes
+                              are removed. This can&apos;t be undone; you can invite the email again later.
+                            </p>
+                            <Button type="submit" size="sm" className="h-9 w-full bg-rose-600 text-white hover:bg-rose-500">Delete account</Button>
+                          </form>
+                        )}
+                      </div>
+                    </details>
+                  );
+                })()}
               </li>
             );
           })}

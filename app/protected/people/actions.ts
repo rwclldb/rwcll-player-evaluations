@@ -258,6 +258,17 @@ export async function setDisabled(formData: FormData) {
   go(back(formData), "message", disable ? "Account disabled. They can no longer sign in." : "Account enabled.");
 }
 
+// Permanently delete an account with no evaluation history. The database checks again and does it all at once.
+export async function deleteAccount(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const userId = String(formData.get("userId") ?? "");
+  const { data, error } = await supabase.rpc("admin_delete_account", { p_user_id: userId });
+  if (error) go(back(formData), "error", error.message);
+  revalidatePath("/protected/people");
+  revalidatePath("/protected/assignments");
+  go(back(formData), "message", `Deleted the account ${data}.`);
+}
+
 // The divisions a coach coaches this season (People page). Replaces the coach's list.
 export async function setCoachDivisions(formData: FormData) {
   const { supabase } = await requireAdmin();
