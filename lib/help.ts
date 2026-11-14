@@ -31,7 +31,7 @@ const scoring = (who: "coach" | "evaluator"): HelpSection => ({
   title: "Scoring players",
   blocks: [
     who === "coach"
-      ? "Open [[Evaluations]] and pick an age group. It shows the age groups the league has set up for you; ask a league admin if one is missing. Scoring opens when an admin opens the age group, usually on evaluation day."
+      ? "Open [[Evaluations]] and pick an age group. You can score the age groups you are assigned to; ask a league admin if one is missing. Scoring opens when an admin opens the age group, usually on evaluation day."
       : "Open [[Evaluations]] and pick your age group. Scoring opens when an admin opens the age group, usually on evaluation day.",
     { steps: [
       "Players are listed by bib number. Tap a player, or type a bib in [[Go to bib #]] and tap [[Go]].",

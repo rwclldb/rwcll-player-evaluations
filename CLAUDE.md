@@ -47,7 +47,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 
 **Roles and visibility**
 - Accounts are invite-only, administered by league admins. No public sign-up.
-- Coaches can evaluate players in any age group. Independent evaluators work their assigned group.
+- Coaches and independent evaluators score only the age groups they are assigned to (Assignments page; decided 2026-11-14, "for now"). A coach can be assigned to several age groups.
 - Coaches never see other individual coaches' current-season ratings. They see group aggregates only. Independent evaluator identities are hidden from coaches.
 - Coach averages and independent evaluator averages are always kept separate.
 - Prior-year (historical) coach ratings are meant to be visible to the next year's evaluators and coaches.

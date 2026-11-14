@@ -101,7 +101,7 @@ export function MySchedule({ rows }: { rows: ScheduleRow[] }) {
           </ul>
         )}
         {role === "coach" && (
-          <p className="text-xs text-muted-foreground">As a coach you can score players in any age group, not just the ones listed here.</p>
+          <p className="text-xs text-muted-foreground">You can score the age groups listed here. If one is missing, ask a league admin to add you.</p>
         )}
       </div>
     </section>
