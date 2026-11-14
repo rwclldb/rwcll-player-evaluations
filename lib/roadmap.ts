@@ -223,8 +223,8 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
         {
           key: "progress", title: "Watch scoring progress",
           status: "info",
-          detail: `${scored} of ${players} players have an independent evaluator score. Per age group below.`,
-          links: [{ href: "/protected/evaluation-review", label: "Data Review", primary: true }],
+          detail: `${scored} of ${players} players have an independent evaluator score. Scoring Progress shows each coach and evaluator, with who hasn't saved lately.`,
+          links: [{ href: "/protected/progress", label: "Scoring Progress", primary: true }, { href: "/protected/evaluation-review", label: "Data Review" }],
         },
         {
           key: "checkin", title: "Check players in",

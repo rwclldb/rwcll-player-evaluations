@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { signOutAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { changeMyPassword, saveMyName } from "./actions";
+import { PasswordInput } from "@/components/password-input";
 
 type Account = { display_name: string | null; roles: { role: string; season: string | null; divisions: string[] }[] };
 
@@ -80,13 +81,13 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         {/* Lets password managers tie the new password to this account. */}
         <input type="email" name="username" value={user.email ?? ""} autoComplete="username" readOnly hidden />
         <label className="block text-sm text-muted-foreground">Current password
-          <input name="current" type="password" required autoComplete="current-password" className={field} />
+          <PasswordInput name="current" required autoComplete="current-password" className={field} />
         </label>
         <label className="block text-sm text-muted-foreground">New password (at least 8 characters)
-          <input name="password" type="password" required minLength={8} autoComplete="new-password" className={field} />
+          <PasswordInput name="password" required minLength={8} autoComplete="new-password" className={field} />
         </label>
         <label className="block text-sm text-muted-foreground">New password again
-          <input name="confirm" type="password" required minLength={8} autoComplete="new-password" className={field} />
+          <PasswordInput name="confirm" required minLength={8} autoComplete="new-password" className={field} />
         </label>
         <Button type="submit" className="min-h-11">Change password</Button>
         <p className="text-xs text-muted-foreground">

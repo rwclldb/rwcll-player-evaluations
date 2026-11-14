@@ -198,6 +198,9 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 
 - **In-app help** (`/protected/help`, test `test:help-content`): guides for coaches (the coach quick start), independent evaluators and registrars, all in `lib/help.ts`. Each guide prints or saves as a PDF (the quick-start sheet to hand out). Reached from the Help icon in the header (phone menu: Help), "How to score" on the scoring screen, Help on Check-in, and "How imports work" on Imports. The index puts the reader's own guides first ("For you"). `[[Label]]` marks on-screen labels; the test fails when a label no longer exists in the app or a help link points at a missing section.
 
+- **Scoring progress** (`/protected/progress`, admin; migration 20261116090000, test `test:scoring-progress-runtime`): per age group, each assigned coach and evaluator with a progress bar (done = saved + not evaluated, out of players registered at that age), last save time, not-evaluated and draft counts, and players checked in today. Open age groups first; a banner counts who has started and names anyone quiet for 15+ minutes. Refreshes every 30 seconds. Counts only (`admin_scoring_progress(season)`). Linked from the Evaluation day roadmap step "Watch scoring progress".
+- **Show-password eye** (`components/password-input.tsx`): sign-in, set-password and Your account password boxes have an eye button to show the typed password. Shown only on touch screens (`@media (pointer: coarse)`), per the user's request.
+
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)

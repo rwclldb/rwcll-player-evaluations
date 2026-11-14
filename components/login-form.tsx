@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { loginAction } from "@/app/actions";
@@ -33,7 +34,7 @@ export function LoginForm({
                 Forgot password?
               </Link>
             </div>
-            <Input id="password" name="password" type="password" required />
+            <PasswordInput id="password" name="password" required autoComplete="current-password" className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500" />
           </div>
 
           {searchParams?.message && (

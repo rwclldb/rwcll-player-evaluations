@@ -18,7 +18,7 @@ const signingIn: HelpSection = {
   blocks: [
     "Accounts are set up by the league. You'll get either an invitation email or a sign-in link from a league admin.",
     { steps: [
-      "Open the link and choose a password (at least 8 characters).",
+      "Open the link and choose a password (at least 8 characters). On a phone, tap the eye in the password box to see what you typed.",
       "After that, sign in with your email and password. On a phone, add the site to your home screen so it's one tap away.",
       "Forgot your password? Use [[Forgot password?]] on the sign-in page, or ask a league admin for a new sign-in link.",
     ] },
