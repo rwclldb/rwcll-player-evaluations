@@ -37,8 +37,8 @@ if (result.status !== 0) {
 }
 
 const passes = notices.filter((line) => line.includes("PASS:")).length;
-if (passes < 16) {
-  console.error(`FAIL: expected 16 PASS lines, saw ${passes}`);
+if (passes < 17) {
+  console.error(`FAIL: expected 17 PASS lines, saw ${passes}`);
   process.exit(1);
 }
 console.log("PASS: birthdate protection holds at runtime (local database)");

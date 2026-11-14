@@ -4,6 +4,8 @@
 //   npm run fixtures:load -- --reset --open-sessions  same, with every age group already Open for scoring
 //   npm run fixtures:load -- --reset --scored         same, plus all Spring 2027 evaluations (for draft reports)
 //   npm run fixtures:load                             load into an empty local DB (refuses if players exist)
+//   npm run fixtures:load -- --reset --demo           board demo: scored league mid-evaluation-day (docs/DEMO-SCRIPT.md)
+//                                                     [--demo-date=YYYY-MM-DD] (default: today, Pacific)
 //   npm run fixtures:load -- --reset --bare           wipe, then only admin accounts + seasons: walk through setup in the app
 //                                                     (docs/TEST-PLAN-SEASON-SETUP.xlsx)
 //
@@ -31,7 +33,13 @@ const gen = path.join(pack, "generated");
 const argv = process.argv.slice(2);
 const args = new Set(argv);
 const RESET = args.has("--reset");
-const SCORED = args.has("--scored");
+// DEMO: the scored league staged as a live evaluation day for presenting (docs/DEMO-SCRIPT.md).
+const DEMO = args.has("--demo");
+const SCORED = args.has("--scored") || DEMO;
+const pacificToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date());
+const DEMO_DATE = (argv.find((a) => a.startsWith("--demo-date=")) ?? "").split("=")[1] || pacificToday();
+if (DEMO && !/^\d{4}-\d{2}-\d{2}$/.test(DEMO_DATE)) { console.error("--demo-date must be YYYY-MM-DD"); process.exit(1); }
+const addDays = (iso, n) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const OPEN_SESSIONS = args.has("--open-sessions");
 // BARE: admin accounts and seasons only; everything else is done by hand in the app.
 const BARE = args.has("--bare");
@@ -77,6 +85,7 @@ if (HOSTED) {
   if (!isLocal(status.API_URL)) fail(`supabase status API_URL is not local: ${status.API_URL}`);
   password = process.env.FIXTURE_PASSWORD || envLocal.FIXTURE_PASSWORD;
 }
+if (DEMO && HOSTED) fail("--demo is for a local laptop demo only.");
 if (!password || password.length < 8) fail("Set FIXTURE_PASSWORD (8+ characters). It becomes the password for every test account.");
 
 // ---------- CSV helper (fixture files are simple RFC 4180) ----------
@@ -261,8 +270,8 @@ PASS: bare league loaded: ${Object.keys(userId).length} admin accounts, Spring 2
     const session = await must(svc.from("evaluation_sessions").insert({ season_id: s2027.id, league_age: age, status: "setup", created_by: adminId }).select("id").single(), `session age ${age}`);
     sessionByAge[age] = session.id;
     await must(svc.from("evaluation_session_events").insert([
-      { evaluation_session_id: session.id, event_type: "primary", event_date: "2027-01-23", start_time: SLOTS[age][0], end_time: SLOTS[age][1], location: "Fixture Park, Field 1", created_by: adminId },
-      { evaluation_session_id: session.id, event_type: "makeup", event_date: "2027-01-30", start_time: "10:00", end_time: "12:00", location: "Fixture Park, Field 2", notes: "Makeup for all ages", created_by: adminId },
+      { evaluation_session_id: session.id, event_type: "primary", event_date: DEMO ? DEMO_DATE : "2027-01-23", start_time: SLOTS[age][0], end_time: SLOTS[age][1], location: "Fixture Park, Field 1", created_by: adminId },
+      { evaluation_session_id: session.id, event_type: "makeup", event_date: DEMO ? addDays(DEMO_DATE, 7) : "2027-01-30", start_time: "10:00", end_time: "12:00", location: "Fixture Park, Field 2", notes: "Makeup for all ages", created_by: adminId },
     ]), `events age ${age}`);
     const rows = [...COACHES[age].map((k) => [k, "coach"]), ...IES(age).map((k) => [k, "independent_evaluator"])].map(([k, t]) => ({ evaluation_session_id: session.id, evaluator_user_id: userId[k], evaluator_type: t, assigned_by: adminId }));
     await must(svc.from("evaluator_assignments").insert(rows), `assignments age ${age}`);
@@ -293,7 +302,17 @@ PASS: bare league loaded: ${Object.keys(userId).length} admin accounts, Spring 2
   await must(svc.from("evaluation_sessions").update({ status: "open" }).eq("season_id", s2027.id), "open sessions");
   const evalRows = readCsv(path.join(gen, "scored/spring-2027-evaluations.csv"));
   const CODES = categories.map((c) => c.code);
-  const byEvaluator = evalRows.reduce((m, r) => ((m[r["Evaluator Key"]] ??= []).push(r), m), {});
+  // DEMO: ages 7 and 8 are still being scored. Avery (COA-01) hasn't started age 7 (scored live in the demo);
+  // the other scorers in ages 7-8 have done about the first 60% of players.
+  const demoUnscored = (r) => {
+    if (!DEMO) return false;
+    const reg = refToReg(r["Fixture Key"]);
+    if (!reg || reg.league_age > 8) return false;
+    if (r["Evaluator Key"] === "COA-01" && reg.league_age === 7) return true;
+    const sameAge = regs.filter((x) => x.league_age === reg.league_age).sort((a, b) => a.id - b.id);
+    return sameAge.indexOf(reg) >= Math.ceil(sameAge.length * 0.6);
+  };
+  const byEvaluator = evalRows.filter((r) => !demoUnscored(r)).reduce((m, r) => ((m[r["Evaluator Key"]] ??= []).push(r), m), {});
   let saved = 0;
   for (const [key, rows] of Object.entries(byEvaluator)) {
     const client = createClient(status.API_URL, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -309,6 +328,7 @@ PASS: bare league loaded: ${Object.keys(userId).length} admin accounts, Spring 2
     await client.auth.signOut();
   }
   log(`REAL scoring: ${saved} evaluations saved through save_evaluation by ${Object.keys(byEvaluator).length} evaluator accounts; sessions left Open`);
+  if (DEMO) return stageDemo({ svc, admin, s2027, sessionByAge, userId, adminId, regs, password, saved });
 
   // Verify: the app's draft_report function (as admin) must reproduce expected-draft-report.csv.
   const report = new Map();
@@ -338,6 +358,61 @@ PASS: bare league loaded: ${Object.keys(userId).length} admin accounts, Spring 2
   log(`Verify: ${evalCount} evaluations in database; draft_report checked ${compared} values for ${report.size} players: ${mismatches} mismatches`);
   if (evalCount !== evalRows.length || mismatches || report.size !== readCsv(path.join(gen, "scored/expected-draft-report.csv")).length) fail("draft_report does not match the fixture files");
   log("\nPASS: scored dataset loaded. Sessions are Open; lock and release them in the app to test reports.");
+}
+
+// ---------- board demo: a live evaluation day (SIMULATED admin and registrar actions) ----------
+async function stageDemo({ svc, admin, s2027, sessionByAge, userId, adminId, regs, password, saved }) {
+  const now = new Date();
+  const at = (minutesAgo) => new Date(now.getTime() - minutesAgo * 60000).toISOString();
+  const byAge = (age) => regs.filter((r) => r.league_age === age).sort((a, b) => a.id - b.id);
+
+  // Age groups: 7-8 still scoring, 9-12 locked and released to coaches, 13-16 locked and waiting for release.
+  // An independent evaluator's shared note (written before the age group locks).
+  const nine = byAge(9);
+  const kendallEval = await must(svc.from("evaluations").select("id").eq("player_season_id", nine[0].id).eq("evaluator_user_id", userId["EVA-01"]).maybeSingle(), "find evaluator score");
+  if (kendallEval) await must(svc.from("evaluator_notes").insert({ evaluation_id: kendallEval.id, author_user_id: userId["EVA-01"], note_text: "Quick first step; keeps the glove down on grounders." }), "evaluator note");
+  // REAL: the Sessions page's lock and release, as admin.jordan.
+  for (const age of [9, 10, 11, 12, 13, 14, 15, 16]) await must(admin.rpc("change_evaluation_session_stage", { p_session_id: sessionByAge[age], p_action: "lock" }), `lock age ${age}`);
+  for (const age of [9, 10, 11, 12]) await must(admin.rpc("change_evaluation_session_stage", { p_session_id: sessionByAge[age], p_action: "release" }), `release age ${age}`);
+  await must(svc.from("seasons").update({ show_prior_year_during_evaluations: true }).eq("id", s2027.id), "prior-year switch");
+
+  // A registrar for check-in.
+  const registrar = await must(svc.auth.admin.createUser({ email: "registrar.riley@example.com", password, email_confirm: true }), "create registrar");
+  await must(svc.from("user_profiles").upsert({ user_id: registrar.user.id, display_name: "Riley Registrar" }), "registrar profile");
+  await must(svc.from("user_roles").insert({ user_id: registrar.user.id, role_name: "registrar", season_id: s2027.id, created_by: adminId }), "registrar role");
+
+  // Check-in at today's primary event: about three quarters of ages 7 and 8 are here.
+  const events = await must(svc.from("evaluation_session_events").select("id, evaluation_session_id").eq("event_type", "primary"), "read events");
+  const eventFor = (age) => events.find((e) => e.evaluation_session_id === sessionByAge[age]).id;
+  const checkins = [7, 8].flatMap((age) => byAge(age).filter((_, i, all) => i < Math.ceil(all.length * 0.75))
+    .map((r, i) => ({ player_season_id: r.id, event_id: eventFor(age), checked_in_by: registrar.user.id, checked_in_at: at(60 - i) })));
+  await must(svc.from("player_checkins").insert(checkins), "check-ins");
+
+  // An injured age-7 player excused from attending.
+  const injured = byAge(7).at(-1);
+  await must(svc.from("player_exemptions").insert({ player_season_id: injured.id, scope: "attendance", reason: "Broken wrist; doctor's note on file", approved_by_name: "Safety officer", recorded_by: adminId }), "exemption");
+
+  // Coach's kids (the league's draft rules decide what that means).
+  const kids = [9, 10, 11, 12].map((age) => byAge(age)[2]);
+  await must(svc.from("player_seasons").update({ is_coach_kid: true }).in("id", kids.map((k) => k.id)), "coach kids");
+
+  // A walk-up who was already registered: shows up under Possible duplicates.
+  const twin = byAge(8)[1];
+  const walk = await must(svc.from("players").insert({ first_name: twin.players.first_name, last_name: twin.players.last_name }).select("id").single(), "walk-up player");
+  await must(svc.from("player_seasons").insert({ player_id: walk.id, season_id: s2027.id, league_age: 8, evaluation_number: 990, registration_source: "on_site", league_age_source: "admin" }), "walk-up registration");
+
+  // Avery's private notes and stars on released age 9.
+  const avery = userId["COA-01"];
+  await must(svc.from("player_stars").insert([nine[0], nine[4], nine[7]].map((r) => ({ user_id: avery, player_season_id: r.id }))), "stars");
+  await must(svc.from("private_notes").insert([
+    { player_season_id: nine[0].id, author_user_id: avery, note_text: "Great hands at short. Ask about spring travel schedule." },
+    { player_season_id: nine[4].id, author_user_id: avery, note_text: "Strong arm, could pitch." },
+  ]), "private notes");
+
+  log(`DEMO staged for ${DEMO_DATE} (makeup ${addDays(DEMO_DATE, 7)}): ${saved} scores; ages 7-8 open, 9-12 released, 13-16 locked;`);
+  log(`  ${checkins.length} check-ins, 1 exemption, ${kids.length} coach's kids, 1 possible duplicate (walk-up bib 990), prior-year shown while scoring.`);
+  log("  Registrar: registrar.riley@example.com. Avery (coach.avery@example.com) has age 7 left to score.");
+  log("\nPASS: demo league loaded. Follow docs/DEMO-SCRIPT.md. Re-run it the morning of the demo so the event date is today.");
 }
 
 main().catch((e) => fail(e.stack || e.message));

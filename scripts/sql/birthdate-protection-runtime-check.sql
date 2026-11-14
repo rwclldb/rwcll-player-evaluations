@@ -106,5 +106,8 @@ SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM public.audit_log WHERE action = '
 -- ---------- check-in sends no birthdates ----------
 SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM pg_proc p, unnest(p.proargnames) a WHERE p.proname = 'checkin_list' AND a = 'date_of_birth'),
   'check-in no longer returns birthdates');
+SELECT pg_temp.check((SELECT bool_and(prosecdef) FROM pg_proc WHERE pronamespace = 'private'::regnamespace
+                      AND proname IN ('forget_handled_import_birthdates', 'audit_log_hide_birthdates')),
+  'the birthdate triggers also work for writes made with the secret key');
 
 ROLLBACK;
