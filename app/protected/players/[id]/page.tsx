@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { leagueAgeForBirthDate } from "@/lib/sports-connect-preview";
 import { type RegistrationRow, usDate } from "@/lib/players";
-import { saveRegistration } from "../actions";
+import { saveRegistration, setCoachKid } from "../actions";
 
 type Params = Promise<{ id: string }>;
 type SearchParams = Promise<{ message?: string; error?: string }>;
@@ -27,7 +27,7 @@ async function EditContent({ params, searchParams }: { params: Params; searchPar
   const psId = Number(id);
   if (!Number.isSafeInteger(psId) || psId <= 0) notFound();
   const { data } = await supabase.from("player_seasons")
-    .select("id, season_id, evaluation_number, league_age, league_age_source, registration_source, external_player_id, external_registration_id, players(id, first_name, last_name, date_of_birth), seasons(name, is_closed)")
+    .select("id, season_id, evaluation_number, league_age, league_age_source, registration_source, external_player_id, external_registration_id, is_coach_kid, players(id, first_name, last_name, date_of_birth), seasons(name, is_closed)")
     .eq("id", psId).maybeSingle();
   if (!data) notFound();
   const reg = data as unknown as RegistrationRow & { external_registration_id: string | null; seasons: { name: string; is_closed: boolean } | null };
@@ -56,6 +56,18 @@ async function EditContent({ params, searchParams }: { params: Params; searchPar
 
       {sp.message && <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">{sp.message}</div>}
       {sp.error && <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-700 dark:text-rose-300">{sp.error}</div>}
+
+      <form action={setCoachKid} className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-4">
+        <input type="hidden" name="registrationId" value={reg.id} />
+        <input type="hidden" name="value" value={reg.is_coach_kid ? "false" : "true"} />
+        <div className="min-w-56 flex-1">
+          <p className="text-sm font-semibold text-foreground">Coach&apos;s kid: {reg.is_coach_kid ? "Yes" : "No"}</p>
+          <p className="text-xs text-muted-foreground">Shown to coaches and evaluators while scoring and on draft reports. The player is scored as usual.</p>
+        </div>
+        <Button type="submit" variant="outline" size="sm" disabled={reg.seasons?.is_closed}>
+          {reg.is_coach_kid ? "Not a coach's kid" : "Mark as coach's kid"}
+        </Button>
+      </form>
 
       <form action={saveRegistration} className="space-y-4 rounded-lg border border-border bg-card p-4">
         <input type="hidden" name="playerSeasonId" value={reg.id} />

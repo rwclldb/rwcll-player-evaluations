@@ -34,6 +34,8 @@ export default async function DraftReportsPage({
   let notes: ReportNote[] = [];
   let isCoach = false;
   let reportError: string | null = null;
+  let coachKids: number[] = [];
+  let stars: number[] = [];
   if (selected) {
     const [report, noteResult, roleResult] = await Promise.all([
       supabase.rpc("draft_report", { p_session_id: selected.session_id }),
@@ -45,6 +47,16 @@ export default async function DraftReportsPage({
     if (report.error) reportError = report.error.message;
     rows = (report.data ?? []) as DraftReportRow[];
     notes = (noteResult.data ?? []) as ReportNote[];
+    // Coach's kids (shown to everyone who can open the report) and this viewer's private stars.
+    const ids = rows.map((r) => r.player_season_id);
+    if (ids.length) {
+      const [kidResult, starResult] = await Promise.all([
+        supabase.from("player_seasons").select("id").in("id", ids).eq("is_coach_kid", true),
+        supabase.from("player_stars").select("player_season_id").in("player_season_id", ids),
+      ]);
+      coachKids = (kidResult.data ?? []).map((k) => k.id as number);
+      stars = (starResult.data ?? []).map((s) => s.player_season_id as number);
+    }
   }
 
   return (
@@ -113,6 +125,8 @@ export default async function DraftReportsPage({
               title={`${selected.season_name} — Age ${selected.league_age} Draft Report`}
               fileName={`draft-report-${selected.season_name.replace(/\s+/g, "-").toLowerCase()}-age-${selected.league_age}.csv`}
               administrator={administrator}
+              coachKids={coachKids}
+              stars={stars}
               notes={notes}
               canWritePrivate={isCoach}
               returnTo={`/protected/draft-reports?sessionId=${selected.session_id}`}

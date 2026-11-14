@@ -8,6 +8,7 @@ import { DirtyTracker, GuardedLink } from "./unsaved-guard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CoachKidBadge } from "@/components/coach-kid-badge";
 import { ClipboardList, ArrowLeft, ShieldAlert, Calendar, Layers, MapPin, Search, ChevronLeft, ChevronRight, History, Lock, MessageSquare, StickyNote } from "lucide-react";
 
 const OLDEST_TO_YOUNGEST = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7];
@@ -27,6 +28,7 @@ type EligibleRegistration = {
   id: number;
   evaluation_number: number | null;
   league_age: number;
+  is_coach_kid: boolean;
   players: { first_name: string; last_name: string; date_of_birth: string | null } | null;
 };
 type EvaluationRecord = { id: number; player_season_id: number; status: string };
@@ -108,7 +110,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
   if (selectedSession?.status === "open" && selectedSession.league_age !== null) {
     // Evaluation eligibility is based on season and Little League age, not payment status.
     const regResult = await supabase.from("player_seasons")
-      .select("id, evaluation_number, league_age, players(first_name, last_name, date_of_birth)")
+      .select("id, evaluation_number, league_age, is_coach_kid, players(first_name, last_name, date_of_birth)")
       .eq("season_id", selectedSession.season_id).eq("league_age", selectedSession.league_age);
     if (regResult.error) loadError = `Could not load players: ${regResult.error.message}`;
     registrations = ((regResult.data ?? []) as unknown as EligibleRegistration[]).sort(
@@ -220,7 +222,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
             <div className="flex items-start justify-between gap-3 border-b border-border pb-3">
               <div>
                 <p className="font-mono text-3xl font-bold text-foreground">{bibLabel(player)}</p>
-                <h2 className="text-lg font-semibold text-foreground">{playerName(player)}</h2>
+                <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold text-foreground">{playerName(player)}{player.is_coach_kid && <CoachKidBadge />}</h2>
                 <p className="text-xs text-muted-foreground">
                   LL age {player.league_age}{player.players?.date_of_birth ? ` · born ${player.players.date_of_birth}` : ""} · player {playerIndex + 1} of {registrations.length}
                 </p>
@@ -386,6 +388,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
                       <Link href={`${sessionUrl}&player=${r.id}`} className="flex min-h-12 items-center gap-3 px-3 py-2 hover:bg-accent">
                         <span className="w-14 shrink-0 font-mono text-base font-bold text-foreground">{r.evaluation_number ?? "—"}</span>
                         <span className="min-w-0 flex-1 truncate text-sm text-foreground">{playerName(r)}</span>
+                        {r.is_coach_kid && <CoachKidBadge short />}
                         {notedPlayers.has(r.id) && <StickyNote className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-label="Has your note" />}
                         <span className="hidden text-xs text-muted-foreground sm:inline">Age {r.league_age}</span>
                         <StatusChip status={evaluationFor.get(r.id)?.status} />

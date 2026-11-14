@@ -7,6 +7,7 @@ export type RegistrationRow = {
   league_age_source: string;
   registration_source: string;
   external_player_id: string | null;
+  is_coach_kid: boolean;
   players: { id: number; first_name: string; last_name: string; date_of_birth: string | null } | null;
 };
 

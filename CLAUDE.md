@@ -152,6 +152,9 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
   - Wording: menu "Reports" is now **Season Export**; page titles match the menu (Data Review, Season Export, Sports Connect Import); "Phase 5.x" text removed; back links say "Roadmap" on admin pages and "Home" on pages coaches use.
   - **Edit a person** on People: Edit next to the name changes the name and sign-in email (`updateAccount`; email via the auth admin API, confirmed immediately, password unchanged; refused if the email is taken). Audited as `account_name_changed` / `account_email_changed`.
 
+- **Coach's kids** (migration 20261113170000, test `test:coach-kids-stars-runtime`): `player_seasons.is_coach_kid`, per season, not linked to any coach. The app only records and shows it (league draft rules change often): a "Coach's kid" badge on the scoring list and page, Players page (with a "Coach's kids" filter), printed roster ("CK"), and draft report (badge, print, CSV column). Admins set it on a player's edit page (`admin_set_coach_kid`, audited) or through an optional "Coaches Kid" column (Yes/No) in the Sports Connect registration file; unclear values are flagged in the preview. Players are scored as usual.
+- **Private stars** (same migration): `player_stars`, toggled with `toggle_player_star`. On the draft report, a star before each name and a "My stars" filter; CSV has a Starred column. Only the owner can read their stars (admins can't). Allowed for players in age groups the person can open (scoring access, or released draft reports).
+
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)

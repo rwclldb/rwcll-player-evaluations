@@ -13,11 +13,14 @@ import { REQUIRED_HEADERS } from "@/lib/sports-connect-preview";
 
 export const SPORTS_CONNECT_TEMPLATE: CsvTemplate = {
   file: "sports-connect-registrations-template.csv",
-  columns: REQUIRED_HEADERS.map((name) => ({
-    name,
-    need: name === "Registration Number" ? "optional" : "required",
-    note: name === "Registration Number" ? "the bib, if filled in; may be blank" : undefined,
-  })),
+  columns: [
+    ...REQUIRED_HEADERS.map((name) => ({
+      name,
+      need: name === "Registration Number" ? "optional" : "required",
+      note: name === "Registration Number" ? "the bib, if filled in; may be blank" : undefined,
+    })),
+    { name: "Coaches Kid", need: "optional", note: "Yes/No (or true/false); marks a coach's child" },
+  ],
   tip: "Export the Enrollment Details report from Sports Connect; it already has these columns. A whole-number Registration Number becomes the player's bib when the row is committed (unless another player has that bib). Extra columns are ignored.",
 };
 

@@ -79,5 +79,17 @@ check("people template: email, role and division recognised",
 const { REQUIRED_HEADERS } = jiti(path.join(root, "lib/sports-connect-preview.ts"));
 check("Sports Connect template has every required header", REQUIRED_HEADERS.every((h) => names(T.SPORTS_CONNECT_TEMPLATE).includes(h)));
 
+// Optional "Coaches Kid" column on the registration import.
+const { makePreview } = jiti(path.join(root, "lib/sports-connect-preview.ts"));
+const kidCsv = [[...REQUIRED_HEADERS, "Coaches Kid"].join(","),
+  ...[["Yes", "K1"], ["no", "K2"], ["", "K3"], ["maybe", "K4"]].map(([v, id]) =>
+    [REQUIRED_HEADERS.map((h) => ({ "Program Name": "Baseball", "Division Name": "AA", "Player Id": id, "Player First Name": "A", "Player Last Name": id,
+      "Player Birth Date": "03/01/2018", "Order Payment Status": "Paid" }[h] ?? "")).join(","), v].join(","))].join("\n");
+const kidPreview = makePreview(kidCsv);
+check("Coaches Kid column: Yes/no/blank become true/false/blank",
+  JSON.stringify(kidPreview.rows.map((r) => r.coachKid)) === "[true,false,null,null]", kidPreview.rows.map((r) => r.coachKid));
+check("an unclear Coaches Kid value is flagged for review", kidPreview.rows[3].issues.some((i) => i.includes("Coaches Kid")) && !kidPreview.rows[0].issues.some((i) => i.includes("Coaches Kid")));
+check("Sports Connect template lists Coaches Kid", names(T.SPORTS_CONNECT_TEMPLATE).includes("Coaches Kid"));
+
 if (failed) { console.error(`FAIL: ${failed} CSV import check(s) failed`); process.exit(1); }
 console.log("PASS: CSV import parsing and templates");

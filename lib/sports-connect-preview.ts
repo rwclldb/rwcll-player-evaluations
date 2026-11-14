@@ -12,8 +12,21 @@ export type PreviewRow = {
   registrationNumber: string;
   paymentStatus: string;
   leagueAge: number | null;
+  /** Optional "Coaches Kid" column: true/false, or null when the file has no such column or the cell is blank. */
+  coachKid: boolean | null;
   issues: string[];
 };
+
+// Optional column marking a coach's child. Yes/No style values; anything else is flagged for review.
+export const COACH_KID_HEADERS = ["Coaches Kid", "Coach's Kid", "Coach Kid", "Coaches Child", "Coach's Child"];
+const headerKey = (h: string) => h.toLowerCase().replace(/[^a-z0-9]/g, "");
+export function parseCoachKid(value: string): boolean | null | "bad" {
+  const v = value.trim().toLowerCase();
+  if (v === "") return null;
+  if (["true", "yes", "y", "1", "x"].includes(v)) return true;
+  if (["false", "no", "n", "0"].includes(v)) return false;
+  return "bad";
+}
 
 export const REQUIRED_HEADERS = [
   "Program Name", "Division Name", "Player Id", "Registration Number",
@@ -95,6 +108,7 @@ export function makePreview(text: string): { rows: PreviewRow[]; missingHeaders:
   const missingHeaders = REQUIRED_HEADERS.filter((header) => !indexes.has(header));
   if (missingHeaders.length) return { rows: [], missingHeaders };
   const get = (cells: string[], header: string) => (cells[indexes.get(header)!] ?? "").trim();
+  const kidHeader = headers.find((h) => COACH_KID_HEADERS.some((k) => headerKey(k) === headerKey(h)));
   const rows = parsed.slice(1).map((cells, index): PreviewRow => {
     const playerId = get(cells, "Player Id");
     const firstName = get(cells, "Player First Name");
@@ -112,6 +126,9 @@ export function makePreview(text: string): { rows: PreviewRow[]; missingHeaders:
     if (!ACTIVE_DIVISIONS.has(division.toUpperCase())) issues.push("Division needs review");
     const leagueAge = date ? chartByBirthMonth.get(`${date.year}-${date.month}`) ?? null : null;
     if (date && leagueAge === null) issues.push("No reviewed age-chart entry");
+    const kidRaw = kidHeader ? (cells[indexes.get(kidHeader)!] ?? "").trim() : "";
+    const kid = parseCoachKid(kidRaw);
+    if (kid === "bad") issues.push(`Coaches Kid value "${kidRaw}" not understood (use Yes or No)`);
     return {
       line: records[index + 1].line,
       playerId,
@@ -123,6 +140,7 @@ export function makePreview(text: string): { rows: PreviewRow[]; missingHeaders:
       registrationNumber,
       paymentStatus,
       leagueAge,
+      coachKid: kid === "bad" ? null : kid,
       issues,
     };
   });

@@ -1,10 +1,12 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Download, Lock, MessageSquare, Printer, StickyNote } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, Lock, MessageSquare, Printer, Star, StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { safeCsvCell } from "@/lib/sports-connect-preview";
 import { saveNote } from "@/app/protected/my-notes/actions";
+import { CoachKidBadge } from "@/components/coach-kid-badge";
+import { toggleStar } from "./actions";
 
 export type DraftReportRow = {
   player_season_id: number;
@@ -64,10 +66,25 @@ function flags(r: DraftReportRow, administrator: boolean) {
 }
 
 // notes: what the database lets this viewer see (player_notes). canWritePrivate: coaches get a private-note box.
-export function DraftReportTable({ rows, title, fileName, administrator, notes = [], canWritePrivate = false, returnTo }: {
+// coachKids: registrations marked as a coach's kid. stars: this viewer's private stars (toggled here).
+export function DraftReportTable({ rows, title, fileName, administrator, notes = [], canWritePrivate = false, returnTo, coachKids = [], stars = [] }: {
   rows: DraftReportRow[]; title: string; fileName: string; administrator: boolean;
-  notes?: ReportNote[]; canWritePrivate?: boolean; returnTo: string;
+  notes?: ReportNote[]; canWritePrivate?: boolean; returnTo: string; coachKids?: number[]; stars?: number[];
 }) {
+  const kids = useMemo(() => new Set(coachKids), [coachKids]);
+  const [starred, setStarred] = useState<Set<number>>(() => new Set(stars));
+  const [onlyStars, setOnlyStars] = useState(false);
+  const [starError, setStarError] = useState<string | null>(null);
+  async function flipStar(id: number) {
+    setStarError(null);
+    const was = starred.has(id);
+    setStarred((s) => { const n = new Set(s); if (was) n.delete(id); else n.add(id); return n; });
+    const res = await toggleStar(id);
+    if (res.error || res.starred === was) {
+      setStarred((s) => { const n = new Set(s); if (was) n.add(id); else n.delete(id); return n; });
+      setStarError(res.error ?? "Could not save the star. Try again.");
+    }
+  }
   const notesFor = useMemo(() => {
     const m = new Map<number, ReportNote[]>();
     for (const n of notes) m.set(n.player_season_id, [...(m.get(n.player_season_id) ?? []), n]);
@@ -85,7 +102,7 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
         default: return num(r[sort.key]);
       }
     };
-    return [...rows].sort((a, b) => {
+    return rows.filter((r) => !onlyStars || starred.has(r.player_season_id)).sort((a, b) => {
       const va = value(a), vb = value(b);
       if (va === null && vb === null) return a.last_name.localeCompare(b.last_name);
       if (va === null) return 1; // blanks always last
@@ -93,7 +110,7 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
       const c = va < vb ? -1 : va > vb ? 1 : 0;
       return (sort.desc ? -c : c) || a.last_name.localeCompare(b.last_name);
     });
-  }, [rows, sort]);
+  }, [rows, sort, onlyStars, starred]);
 
   const header = (key: SortKey, label: string, defaultDesc: boolean, extra = "") => (
     <th scope="col" className={`px-3 py-2 ${extra}`} aria-sort={sort.key === key ? (sort.desc ? "descending" : "ascending") : "none"}>
@@ -104,12 +121,12 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
   );
 
   function downloadCsv() {
-    const head = ["Bib", "Last Name", "First Name", "Age", "Evaluator Overall", "Evaluator Skills Rated", "Evaluators", "Coach Overall",
+    const head = ["Bib", "Last Name", "First Name", "Coach's Kid", "Starred", "Age", "Evaluator Overall", "Evaluator Skills Rated", "Evaluators", "Coach Overall",
       "Coach Overall (high/low dropped)", "Coach Skills Rated", "Coaches",
       "Prior-Year Overall", "Prior-Year Ratings", ...SKILLS.flatMap(([, l]) => [`Evaluator ${l}`, `Coach ${l}`, `Coach ${l} (high/low dropped)`, `Prior ${l}`]),
       "Evaluator Pitching", "Coach Pitching", "Coach Pitching (high/low dropped)", "Evaluator Catching", "Coach Catching", "Coach Catching (high/low dropped)", "Flags"];
     const lines = sorted.map((r) => [
-      r.evaluation_number ?? "", r.last_name, r.first_name, r.league_age, fmt(r.evaluator_overall), r.evaluator_skills_rated, r.evaluator_evaluations,
+      r.evaluation_number ?? "", r.last_name, r.first_name, kids.has(r.player_season_id) ? "Yes" : "", starred.has(r.player_season_id) ? "Yes" : "", r.league_age, fmt(r.evaluator_overall), r.evaluator_skills_rated, r.evaluator_evaluations,
       fmt(r.coach_overall), fmt(r.skill_averages?.coach_trimmed_overall), r.coach_skills_rated, r.coach_evaluations, fmt(r.prior_overall), r.prior_ratings,
       ...SKILLS.flatMap(([c]) => [fmt(r.skill_averages?.evaluator?.[c]), fmt(r.skill_averages?.coach?.[c]), fmt(r.skill_averages?.coach_trimmed?.[c]), fmt(r.skill_averages?.prior?.[c])]),
       fmt(r.skill_averages?.evaluator?.pitching), fmt(r.skill_averages?.coach?.pitching), fmt(r.skill_averages?.coach_trimmed?.pitching),
@@ -144,11 +161,19 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-semibold text-foreground print:text-black">{title}</h2>
         <div className="flex gap-2 print:hidden">
+          <Button type="button" variant={onlyStars ? "default" : "outline"} size="sm" aria-pressed={onlyStars} onClick={() => setOnlyStars((v) => !v)}
+            title="Show only the players you starred">
+            <Star className={`mr-1 h-4 w-4 ${onlyStars ? "fill-current" : ""}`} /> My stars ({starred.size})
+          </Button>
           <Button type="button" variant="outline" size="sm" onClick={downloadCsv}><Download className="mr-1 h-4 w-4" /> CSV</Button>
           <Button type="button" variant="outline" size="sm" onClick={() => window.print()}><Printer className="mr-1 h-4 w-4" /> Print</Button>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground print:hidden">{rows.length} players. Click a column heading to sort; click a player to see each skill.</p>
+      <p className="text-xs text-muted-foreground print:hidden">
+        {onlyStars ? `Showing your ${sorted.length} starred player${sorted.length === 1 ? "" : "s"} of ${rows.length}.` : `${rows.length} players.`} Click a column heading to sort; click a player to see each skill.
+        Tap the star to add a player to your own shortlist; only you see your stars.
+      </p>
+      {starError && <p role="alert" className="text-xs text-rose-700 dark:text-rose-300">{starError}</p>}
 
       <div className="overflow-x-auto rounded-lg border border-border print:overflow-visible print:border-black">
         <table className="w-full text-left text-sm print:text-[10px] print:text-black">
@@ -173,11 +198,20 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
                   <tr className="cursor-pointer hover:bg-accent/50 print:break-inside-avoid" onClick={toggle}>
                     <td className="px-3 py-2 font-mono">{r.evaluation_number ?? "—"}</td>
                     <td className="px-3 py-2">
-                      <button type="button" className="flex items-center gap-1 text-left font-medium text-foreground print:text-black" aria-expanded={expanded} onClick={(e) => { e.stopPropagation(); toggle(); }}>
-                        <span className="print:hidden">{expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}</span>
-                        {r.last_name}, {r.first_name}
-                        {notesFor.has(r.player_season_id) && <StickyNote className="ml-1 h-3.5 w-3.5 text-amber-600 dark:text-amber-400 print:hidden" aria-label="Has notes" />}
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button type="button" onClick={(e) => { e.stopPropagation(); flipStar(r.player_season_id); }}
+                          aria-pressed={starred.has(r.player_season_id)} aria-label={starred.has(r.player_season_id) ? "Unstar" : "Star"}
+                          className={`-ml-1 rounded p-1 hover:bg-accent print:hidden ${starred.has(r.player_season_id) ? "text-amber-500" : "text-muted-foreground/60"}`}>
+                          <Star className={`h-4 w-4 ${starred.has(r.player_season_id) ? "fill-current" : ""}`} />
+                        </button>
+                        {starred.has(r.player_season_id) && <span className="hidden print:inline">★</span>}
+                        <button type="button" className="flex items-center gap-1 text-left font-medium text-foreground print:text-black" aria-expanded={expanded} onClick={(e) => { e.stopPropagation(); toggle(); }}>
+                          <span className="print:hidden">{expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}</span>
+                          {r.last_name}, {r.first_name}
+                          {notesFor.has(r.player_season_id) && <StickyNote className="ml-1 h-3.5 w-3.5 text-amber-600 dark:text-amber-400 print:hidden" aria-label="Has notes" />}
+                        </button>
+                        {kids.has(r.player_season_id) && <CoachKidBadge />}
+                      </div>
                     </td>
                     {overallCell(num(r.evaluator_overall), r.evaluator_skills_rated, r.evaluator_evaluations, "evaluator")}
                     {overallCell(num(r.coach_overall), r.coach_skills_rated, r.coach_evaluations, "coach", num(r.skill_averages?.coach_trimmed_overall))}

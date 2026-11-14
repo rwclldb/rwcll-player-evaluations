@@ -128,3 +128,14 @@ export async function applyBibUpload(formData: FormData) {
   revalidatePath("/protected/players");
   go(back, "message", `${data} bib(s) set.`);
 }
+
+// ---------- coach's kid flag ----------
+export async function setCoachKid(formData: FormData) {
+  const registrationId = id(formData.get("registrationId"));
+  const back = `/protected/players/${registrationId}`;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_set_coach_kid", { p_player_season_id: registrationId, p_value: formData.get("value") === "true" });
+  if (error) go(back, "error", error.message);
+  revalidatePath("/protected/players");
+  go(back, "message", formData.get("value") === "true" ? "Marked as a coach's kid." : "No longer marked as a coach's kid.");
+}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CoachKidBadge } from "@/components/coach-kid-badge";
 import { createClient } from "@/lib/supabase/server";
 import { PrintButton } from "./print-button";
 
@@ -9,6 +10,7 @@ type Registration = {
   id: number;
   league_age: number;
   evaluation_number: number | null;
+  is_coach_kid: boolean;
   players: { first_name: string; last_name: string; date_of_birth: string | null } | null;
 };
 
@@ -33,7 +35,7 @@ export default async function RosterPage({
     for (let from = 0; ; from += 1000) {
       const { data, error } = await supabase
         .from("player_seasons")
-        .select("id, league_age, evaluation_number, players(first_name, last_name, date_of_birth)")
+        .select("id, league_age, evaluation_number, is_coach_kid, players(first_name, last_name, date_of_birth)")
         .eq("season_id", season.id)
         .gte("league_age", 7)
         .lte("league_age", 16)
@@ -107,7 +109,7 @@ export default async function RosterPage({
                   <tr key={r.id} className="h-8 border-b border-border print:break-inside-avoid print:border-gray-400">
                     <td className="px-2 font-mono font-semibold">{r.evaluation_number ?? "—"}</td>
                     <td className="px-2">{r.players?.last_name}</td>
-                    <td className="px-2">{r.players?.first_name}</td>
+                    <td className="px-2">{r.players?.first_name}{r.is_coach_kid && <span className="ml-2"><CoachKidBadge short /></span>}</td>
                     <td className="px-2 font-mono text-xs">{r.players?.date_of_birth ?? "—"}</td>
                     <td className="px-2 text-center"><span className="inline-block h-4 w-4 border border-gray-500" aria-hidden /></td>
                     <td className="px-2" />

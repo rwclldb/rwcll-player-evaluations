@@ -417,7 +417,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
                   <table className="w-full text-left text-sm">
                     <thead className="bg-background text-xs font-mono uppercase tracking-wider text-muted-foreground border-b border-border">
                       <tr>
-                        {["Line", "Player ID", "Player", "Birth Date", "Age", "Division", "Payment", "Registration #", "Review Flags"].map((heading) => (
+                        {["Line", "Player ID", "Player", "Birth Date", "Age", "Division", "Payment", "Registration #", "Coach's Kid", "Review Flags"].map((heading) => (
                           <th key={heading} className="px-4 py-3 font-semibold">{heading}</th>
                         ))}
                       </tr>
@@ -433,6 +433,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
                           <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{row.division || "—"}</td>
                           <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{row.paymentStatus || "—"}</td>
                           <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{row.registrationNumber || "—"}</td>
+                          <td className="px-4 py-3 text-xs">{row.coachKid ? <span className="rounded bg-sky-500/15 px-1.5 py-0.5 font-semibold text-sky-800 dark:text-sky-300">Yes</span> : <span className="text-muted-foreground">—</span>}</td>
                           <td className="px-4 py-3">
                             <div className="flex max-w-sm flex-wrap gap-1">
                               {row.issues.length ? (

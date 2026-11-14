@@ -17,6 +17,7 @@ type StageRow = {
   registrationNumber: string;
   paymentStatus: string;
   leagueAge: number | null;
+  coachKid?: boolean | null;
   issues: string[];
 };
 
@@ -52,6 +53,7 @@ export async function stageSportsConnectImport(input: {
     registrationNumber: String(row.registrationNumber ?? "").slice(0, 200),
     paymentStatus: String(row.paymentStatus ?? "").slice(0, 100),
     leagueAge: row.leagueAge === null ? null : Number(row.leagueAge),
+    coachKid: typeof row.coachKid === "boolean" ? row.coachKid : null,
     issues: Array.isArray(row.issues) ? row.issues.map((issue) => String(issue).slice(0, 300)).slice(0, 30) : [],
   }));
   if (rows.some((row) => !Number.isSafeInteger(row.line) || row.line < 2)) {
