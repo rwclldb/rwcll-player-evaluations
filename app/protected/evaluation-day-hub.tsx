@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, ClipboardCheck, Printer, UserPlus, type LucideIcon } from "lucide-react";
+import { CalendarClock, ClipboardCheck, FileSpreadsheet, Printer, UserPlus, Users, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { leagueToday } from "@/lib/roadmap";
 
@@ -9,6 +9,8 @@ const CARDS: { href: string; title: string; text: string; icon: LucideIcon }[] =
   { href: "/protected/players/new", title: "Add a walk-up", text: "A child who shows up but isn't registered yet.", icon: UserPlus },
   { href: "/protected/roster?age=all", title: "Print rosters", text: "One page per age group, with Check-in and Notes columns.", icon: Printer },
   { href: "/protected/timetable", title: "Who scores when", text: "Each age group's time, place, coaches and evaluators.", icon: CalendarClock },
+  { href: "/protected/players", title: "Players", text: "Find a player, fix a name, birthdate, age group or bib.", icon: Users },
+  { href: "/protected/import-batches", title: "Registration imports", text: "Upload the Sports Connect export or a bib list, and review it.", icon: FileSpreadsheet },
 ];
 
 export const longDate = (iso: string) =>
@@ -49,7 +51,7 @@ export async function EvaluationDayHub({ season }: { season: { id: number; name:
           </span>
         </span>
       </Link>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {CARDS.map(({ href, title, text, icon: Icon }) => (
           <Link key={href} href={href}
             className="group rounded-2xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-emerald-500/50 hover:shadow-md">

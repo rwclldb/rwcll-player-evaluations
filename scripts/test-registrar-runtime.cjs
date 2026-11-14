@@ -37,8 +37,8 @@ if (result.status !== 0) {
 }
 
 const passes = notices.filter((line) => line.includes("PASS:")).length;
-if (passes < 25) {
-  console.error(`FAIL: expected 25 PASS lines, saw ${passes}`);
+if (passes < 26) {
+  console.error(`FAIL: expected 26 PASS lines, saw ${passes}`);
   process.exit(1);
 }
 console.log("PASS: registrar role holds at runtime (local database)");

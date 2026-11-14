@@ -139,8 +139,13 @@ SELECT pg_temp.check((SELECT coaches FROM public.registrar_timetable((SELECT sea
   'the timetable shows who scores each age group and when');
 SELECT pg_temp.expect_error(format('SELECT public.admin_grant_role(%L, %L, %s)', '00000000-0000-4000-8000-0000000ea003', 'registrar', (SELECT season_id FROM ctx)),
   'Administrator access required', 'a registrar cannot give roles');
-SELECT pg_temp.expect_error(format('SELECT public.admin_save_registration(%s, %L, %L, NULL, 9, NULL, %L)', :sam, 'Sam', 'Regtest', 'test reason'),
-  'Administrator access required', 'other registration edits stay admin-only for now');
+SELECT public.admin_save_registration(:sam, 'Samuel', 'Regtest', NULL, 10, NULL, 'Parent corrected the name');
+SELECT pg_temp.check((SELECT first_name FROM public.players p JOIN public.player_seasons ps ON ps.player_id = p.id WHERE ps.id = :sam) = 'Samuel',
+  'a registrar fixes a player''s name in their season');
+SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000ea004');
+SELECT pg_temp.expect_error(format('SELECT public.admin_save_registration(%s, %L, %L, NULL, 10, NULL, %L)', :sam, 'Sam', 'Regtest', 'test reason'),
+  'Administrator access required', 'a registrar for another season cannot');
+SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000ea002');
 SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000ea003');
 SELECT pg_temp.expect_error(format('SELECT public.admin_add_onsite_registration(%s, NULL, %L, %L, NULL, 9, NULL, %L)', (SELECT season_id FROM ctx), 'No', 'Way', 'Walk-up test'),
   'Only registrars and league admins', 'a coach cannot add walk-ups');

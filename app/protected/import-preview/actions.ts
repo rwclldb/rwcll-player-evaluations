@@ -39,7 +39,7 @@ export async function stageSportsConnectImport(input: {
   const supabase = await createClient();
   const { data: claims, error: claimsError } = await supabase.auth.getClaims();
   if (claimsError || !claims?.claims) return { ok: false, message: "Sign in again before staging this import." };
-  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
+  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin_or_registrar");
   if (roleError || isAdmin !== true) return { ok: false, message: "Administrator access is required." };
 
   const rows = input.rows.map((row) => ({

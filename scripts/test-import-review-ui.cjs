@@ -14,7 +14,7 @@ const page = fs.readFileSync(path.join(root, files[1]), 'utf8');
 const form = fs.readFileSync(path.join(root, files[2]), 'utf8');
 for (const [label, condition] of [
   ['server-side authentication', action.includes('supabase.auth.getClaims()')],
-  ['server-side administrator check', action.includes('supabase.rpc("is_admin")')],
+  ['server-side administrator (or registrar) check', /supabase\.rpc\("is_admin(_or_registrar)?"\)/.test(action)],
   ['batch/row relationship validation', action.includes('Number(row.import_batch_id) !== batchId')],
   ['audited review RPC', action.includes('review_sports_connect_import_row')],
   ['review reason length validation', action.includes('reason.length < 5') && action.includes('reason.length > 1000')],
@@ -30,7 +30,7 @@ for (const [label, condition] of [
   action.includes('export async function commitImportRow') &&
     action.includes('commit_sports_connect_import_row'),
 ],
-  ['administrator-gated page', page.includes('supabase.rpc("is_admin")')],
+  ['administrator (or registrar) gated page', /supabase\.rpc\("is_admin(_or_registrar)?"\)/.test(page)],
   ['explicit read-only boundary', page.includes('does not create or update players or registrations')],
   ['reason-required UI', form.includes('required') && form.includes('minLength={5}')],
   ['approved match requires player selection', form.includes('(match && !matchedPlayerId)')],

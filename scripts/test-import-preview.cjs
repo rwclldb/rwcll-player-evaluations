@@ -71,7 +71,7 @@ assert.equal(safeCsvCell('Sam "Slugger"'), `"Sam ""Slugger"""`);
 console.log("PASS: issue-report CSV cells are quoted and spreadsheet-formula prefixes are neutralized.");
 
 const importPage = fs.readFileSync(path.join(root, "app", "protected", "import-preview", "page.tsx"), "utf8");
-assert.match(importPage, /supabase\.rpc\([\"']is_admin[\"']\)/, "import preview must perform a server-side administrator role check");
+assert.match(importPage, /supabase\.rpc\([\"']is_admin(_or_registrar)?[\"']\)/, "import preview must perform a server-side administrator (or registrar) role check");
 assert.match(importPage, /Administrator Access Required/, "non-admin users must be denied the import preview");
 console.log("PASS: import preview requires the database-backed administrator role on the server.");
 console.log("LIMITATION: tests the browser-side preview parser and static authorization contract only, not Supabase role behavior or database writes.");
@@ -89,7 +89,7 @@ assert.match(stagingMigration, /GRANT EXECUTE ON FUNCTION public\.stage_sports_c
 assert.doesNotMatch(stagingMigration, /INSERT INTO public\.players\b/i, "staging migration must not create player records");
 assert.doesNotMatch(stagingMigration, /INSERT INTO public\.player_seasons\b/i, "staging migration must not create registrations");
 const actionSource = fs.readFileSync(path.join(root, "app", "protected", "import-preview", "actions.ts"), "utf8");
-assert.match(actionSource, /supabase\.rpc\("is_admin"\)/);
+assert.match(actionSource, /supabase\.rpc\("is_admin(_or_registrar)?"\)/);
 assert.match(actionSource, /stage_sports_connect_import/);
 const clientSource = fs.readFileSync(path.join(root, "app", "protected", "import-preview", "registration-import-preview.tsx"), "utf8");
 assert.match(clientSource, /Save Batch for Review/);

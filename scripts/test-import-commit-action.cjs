@@ -20,7 +20,7 @@ const checks = [
   ],
   [
     "administrator authorization required",
-    /supabase\.rpc\("is_admin"\)/,
+    /supabase\.rpc\("is_admin(_or_registrar)?"\)/,
   ],
   [
     "row must belong to requested batch",

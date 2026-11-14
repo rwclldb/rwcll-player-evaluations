@@ -30,10 +30,11 @@ const EVALUATOR_LINKS: NavLink[] = [
   { href: "/protected/my-notes", label: "My Notes" },
 ];
 
-// Registrars: evaluation day only. No scores, notes or draft reports.
+// Registrars: registrations and evaluation day for their season. No scores, notes or draft reports.
 const REGISTRAR_LINKS: NavLink[] = [
   { href: "/protected/check-in", label: "Check-in" },
-  { href: "/protected/players/new", label: "Walk-ups" },
+  { href: "/protected/players", label: "Players" },
+  { href: "/protected/import-batches", label: "Imports" },
   { href: "/protected/roster", label: "Rosters" },
   { href: "/protected/timetable", label: "Who scores when" },
 ];

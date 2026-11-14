@@ -19,9 +19,10 @@ async function ImportPreviewContent() {
     return redirect("/auth/login");
   }
 
-  // Verify administrator permissions via Supabase RPC function
-  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
+  // Admins and registrars (the season list shows only seasons the person may import into).
+  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin_or_registrar");
   const administrator = !roleError && isAdmin === true;
+  const { data: realAdmin } = await supabase.rpc("is_admin");
 
   if (!administrator) {
     return (
@@ -58,7 +59,7 @@ async function ImportPreviewContent() {
           <div className="flex items-center gap-2 mb-2">
             <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
               <Link href="/protected">
-                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Roadmap
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> {realAdmin === true ? "Roadmap" : "Home"}
               </Link>
             </Button>
           </div>

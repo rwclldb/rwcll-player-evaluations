@@ -21,7 +21,7 @@ async function EditContent({ params, searchParams }: { params: Params; searchPar
   const { id } = await params;
   const sp = await searchParams;
   const supabase = await createClient();
-  const { data: isAdmin } = await supabase.rpc("is_admin");
+  const { data: isAdmin } = await supabase.rpc("is_admin_or_registrar");
   if (isAdmin !== true) redirect("/protected");
 
   const psId = Number(id);
@@ -32,14 +32,14 @@ async function EditContent({ params, searchParams }: { params: Params; searchPar
   if (!data) notFound();
   const reg = data as unknown as RegistrationRow & { external_registration_id: string | null; seasons: { name: string; is_closed: boolean } | null };
 
-  const [{ data: auditData }, { count: evaluationCount }] = await Promise.all([
-    supabase.from("audit_log").select("id, action, reason, before_data, after_data, created_at")
-      .eq("target_table", "player_seasons").eq("target_id", String(psId)).order("created_at", { ascending: false }).limit(20),
-    supabase.from("evaluations").select("id", { count: "exact", head: true }).eq("player_season_id", psId),
+  // Through functions, so registrars see this player's history and score yes/no without reading the audit log or scores.
+  const [{ data: auditData }, { data: hasScores }] = await Promise.all([
+    supabase.rpc("registration_history", { p_player_season_id: psId }),
+    supabase.rpc("registration_has_scores", { p_player_season_id: psId }),
   ]);
   const history = (auditData ?? []) as AuditRow[];
   const chartAge = leagueAgeForBirthDate(reg.players?.date_of_birth);
-  const locked = (evaluationCount ?? 0) > 0;
+  const locked = hasScores === true;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">

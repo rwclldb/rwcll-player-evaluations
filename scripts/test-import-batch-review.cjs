@@ -26,7 +26,7 @@ const listPage = fs.readFileSync(path.join(root, files[2]), "utf8");
 const detailPage = fs.readFileSync(path.join(root, files[3]), "utf8");
 for (const [name, source] of [["batch list", listPage], ["batch detail", detailPage]]) {
   assert.match(source, /supabase\.auth\.getUser\(\)/, `${name} must require an authenticated user`);
-  assert.match(source, /supabase\.rpc\(["']is_admin["']\)/, `${name} must check admin role server-side`);
+  assert.match(source, /supabase\.rpc\(["']is_admin(_or_registrar)?["']\)/, `${name} must check admin (or registrar) role server-side`);
   assert.match(source, /<Suspense/, `${name} must use a Suspense boundary for request-specific rendering`);
 }
 assert.match(listPage, /\.limit\(100\)/, "batch list should be bounded");

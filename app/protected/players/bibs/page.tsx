@@ -14,7 +14,7 @@ type Batch = { id: number; source_file_name: string | null; status: string; rows
 async function BibsContent({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams;
   const supabase = await createClient();
-  const { data: isAdmin } = await supabase.rpc("is_admin");
+  const { data: isAdmin } = await supabase.rpc("is_admin_or_registrar");
   if (isAdmin !== true) redirect("/protected");
 
   const [{ data: seasonData }, { data: batchData }, { data: heldData }] = await Promise.all([

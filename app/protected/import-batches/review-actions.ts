@@ -29,7 +29,7 @@ export async function saveImportRowReview(formData: FormData): Promise<ReviewRow
   const supabase = await createClient();
   const { data: claims, error: claimsError } = await supabase.auth.getClaims();
   if (claimsError || !claims?.claims) return { ok: false, message: "Sign in before reviewing staged rows." };
-  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
+  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin_or_registrar");
   if (roleError || isAdmin !== true) return { ok: false, message: "Administrator access is required." };
 
   // Confirm the row belongs to the requested batch; the database RPC remains the write boundary.
@@ -79,7 +79,7 @@ export async function commitImportRow(formData: FormData): Promise<CommitImportR
     return { ok: false, message: "Sign in before committing a staged row." };
   }
 
-  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
+  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin_or_registrar");
   if (roleError || isAdmin !== true) {
     return { ok: false, message: "Administrator access is required." };
   }
@@ -185,7 +185,7 @@ export async function resolveDuplicatePlayerIdWarning(
   }
 
   const { data: isAdmin, error: roleError } =
-    await supabase.rpc("is_admin");
+    await supabase.rpc("is_admin_or_registrar");
 
   if (roleError || isAdmin !== true) {
     return {
@@ -294,7 +294,7 @@ export async function reopenIgnoredImportRow(
   }
 
   const { data: isAdmin, error: roleError } =
-    await supabase.rpc("is_admin");
+    await supabase.rpc("is_admin_or_registrar");
 
   if (roleError || isAdmin !== true) {
     return {

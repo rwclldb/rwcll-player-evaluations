@@ -39,9 +39,10 @@ async function ImportBatchesContent() {
     return redirect("/auth/login");
   }
 
-  // Verify administrator permissions via Supabase RPC function
-  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
+  // Admins and registrars (who see only their own season's registration and bib batches).
+  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin_or_registrar");
   const administrator = !roleError && isAdmin === true;
+  const { data: realAdmin } = await supabase.rpc("is_admin");
 
   if (!administrator) {
     return (
@@ -95,7 +96,7 @@ async function ImportBatchesContent() {
           <div className="flex items-center gap-2 mb-2">
             <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
               <Link href="/protected">
-                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> Roadmap
+                <ArrowLeft className="h-4 w-4 mr-1 text-emerald-700 dark:text-emerald-400" /> {realAdmin === true ? "Roadmap" : "Home"}
               </Link>
             </Button>
           </div>
@@ -108,9 +109,11 @@ async function ImportBatchesContent() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline" className="text-xs">
-            <Link href="/protected/prior-year">Prior-year ratings &rarr;</Link>
-          </Button>
+          {realAdmin === true && (
+            <Button asChild variant="outline" className="text-xs">
+              <Link href="/protected/prior-year">Prior-year ratings &rarr;</Link>
+            </Button>
+          )}
           <Button asChild variant="outline" className="text-xs">
             <Link href="/protected/players/bibs">Bib numbers &rarr;</Link>
           </Button>

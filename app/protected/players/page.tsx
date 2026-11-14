@@ -22,8 +22,10 @@ const FILTERS = [
 async function PlayersContent({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const supabase = await createClient();
-  const { data: isAdmin } = await supabase.rpc("is_admin");
+  // Admins and registrars (who see only their own season).
+  const { data: isAdmin } = await supabase.rpc("is_admin_or_registrar");
   if (isAdmin !== true) redirect("/protected");
+  const { data: realAdmin } = await supabase.rpc("is_admin");
 
   const { data: seasonData } = await supabase.from("seasons").select("id, name, is_closed, start_date").order("start_date", { ascending: false });
   const seasons = seasonData ?? [];
@@ -70,7 +72,7 @@ async function PlayersContent({ searchParams }: { searchParams: SearchParams }) 
     <div className="space-y-6">
       <div className="flex flex-col gap-3 border-b border-border pb-5">
         <Button asChild variant="ghost" size="sm" className="h-8 w-fit px-2 text-xs text-muted-foreground hover:text-foreground">
-          <Link href="/protected"><ArrowLeft className="mr-1 h-4 w-4" /> Roadmap</Link>
+          <Link href="/protected"><ArrowLeft className="mr-1 h-4 w-4" /> {realAdmin === true ? "Roadmap" : "Home"}</Link>
         </Button>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">

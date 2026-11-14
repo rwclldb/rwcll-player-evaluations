@@ -92,7 +92,7 @@ async function ImportBatchReviewContent({ params, searchParams }: { params: Prom
   }
 
   // Verify administrator permissions via Supabase RPC function
-  const { data: isAdmin, error: adminError } = await supabase.rpc("is_admin");
+  const { data: isAdmin, error: adminError } = await supabase.rpc("is_admin_or_registrar");
   if (adminError || isAdmin !== true) {
     return (
       <div className="space-y-6">

@@ -46,7 +46,7 @@ async function BatchContent({ params, searchParams }: { params: Params; searchPa
   const { batchId } = await params;
   const sp = await searchParams;
   const supabase = await createClient();
-  const { data: isAdmin } = await supabase.rpc("is_admin");
+  const { data: isAdmin } = await supabase.rpc("is_admin_or_registrar");
   if (isAdmin !== true) redirect("/protected");
 
   const id = Number(batchId);

@@ -15,7 +15,7 @@ const result = ts.transpileModule(source, {
 const errors = (result.diagnostics || []).filter((item) => item.category === ts.DiagnosticCategory.Error);
 assert.equal(errors.length, 0, `${relative} has TSX syntax errors`);
 assert.match(source, /supabase\.auth\.getUser\(\)/, "detail page must require authentication");
-assert.match(source, /supabase\.rpc\(["']is_admin["']\)/, "detail page must check administrator access server-side");
+assert.match(source, /supabase\.rpc\(["']is_admin(_or_registrar)?["']\)/, "detail page must check administrator (or registrar) access server-side");
 assert.match(source, /\.from\(["']players["']\)/, "candidate suggestions should read existing player records");
 assert.match(source, /offset < 10000/, "candidate search must have a hard overall bound");
 assert.match(source, /\.range\(offset, offset \+ 999\)/, "candidate search must page around API row caps");

@@ -122,7 +122,7 @@ async function ImportBatchDetailContent({ batchId, bulkMessage, bulkError, syncM
   }
 
   // Verify administrator permissions via Supabase RPC function
-  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
+  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin_or_registrar");
   const administrator = !roleError && isAdmin === true;
 
   if (!administrator) {
