@@ -9,6 +9,7 @@ import { TopbarClock } from "@/components/topbar-clock";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { DesktopNav, MobileMenu, type NavLink } from "@/components/app-nav";
 import { getMyRoles } from "@/lib/my-roles";
+import { OfflineStatus } from "@/components/offline-sync";
 
 const ADMIN_LINKS: NavLink[] = [
   { href: "/protected", label: "Roadmap" },
@@ -67,6 +68,9 @@ export async function AppHeader({ user }: { user: User }) {
           </Link>
           <DesktopNav links={links} />
         </div>
+
+        {/* Scores saved on this device but not sent yet (no signal). Visible on every screen size. */}
+        <div className="ml-auto"><OfflineStatus userId={user.id} /></div>
 
         {/* Desktop: clock, account, sign out, theme. Below xl these move into the menu button. */}
         <div className="hidden items-center gap-3 xl:flex">

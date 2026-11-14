@@ -3,65 +3,31 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getMyRoles, onlyRegistrar } from "@/lib/my-roles";
-import { saveEvaluation } from "./actions";
-import { RatingInputs } from "./rating-inputs";
-import { DirtyTracker, GuardedLink } from "./unsaved-guard";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CoachKidBadge } from "@/components/coach-kid-badge";
-import { ClipboardList, ArrowLeft, ShieldAlert, Calendar, Layers, MapPin, Search, ChevronLeft, ChevronRight, History, Lock, MessageSquare, StickyNote } from "lucide-react";
+import { ClipboardList, ArrowLeft, Layers, MapPin } from "lucide-react";
+import { ScoringSession, type MyScores, type PriorYear, type ScoringCategory, type ScoringPlayer } from "./scoring-session";
+import { HideWhileScoring } from "./hide-while-scoring";
 
 const OLDEST_TO_YOUNGEST = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7];
 
-type SearchParams = Promise<{
-  sessionId?: string;
-  player?: string;
-  bib?: string;
-  message?: string;
-  error?: string;
-}>;
-
+type SearchParams = Promise<{ sessionId?: string; player?: string; message?: string; error?: string }>;
 type AssignedSession = { id: number; season_id: number; league_age: number | null; status: string };
 type Season = { id: number; name: string };
-type RatingCategory = { id: number; code: string; name: string; category_group: string; sort_order: number };
 type EligibleRegistration = {
-  id: number;
-  evaluation_number: number | null;
-  league_age: number;
-  is_coach_kid: boolean;
+  id: number; evaluation_number: number | null; league_age: number; is_coach_kid: boolean;
   players: { first_name: string; last_name: string; date_of_birth: string | null } | null;
 };
-type EvaluationRecord = { id: number; player_season_id: number; status: string };
-type PlayerNote = { player_season_id: number; kind: "private" | "shared"; note_text: string; is_mine: boolean };
-type PriorYear = { player_season_id: number; prior_overall: number | null; prior_skills_rated: number; prior_ratings: number; prior_skills: Record<string, number> };
-
-const EXPERIENCE_QUESTIONS = [
-  { code: "pitched_before", label: "Has pitched before" },
-  { code: "caught_before", label: "Has caught before" },
-  { code: "interested_in_pitching", label: "Interested in pitching" },
-  { code: "interested_in_catching", label: "Interested in catching" },
-] as const;
-
-const PRIOR_SKILLS: [string, string][] = [
-  ["hitting", "Hitting"], ["throwing", "Throwing"], ["grounders", "Grounders"], ["fly_balls", "Fly Balls"],
-  ["running_awareness", "Running"], ["pitching", "Pitching"], ["catching", "Catching"],
-];
-
-const STATUS_STYLE: Record<string, { label: string; className: string }> = {
-  submitted: { label: "Saved", className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
-  draft: { label: "Draft (not counted)", className: "bg-amber-500/15 text-amber-800 dark:text-amber-300" },
-  not_evaluated: { label: "Not evaluated", className: "bg-slate-500/15 text-slate-700 dark:text-slate-300" },
-  none: { label: "Not started", className: "bg-muted text-muted-foreground" },
+type MyEvaluation = {
+  player_season_id: number; status: string;
+  ratings: { score: number; rating_categories: { code: string } | null }[];
+  experience_answers: { question_code: string; answer: string }[];
 };
+type PlayerNote = { player_season_id: number; kind: "private" | "shared"; note_text: string; is_mine: boolean };
+type PriorRow = PriorYear & { player_season_id: number };
 
 const playerName = (r: EligibleRegistration) => (r.players ? `${r.players.last_name}, ${r.players.first_name}` : `Registration #${r.id}`);
-const bibLabel = (r: EligibleRegistration) => (r.evaluation_number === null ? "No bib" : `#${r.evaluation_number}`);
-
-function StatusChip({ status }: { status?: string }) {
-  const s = STATUS_STYLE[status ?? "none"] ?? STATUS_STYLE.none;
-  return <span className={`inline-block whitespace-nowrap rounded px-2 py-0.5 text-[11px] font-semibold ${s.className}`}>{s.label}</span>;
-}
 
 async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -90,7 +56,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
   ]);
   const sessions = (sessionResult.data ?? []) as AssignedSession[];
   const seasons = (seasonResult.data ?? []) as Season[];
-  const categories = (categoryResult.data ?? []) as RatingCategory[];
+  const categories = (categoryResult.data ?? []) as ScoringCategory[];
   const seasonName = (id: number) => seasons.find((s) => s.id === id)?.name ?? `Season #${id}`;
 
   const requestedId = Number(params.sessionId);
@@ -102,27 +68,21 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
     : { data: [], error: null };
   const events = eventsResult.data ?? [];
 
-  let registrations: EligibleRegistration[] = [];
-  let evaluations: EvaluationRecord[] = [];
-  let priorYear: PriorYear[] = [];
-  let notes: PlayerNote[] = [];
-  // Players the registrar checked in today (the "Here" marker).
-  let hereToday = new Set<number>();
-  let evaluatorType: string | null = null;
+  // An open age group is loaded in one go, so scoring keeps working with no signal (see scoring-session.tsx).
+  let scoring: {
+    players: ScoringPlayer[]; mine: Record<number, MyScores>; notes: Record<number, string>; prior: Record<number, PriorYear>;
+    noteKind: "private" | "shared" | null;
+  } | null = null;
   let loadError: string | null = null;
 
   if (selectedSession?.status === "open" && selectedSession.league_age !== null) {
     // Evaluation eligibility is based on season and Little League age, not payment status.
-    const regResult = await supabase.from("player_seasons")
-      .select("id, evaluation_number, league_age, is_coach_kid, players(first_name, last_name, date_of_birth)")
-      .eq("season_id", selectedSession.season_id).eq("league_age", selectedSession.league_age);
-    if (regResult.error) loadError = `Could not load players: ${regResult.error.message}`;
-    registrations = ((regResult.data ?? []) as unknown as EligibleRegistration[]).sort(
-      (a, b) => (a.evaluation_number ?? Infinity) - (b.evaluation_number ?? Infinity) || playerName(a).localeCompare(playerName(b)),
-    );
-
-    const [evalResult, priorResult, assignmentResult, notesResult, hereResult] = await Promise.all([
-      supabase.from("evaluations").select("id, player_season_id, status")
+    const [regResult, evalResult, priorResult, assignmentResult, notesResult, hereResult] = await Promise.all([
+      supabase.from("player_seasons")
+        .select("id, evaluation_number, league_age, is_coach_kid, players(first_name, last_name, date_of_birth)")
+        .eq("season_id", selectedSession.season_id).eq("league_age", selectedSession.league_age),
+      supabase.from("evaluations")
+        .select("player_season_id, status, ratings(score, rating_categories(code)), experience_answers(question_code, answer)")
         .eq("evaluation_session_id", selectedSession.id).eq("evaluator_user_id", userId),
       // Empty unless the season's prior-year switch is on.
       supabase.rpc("prior_year_for_session", { p_session_id: selectedSession.id }),
@@ -130,70 +90,37 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
         .eq("evaluation_session_id", selectedSession.id).eq("evaluator_user_id", userId).maybeSingle(),
       // Only the viewer's own notes are used on this screen.
       supabase.rpc("player_notes", { p_session_id: selectedSession.id }),
+      // Players the registrar checked in today (the "Here" marker).
       supabase.rpc("session_checked_in_today", { p_session_id: selectedSession.id }),
     ]);
-    hereToday = new Set(((hereResult.data ?? []) as number[]).map(Number));
+    if (regResult.error) loadError = `Could not load players: ${regResult.error.message}`;
     if (evalResult.error) loadError = `Could not load your evaluations: ${evalResult.error.message}`;
-    evaluations = (evalResult.data ?? []) as EvaluationRecord[];
-    priorYear = (priorResult.data ?? []) as PriorYear[];
-    evaluatorType = (assignmentResult.data?.evaluator_type as string | undefined) ?? null;
     if (notesResult.error) loadError = `Could not load your notes: ${notesResult.error.message}`;
-    notes = ((notesResult.data ?? []) as PlayerNote[]).filter((n) => n.is_mine);
+
+    const evaluatorType = (assignmentResult.data?.evaluator_type as string | undefined) ?? null;
+    // Coaches keep private notes; independent evaluators write shared ones.
+    const noteKind = evaluatorType === "coach" ? "private" : evaluatorType === "independent_evaluator" ? "shared" : null;
+    const here = new Set(((hereResult.data ?? []) as number[]).map(Number));
+    const registrations = ((regResult.data ?? []) as unknown as EligibleRegistration[]).sort(
+      (a, b) => (a.evaluation_number ?? Infinity) - (b.evaluation_number ?? Infinity) || playerName(a).localeCompare(playerName(b)),
+    );
+    scoring = {
+      noteKind,
+      players: registrations.map((r) => ({
+        id: r.id, bib: r.evaluation_number, name: playerName(r), leagueAge: r.league_age,
+        birthDate: r.players?.date_of_birth ?? null, coachKid: r.is_coach_kid, here: here.has(r.id),
+      })),
+      mine: Object.fromEntries(((evalResult.data ?? []) as unknown as MyEvaluation[]).map((e) => [e.player_season_id, {
+        status: e.status,
+        scores: Object.fromEntries(e.ratings.filter((r) => r.rating_categories).map((r) => [r.rating_categories!.code, r.score])),
+        answers: Object.fromEntries(e.experience_answers.map((a) => [a.question_code, a.answer])),
+      }])),
+      notes: Object.fromEntries(((notesResult.data ?? []) as PlayerNote[]).filter((n) => n.is_mine && n.kind === noteKind).map((n) => [n.player_season_id, n.note_text])),
+      prior: Object.fromEntries(((priorResult.data ?? []) as PriorRow[]).map((p) => [p.player_season_id, p])),
+    };
   }
-  // Coaches keep private notes; independent evaluators write shared ones.
-  const noteKind: "private" | "shared" | null =
-    evaluatorType === "coach" ? "private" : evaluatorType === "independent_evaluator" ? "shared" : null;
-  const notedPlayers = new Set(notes.filter((n) => n.kind === noteKind).map((n) => n.player_season_id));
-
-  const evaluationFor = new Map(evaluations.map((e) => [e.player_season_id, e]));
-  const priorFor = new Map(priorYear.map((p) => [p.player_season_id, p]));
-  const sessionUrl = selectedSession ? `/protected/evaluations?sessionId=${selectedSession.id}` : "/protected/evaluations";
-
-  // Bib search jumps straight to the player.
-  if (selectedSession && params.bib !== undefined) {
-    const wanted = Number(String(params.bib).replace(/^#/, "").trim());
-    const hit = registrations.find((r) => r.evaluation_number === wanted);
-    if (hit) redirect(`${sessionUrl}&player=${hit.id}`);
-    redirect(`${sessionUrl}&error=${encodeURIComponent(`No player with bib ${params.bib} in this age group.`)}`);
-  }
-
-  const playerIndex = registrations.findIndex((r) => String(r.id) === params.player);
-  const player = playerIndex >= 0 ? registrations[playerIndex] : undefined;
-  const previous = playerIndex > 0 ? registrations[playerIndex - 1] : undefined;
-  const next = playerIndex >= 0 && playerIndex < registrations.length - 1 ? registrations[playerIndex + 1] : undefined;
-  const myEvaluation = player ? evaluationFor.get(player.id) : undefined;
-
-  let savedScores: Record<string, number | null> = {};
-  let savedAnswers: Record<string, string> = {};
-  if (myEvaluation) {
-    const [ratingResult, answerResult] = await Promise.all([
-      supabase.from("ratings").select("rating_category_id, score").eq("evaluation_id", myEvaluation.id),
-      supabase.from("experience_answers").select("question_code, answer").eq("evaluation_id", myEvaluation.id),
-    ]);
-    savedScores = Object.fromEntries((ratingResult.data ?? []).map((r) => [categories.find((c) => c.id === r.rating_category_id)?.code ?? "", r.score]));
-    savedAnswers = Object.fromEntries((answerResult.data ?? []).map((a) => [a.question_code, a.answer]));
-  }
-  const prior = player ? priorFor.get(player.id) : undefined;
-  const myNote = player && noteKind ? notes.find((n) => n.player_season_id === player.id && n.kind === noteKind)?.note_text ?? "" : "";
-  const submittedCount = evaluations.filter((e) => e.status === "submitted" || e.status === "not_evaluated").length;
-
-  const navBar = (position: string) => player && (
-    <div className="grid grid-cols-3 items-center gap-2" aria-label={`Player navigation ${position}`}>
-      {previous ? (
-        <GuardedLink href={`${sessionUrl}&player=${previous.id}`} className="inline-flex min-h-11 items-center justify-center gap-1 rounded-md border border-border bg-card px-2 text-sm font-medium hover:bg-accent">
-          <ChevronLeft className="h-4 w-4" /> {bibLabel(previous)}
-        </GuardedLink>
-      ) : <span />}
-      <GuardedLink href={sessionUrl} className="inline-flex min-h-11 items-center justify-center rounded-md px-2 text-sm text-muted-foreground hover:text-foreground">
-        All players
-      </GuardedLink>
-      {next ? (
-        <GuardedLink href={`${sessionUrl}&player=${next.id}`} className="inline-flex min-h-11 items-center justify-center gap-1 rounded-md border border-emerald-600 bg-emerald-600 px-2 text-sm font-semibold text-white hover:bg-emerald-500">
-          Next {bibLabel(next)} <ChevronRight className="h-4 w-4" />
-        </GuardedLink>
-      ) : <span className="text-center text-xs text-muted-foreground">Last player</span>}
-    </div>
-  );
+  const requestedPlayer = Number(params.player);
+  const initialPlayerId = scoring && scoring.players.some((p) => p.id === requestedPlayer) ? requestedPlayer : null;
 
   return (
     <div className="space-y-6">
@@ -220,199 +147,51 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
         </div>
       )}
 
-      {/* ===== One player ===== */}
-      {selectedSession && player && (
-        <Card className="border-border bg-card">
-          <CardContent className="space-y-5 p-4 sm:p-6">
-            {navBar("top")}
-            <div className="flex items-start justify-between gap-3 border-b border-border pb-3">
-              <div>
-                <p className="font-mono text-3xl font-bold text-foreground">{bibLabel(player)}</p>
-                <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold text-foreground">{playerName(player)}{player.is_coach_kid && <CoachKidBadge />}</h2>
-                <p className="text-xs text-muted-foreground">
-                  LL age {player.league_age}{player.players?.date_of_birth ? ` · born ${player.players.date_of_birth}` : ""} · player {playerIndex + 1} of {registrations.length}
-                </p>
-              </div>
-              <StatusChip status={myEvaluation?.status} />
-            </div>
-
-            {prior && (
-              <section className="rounded-lg border border-sky-500/30 bg-sky-500/5 p-3 text-xs" aria-label="Prior-year ratings">
-                <p className="mb-1 flex items-center gap-1 font-semibold text-sky-800 dark:text-sky-300">
-                  <History className="h-3.5 w-3.5" /> Prior-year coach rating: {prior.prior_overall === null ? "—" : Number(prior.prior_overall).toFixed(2)}
-                  <span className="font-normal text-muted-foreground">({prior.prior_ratings} rating{prior.prior_ratings === 1 ? "" : "s"})</span>
-                </p>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
-                  {PRIOR_SKILLS.filter(([c]) => prior.prior_skills?.[c] !== undefined).map(([c, l]) => (
-                    <span key={c}>{l} <strong className="font-mono text-foreground">{Number(prior.prior_skills[c]).toFixed(1)}</strong></span>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* key: rebuild the form for each player and each saved version. Without it, moving between players
-                reuses the previous form, so it shows stale scores (blank after "Previous", or another player's). */}
-            <form
-              key={`${player.id}|${myEvaluation?.status ?? "none"}|${JSON.stringify(savedScores)}|${JSON.stringify(savedAnswers)}|${myNote}`}
-              id="evaluation-form"
-              action={saveEvaluation}
-              className="space-y-6"
-            >
-              <DirtyTracker formId="evaluation-form" />
-              <input type="hidden" name="sessionId" value={selectedSession.id} />
-              <input type="hidden" name="playerSeasonId" value={player.id} />
-              {next && <input type="hidden" name="nextPlayerSeasonId" value={next.id} />}
-              {noteKind && <input type="hidden" name="noteKind" value={noteKind} />}
-
-              <RatingInputs categories={categories} initialScores={Object.fromEntries(categories.map((c) => [c.code, savedScores[c.code] ?? null]))} />
-
-              <div className="space-y-3 border-t border-border pt-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Pitching and catching experience</h3>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {EXPERIENCE_QUESTIONS.map((q) => (
-                    <div key={q.code} className="space-y-2 text-xs">
-                      <span className="block font-semibold text-slate-700 dark:text-slate-300">{q.label}</span>
-                      <div className="grid grid-cols-3 gap-2" role="group" aria-label={q.label}>
-                        {[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }, { value: "unknown", label: "Not sure" }].map((o) => (
-                          <label key={o.value} className="cursor-pointer">
-                            <input type="radio" name={`experience_${q.code}`} value={o.value} defaultChecked={(savedAnswers[q.code] ?? "unknown") === o.value} className="peer sr-only" />
-                            <span className="flex min-h-10 items-center justify-center rounded-md border border-border bg-card px-2 text-xs font-medium text-slate-700 hover:bg-accent peer-checked:border-emerald-500 peer-checked:bg-emerald-600 peer-checked:text-white dark:text-slate-300">
-                              {o.label}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {noteKind && (
-                <div className="space-y-2 border-t border-border pt-4">
-                  <label htmlFor="player-note" className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
-                    {noteKind === "private" ? <><Lock className="h-3.5 w-3.5" /> Private note</> : <><MessageSquare className="h-3.5 w-3.5" /> Shared note</>}
-                  </label>
-                  <p id="player-note-help" className="text-xs text-muted-foreground">
-                    {noteKind === "private"
-                      ? "Only you can see this note. You can read and change it anytime, including after scoring closes (My Notes)."
-                      : "Coaches see this note after the age group's draft report is released, without your name. Admins see it with your name. It locks with the session."}
-                  </p>
-                  <textarea
-                    id="player-note"
-                    name="note"
-                    defaultValue={myNote}
-                    maxLength={2000}
-                    rows={3}
-                    aria-describedby="player-note-help"
-                    placeholder={noteKind === "private" ? "Anything you want to remember about this player" : "Observations other coaches should know"}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 sm:text-sm"
-                  />
-                </div>
+      {selectedSession && (() => {
+        const schedule = events.length > 0 && (
+          <section className="space-y-2 rounded-lg border border-border bg-background p-3" aria-label="Scheduled evaluation events">
+            <h3 className="text-sm font-semibold text-foreground">Scheduled events</h3>
+            {events.map((e) => (
+              <p key={e.id} className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                <strong className="text-foreground">{e.event_type === "primary" ? "Primary" : "Makeup"}</strong>
+                {e.event_date} · {e.start_time.slice(0, 5)}–{e.end_time.slice(0, 5)}
+                <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{e.location}</span>
+                {e.notes && <span>· {e.notes}</span>}
+              </p>
+            ))}
+          </section>
+        );
+        const ageLabel = `Age ${selectedSession.league_age} · ${seasonName(selectedSession.season_id)}`;
+        if (scoring && !loadError) {
+          return (
+            <ScoringSession userId={userId} sessionId={selectedSession.id} ageLabel={ageLabel} categories={categories}
+              players={scoring.players} mine={scoring.mine} notes={scoring.notes} prior={scoring.prior} noteKind={scoring.noteKind}
+              initialPlayerId={initialPlayerId}>
+              {schedule}
+            </ScoringSession>
+          );
+        }
+        return (
+          <Card className="border-border bg-card">
+            <CardHeader className="border-b border-border/50 py-4">
+              <CardTitle className="text-lg font-bold text-foreground">{ageLabel}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 p-4 sm:p-6">
+              {schedule}
+              {loadError ? (
+                <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300">{loadError}</div>
+              ) : selectedSession.status === "setup" ? (
+                <p className="text-sm text-muted-foreground">This session is still being prepared. An administrator must open it before scoring can begin.</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">Scoring for this age group is locked. You can no longer change scores.</p>
               )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
-              <div className="space-y-3 border-t border-border pt-4">
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Leave a skill on &quot;Not scored&quot; if you didn&apos;t see it. Blank skills are flagged, never counted as zero. Saving needs at least one core skill. Your ratings count in reports as soon as you save, and you can change them until the session is locked.
-                </p>
-                <div className="grid gap-2 sm:flex sm:flex-row-reverse sm:flex-wrap">
-                  {next && (
-                    <Button type="submit" name="intent" value="submitted_next" className="min-h-11 bg-emerald-600 text-white hover:bg-emerald-500">
-                      Save &amp; Next ({bibLabel(next)})
-                    </Button>
-                  )}
-                  <Button type="submit" name="intent" value="submitted" variant={next ? "outline" : "default"} className={`min-h-11 ${next ? "" : "bg-emerald-600 text-white hover:bg-emerald-500"}`}>
-                    Save
-                  </Button>
-                  <Button type="submit" name="intent" value="not_evaluated" variant="outline" className="min-h-11 text-muted-foreground">
-                    Not Evaluated (clears ratings)
-                  </Button>
-                </div>
-              </div>
-            </form>
-            {navBar("bottom")}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ===== Player list for a session ===== */}
-      {selectedSession && !player && (
-        <Card className="border-border bg-card">
-          <CardHeader className="border-b border-border/50 py-4">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
-                  <Calendar className="h-5 w-5 text-emerald-700 dark:text-emerald-400" />
-                  Age {selectedSession.league_age} Session
-                </CardTitle>
-                <CardDescription className="mt-1 text-xs text-muted-foreground">{seasonName(selectedSession.season_id)}</CardDescription>
-              </div>
-              <Badge variant="outline" className="text-xs">{selectedSession.status}</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-5 p-4 sm:p-6">
-            {events.length > 0 && (
-              <section className="space-y-2 rounded-lg border border-border bg-background p-3" aria-label="Scheduled evaluation events">
-                <h3 className="text-sm font-semibold text-foreground">Scheduled events</h3>
-                {events.map((e) => (
-                  <p key={e.id} className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                    <strong className="text-foreground">{e.event_type === "primary" ? "Primary" : "Makeup"}</strong>
-                    {e.event_date} · {e.start_time.slice(0, 5)}–{e.end_time.slice(0, 5)}
-                    <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{e.location}</span>
-                    {e.notes && <span>· {e.notes}</span>}
-                  </p>
-                ))}
-              </section>
-            )}
-
-            {selectedSession.status === "setup" ? (
-              <p className="text-sm text-muted-foreground">This session is still being prepared. An administrator must open it before scoring can begin.</p>
-            ) : selectedSession.status !== "open" ? (
-              <p className="text-sm text-muted-foreground">Scoring for this age group is locked. You can no longer change scores.</p>
-            ) : loadError ? (
-              <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300">{loadError}</div>
-            ) : registrations.length === 0 ? (
-              <div className="space-y-2 rounded-lg border border-border bg-background p-6 text-center">
-                <ShieldAlert className="mx-auto h-8 w-8 text-amber-700 dark:text-amber-400" />
-                <p className="text-sm font-semibold text-foreground">No players in this age group yet</p>
-              </div>
-            ) : (
-              <>
-                <form className="flex gap-2" action="/protected/evaluations" method="get" role="search">
-                  <input type="hidden" name="sessionId" value={selectedSession.id} />
-                  <label htmlFor="bib-search" className="sr-only">Bib number</label>
-                  <input id="bib-search" name="bib" inputMode="numeric" placeholder="Go to bib #" required
-                    className="min-h-11 w-full rounded-md border border-border bg-background px-3 text-base" />
-                  <Button type="submit" className="min-h-11"><Search className="mr-1 h-4 w-4" /> Go</Button>
-                </form>
-                <p className="text-xs text-muted-foreground">
-                  {submittedCount} of {registrations.length} players done (saved or not evaluated).{hereToday.size > 0 && ` ${hereToday.size} checked in today ("Here").`} A player marked &quot;Draft (not counted)&quot; stays out of reports until you open it and save.
-                  {priorYear.length > 0 && " Prior-year ratings are shown on each player's page."}
-                </p>
-                <ul className="divide-y divide-border rounded-lg border border-border">
-                  {registrations.map((r) => (
-                    <li key={r.id}>
-                      <Link href={`${sessionUrl}&player=${r.id}`} className="flex min-h-12 items-center gap-3 px-3 py-2 hover:bg-accent">
-                        <span className="w-14 shrink-0 font-mono text-base font-bold text-foreground">{r.evaluation_number ?? "—"}</span>
-                        <span className="min-w-0 flex-1 truncate text-sm text-foreground">{playerName(r)}</span>
-                        {hereToday.has(r.id) && (
-                          <span title="Checked in today" className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Here</span>
-                        )}
-                        {r.is_coach_kid && <CoachKidBadge short />}
-                        {notedPlayers.has(r.id) && <StickyNote className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-label="Has your note" />}
-                        <span className="hidden text-xs text-muted-foreground sm:inline">Age {r.league_age}</span>
-                        <StatusChip status={evaluationFor.get(r.id)?.status} />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ===== My sessions ===== */}
-      {!player && (
+      {/* ===== My sessions (hidden while a player is open) ===== */}
+      <HideWhileScoring>
         <Card className="border-border bg-card">
           <CardHeader className="border-b border-border/50 py-4">
             <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
@@ -438,7 +217,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
             )}
           </CardContent>
         </Card>
-      )}
+      </HideWhileScoring>
     </div>
   );
 }

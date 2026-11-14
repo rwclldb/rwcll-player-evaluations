@@ -22,6 +22,7 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - `npm run fixtures:generate`: rebuild the fixture CSVs from the roster and people files
 - `npm run fixtures:load -- --reset --bare`: wipe local Supabase and create only the two admin accounts and seasons, for walking through setup in the app (`docs/TEST-PLAN-SEASON-SETUP.xlsx`) (ask first)
 - `npm run e2e:evaluation-navigation`: browser test of the scoring screen in phone-sized Chrome. It needs `npm run dev` running and fixtures loaded with `--open-sessions`, cleans up after itself, and is not part of `test:all`. Run it after any change to the evaluation screen.
+- `npm run e2e:offline-scoring`: browser test of scoring with no signal (Chrome's offline mode): saves kept on the phone, the header badge, automatic sending when back online, and refused saves. Same needs as above; run it after any change to the evaluation screen too.
 
 ## Safety rules (always follow)
 
@@ -185,6 +186,15 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
   - The player edit page reads `registration_history` and `registration_has_scores` (yes/no) instead of `audit_log` and `evaluations`, so registrars never read those tables.
   - Menu for registrars: Check-in, Players, Imports, Rosters, Who scores when; the home page adds Players and Registration imports cards. The Imports page hides the prior-year button from registrars; back links say "Home".
   - Fixed with it: after a re-import, the bib upload held every player as "on more than one registration" because already-registered rows counted as waiting in import review (`private.match_registration`).
+
+## Built 2026-11-16 (local only; no migration)
+
+- **Offline scoring** (`e2e:offline-scoring`):
+  - The scoring screen (`app/protected/evaluations/scoring-session.tsx`) is now a client component. The page loads the whole open age group once (players, your evaluations with ratings and answers, notes, prior-year, Here) and the player list, bib search, Previous/Next and Save & Next run on the device. The URL still follows the player (`?player=`) through `history.pushState`; Back works. Same labels and field names as before.
+  - Saves go through `saveScores(payload)` (`actions.ts`), which returns a result instead of redirecting and doesn't call `revalidatePath` (that re-downloaded the whole age group after every save). The old form action `saveEvaluation` and `unsaved-guard.tsx` are gone; the unsaved-changes warning lives in the screen.
+  - No signal (browser offline, or the request fails): the save is kept in localStorage (`lib/offline-queue.ts`, one list per signed-in person, newest save per player), the player shows "On phone (not sent)", and Save & Next still moves on. A Save needs at least one core skill on the device too, so queued saves aren't refused later for that.
+  - `OfflineStatus` (`components/offline-sync.tsx`, in the header on every page) shows "N not sent" and sends the saves when the connection returns, on any page, every 15 seconds while anything waits. An expired sign-in keeps the save and retries after signing in again. A save the server refuses (age group locked, for example) turns the badge red with the reason and waits for Send now or Discard.
+  - Not covered: reloading the page while offline shows the browser's offline page (no service worker). Saved scores are safe on the device and are sent the next time the app is opened online.
 
 ## Tracked additions (confirmed requirements, not yet built)
 
