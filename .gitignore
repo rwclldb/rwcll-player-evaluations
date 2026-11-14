@@ -42,3 +42,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# other
+rwcll-fictional-test-league/generated/bib-numbers-test-step4-7.csv
+rwcll-fictional-test-league/rwcll_people.csv
