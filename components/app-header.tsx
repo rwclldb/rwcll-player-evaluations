@@ -1,26 +1,37 @@
 import Link from "next/link";
 import Image from "next/image";
-import { CircleHelp, UserRound } from "lucide-react";
+import { CircleHelp } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
-import { signOutAction } from "@/app/actions";
-import { Button } from "@/components/ui/button";
-import { TopbarClock } from "@/components/topbar-clock";
-import { ThemeSwitcher } from "@/components/theme-switcher";
-import { DesktopNav, MobileMenu, type NavLink } from "@/components/app-nav";
+import { AccountMenu, DesktopNav, MobileMenu, type NavItem, type NavLink } from "@/components/app-nav";
 import { getMyRoles } from "@/lib/my-roles";
 import { OfflineStatus } from "@/components/offline-sync";
 
-const ADMIN_LINKS: NavLink[] = [
+// Admins: grouped menus so everything fits in one row on a laptop. The phone menu uses the same groups.
+const ADMIN_ITEMS: NavItem[] = [
   { href: "/protected", label: "Roadmap" },
-  { href: "/protected/players", label: "Players" },
-  { href: "/protected/sessions", label: "Sessions" },
+  { label: "Players", links: [
+    { href: "/protected/players", label: "Players" },
+    { href: "/protected/import-batches", label: "Imports" },
+    { href: "/protected/players/duplicates", label: "Possible duplicates" },
+  ] },
+  { label: "Evaluations", links: [
+    { href: "/protected/sessions", label: "Sessions" },
+    { href: "/protected/assignments", label: "Assignments" },
+    { href: "/protected/progress", label: "Scoring progress" },
+    { href: "/protected/evaluation-review", label: "Data Review" },
+  ] },
+  { label: "Evaluation day", links: [
+    { href: "/protected/check-in", label: "Check-in" },
+    { href: "/protected/roster", label: "Rosters" },
+    { href: "/protected/timetable", label: "Who scores when" },
+    { href: "/protected/qr", label: "QR codes" },
+  ] },
+  { label: "Reports", links: [
+    { href: "/protected/draft-reports", label: "Draft Reports" },
+    { href: "/protected/reports", label: "Season Export" },
+  ] },
   { href: "/protected/people", label: "People" },
-  { href: "/protected/assignments", label: "Assignments" },
-  { href: "/protected/import-batches", label: "Imports" },
-  { href: "/protected/evaluation-review", label: "Data Review" },
-  { href: "/protected/draft-reports", label: "Draft Reports" },
-  { href: "/protected/reports", label: "Season Export" },
 ];
 
 // Coaches and independent evaluators. The database decides what each may open on Draft Reports
@@ -43,7 +54,7 @@ const REGISTRAR_LINKS: NavLink[] = [
 export async function AppHeader({ user }: { user: User }) {
   const supabase = await createClient();
   const roles = await getMyRoles(supabase);
-  const links = roles.isAdmin ? ADMIN_LINKS : [
+  const items: NavItem[] = roles.isAdmin ? ADMIN_ITEMS : [
     ...(roles.registrarSeason ? REGISTRAR_LINKS : []),
     ...(roles.scores || !roles.registrarSeason ? EVALUATOR_LINKS : []),
   ];
@@ -75,37 +86,24 @@ export async function AppHeader({ user }: { user: User }) {
               RWCLL <span className="font-normal text-emerald-700 dark:text-emerald-400">Evaluations</span>
             </span>
           </Link>
-          <DesktopNav links={links} />
+          <DesktopNav items={items} />
         </div>
 
         {/* Scores saved on this device but not sent yet (no signal). Visible on every screen size. */}
         <div className="ml-auto"><OfflineStatus userId={user.id} /></div>
 
-        {/* Desktop: clock, account, sign out, theme. Below xl these move into the menu button. */}
-        <div className="hidden items-center gap-3 xl:flex">
-          <TopbarClock />
+        {/* Laptops and up: help, and the account menu (Your account, theme, sign out). Below lg these are in the menu button. */}
+        <div className="hidden items-center gap-2 lg:flex">
           <Link href="/protected/help" title="Help: guides for coaches, evaluators and registrars" aria-label="Help"
             className="flex h-9 items-center rounded border border-border bg-background px-2.5 text-muted-foreground hover:border-emerald-500/50 hover:text-foreground">
             <CircleHelp className="h-4 w-4" />
           </Link>
-          {/* Icon only on laptops so the menu fits; the email shows on wide screens. */}
-          <Link href="/protected/account" title={`Your account (${email}): name and password`} aria-label="Your account"
-            className="flex h-9 max-w-[16rem] items-center gap-2 rounded border border-border bg-background px-2.5 text-muted-foreground hover:border-emerald-500/50 hover:text-foreground">
-            <UserRound className="h-4 w-4 shrink-0" />
-            <span className="hidden truncate font-mono text-xs 2xl:inline">{email}</span>
-          </Link>
-          {previewInfo ? (
-            <Button asChild variant="outline" size="sm"><a href="/auth/end-preview">End preview</a></Button>
-          ) : (
-            <form action={signOutAction}>
-              <Button variant="outline" size="sm" type="submit">
-                Sign Out
-              </Button>
-            </form>
+          {previewInfo && (
+            <a href="/auth/end-preview" className="flex h-9 items-center rounded border border-violet-500/50 px-2.5 text-sm font-medium text-violet-700 hover:bg-violet-500/10 dark:text-violet-300">End preview</a>
           )}
-          <ThemeSwitcher />
+          <AccountMenu email={email} preview={Boolean(previewInfo)} />
         </div>
-        <MobileMenu links={links} email={email} preview={Boolean(previewInfo)} />
+        <MobileMenu items={items} email={email} preview={Boolean(previewInfo)} />
       </div>
     </header>
   );

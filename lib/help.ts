@@ -23,7 +23,7 @@ const signingIn: HelpSection = {
       "After that, sign in with your email and password. On a phone, add the site to your home screen so it's one tap away.",
       "Forgot your password? Use [[Forgot password?]] on the sign-in page, or ask a league admin for a new sign-in link.",
     ] },
-    "To change your name or password, tap the person icon at the top (on a phone: the menu, then [[Your account]]). Your sign-in email can only be changed by a league admin.",
+    "To change your name or password, tap the person icon at the top, then [[Your account]] (on a phone: the menu, then [[Your account]]). Light or dark screen and Sign out are there too. Your sign-in email can only be changed by a league admin.",
   ],
 };
 
