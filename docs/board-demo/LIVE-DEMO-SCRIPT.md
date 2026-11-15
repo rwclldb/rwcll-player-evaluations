@@ -108,20 +108,33 @@ the real thing in your hand.
 
 ### 2. The admin's roadmap (Window A, 2 min)
 
-- **Roadmap**: the five stages, the badges. Click **3 Evaluation day**: every
-  step has a status and a button to the page that does it.
+- **Roadmap**: the five stages, the badges. "It works out where we are from the
+  data: most age groups are locked, so it says After evaluations."
+- Click **1 Before evaluations**: every step has a status and a button to the
+  page that does it. Walk the steps below from here; each page has a
+  **Roadmap** link (top left) to come back.
 
-### 3. Getting ready (Window A, 4 min)
+### 3. Getting ready: the Before evaluations steps (Window A, 5 min)
 
-- **Imports** → batch #1 → **View Rows**: the Sports Connect export, 368 rows; clean
-  rows go in with two clicks, odd ones wait for a person. Uploading a newer export
-  later only adds and updates.
-- **Players** → **Possible duplicates (1)**: Elliot Carter was added as a walk-up
-  but was already registered. Do it live: choose **Keep this one** on the card
-  with scores (bib 205), type "Same child, walk-up on evaluation day", **Merge**.
-  "The record is fixed and the change is logged."
-- **Assignments**: coaches only score their own age groups. Point at the six
-  Board Members on **Age 8**: "That's you, in a minute."
+- Step **Import registrations** → **Review imports** → **View Rows** on batch #1:
+  the Sports Connect export, 368 rows.
+  - The **Bulk review** box shows 0 and 0: that was done when the league was
+    loaded. **Don't click** "Ignore out-of-scope rows" or "Approve and commit clean
+    rows". Say: "Normally two clicks: 77 rows from other programs ignored, 290
+    players added."
+  - **Open Administrator Row Review** → **Needs work**: one row, **Harper Oak**,
+    "Duplicate Player ID in file". "Two children came in with the same Player Id.
+    The app won't guess; a person decides." Leave it.
+  - "Uploading a newer export later is safe: it only adds and updates."
+- Back to **Roadmap**. Step **Give every player a bib**: 3 players have no bib.
+  "You'll see that again as a flag on the draft report."
+- Step **Check for duplicate players** → **Possible duplicates**: Elliot Carter
+  was added as a walk-up but was already registered (two records, one child;
+  Harper Oak isn't in the app yet, so she isn't here). Do it live: **Keep this
+  one** on the card with scores (bib 205), type "Same child, walk-up on evaluation
+  day", **Merge**. "The record is fixed and the change is logged."
+- Step **Assign age groups** → **Assignments**: coaches only score their own age
+  groups. Point at the six Board Members on **Age 8**: "That's you, in a minute."
 
 ### 4. Evaluation day (Windows C and B, 6 min)
 

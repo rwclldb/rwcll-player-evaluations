@@ -71,21 +71,35 @@ players, 18 test accounts. Nothing touches the hosted site.
 ### 2. The admin's roadmap (Window A, 2 min)
 
 - Home page = **Roadmap**. Point at the five stages and the badges
-  ("needs attention" counts).
-- Click **3 Evaluation day**. "Every step has a live status and a button to
-  the page that does it. I don't have to remember what's next."
+  ("needs attention" counts). "The app works out where we are from the data:
+  most age groups are locked, so it says After evaluations."
+- Click **1 Before evaluations**. "Every step has a live status and a button to
+  the page that does it. I don't have to remember what's next." Walk the steps
+  below from here; each page has a **Roadmap** link (top left) to come back.
 
-### 3. Getting ready (Window A, 4 min)
+### 3. Getting ready: the Before evaluations steps (Window A, 5 min)
 
-- **Imports** → **View Rows** on batch #1. "This is the Sports Connect export,
-  368 rows. Clean rows go in with two clicks; 87 had something worth a look,
-  like out-of-scope programs. Harper Oak is still waiting because her Player Id
-  was used twice." Mention: uploading a newer export later only adds and
-  updates.
-- **Players** → **Possible duplicates (1)**. "Elliot Carter was added as a walk-up
-  but was already registered. The app spots it; a person decides." Don't merge
-  (or do: choose **Keep this one** on the left card, type a reason, **Merge**).
-- **Assignments**. "Coaches only score the age groups they're assigned to."
+- Step **Import registrations** → **Review imports** → **View Rows** on batch #1.
+  "This is the Sports Connect export, 368 rows."
+  - The **Bulk review** box says 0 out-of-scope rows and 0 clean rows: that was
+    done when the league was loaded. **Don't click** "Ignore out-of-scope rows" or
+    "Approve and commit clean rows" (there's nothing left for them). Say: "Normally
+    this is two clicks: 77 rows from other programs ignored, 290 players added."
+  - Click **Open Administrator Row Review**. The **Needs work** tab has one row:
+    **Harper Oak**, "Duplicate Player ID in file". "Two children came in with the
+    same Sports Connect Player Id. The app won't guess; a person decides." Don't
+    decide it now.
+  - "Uploading a newer export later is safe: it only adds and updates."
+- Back to **Roadmap**. Step **Give every player a bib**: 3 players have no bib.
+  "You'll see that again as a flag on the draft report."
+- Step **Check for duplicate players** → **Possible duplicates**. "Elliot Carter
+  was added as a walk-up but was already registered: two records, one child."
+  (Different from Harper Oak, who isn't in the app yet.) Don't merge, or do it:
+  **Keep this one** on the card with scores (bib 205), type a reason, **Merge**.
+- Step **Assign age groups** → **Assignments**. "Coaches only score the age
+  groups they're assigned to."
+- Optional: point at step **Board decision: prior-year ratings while scoring**.
+  "That's one of my questions for you at the end."
 
 ### 4. Evaluation day (Windows C, B, A, 8 min)
 
