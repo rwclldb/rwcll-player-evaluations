@@ -508,3 +508,27 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 **A separate option:** VS Code has its own terminal suggestions, a dropdown rather than gray text. Turn it on under Settings → search **"terminal suggest"** → tick **Terminal › Integrated › Suggest: Enabled**. It works alongside the steps above.
 
 **If you'd rather I do the install next time**, add a permission rule allowing it to your Claude Code settings. Running the two commands yourself is quicker.
+
+## Background server already running on Port 3000
+
+If Claude starts the dev server in the background earlier in your session, it doesn't always show up in your terminal. To find and stop it in PowerShell:
+
+1. See what's using port 3000:
+
+   ```powershell
+   Get-NetTCPConnection -LocalPort 3000 -State Listen | Select-Object OwningProcess
+   ```
+
+2. Stop that process:
+
+   ```powershell
+   Stop-Process -Id (Get-NetTCPConnection -LocalPort 3000 -State Listen).OwningProcess -Force
+   ```
+
+3. If anything from it is left over, stop every Node process tied to this project. This won't touch other projects:
+
+   ```powershell
+   Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.CommandLine -like '*rwcll-player-evaluations*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+   ```
+
+Then `npm run dev` will start cleanly on port 3000 again.
