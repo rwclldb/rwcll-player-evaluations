@@ -7,9 +7,9 @@ import { createClient } from "@/lib/supabase/server";
 import { AutoRefresh } from "./auto-refresh";
 
 type Row = {
-  session_id: number; league_age: number; session_status: string; released: boolean; players: number; checked_in_today: number;
+  session_id: number; league_age: number; session_status: string; released: boolean; players: number; checked_in_today: number; called: number;
   user_id: string | null; scorer_name: string | null; evaluator_type: "coach" | "independent_evaluator" | null;
-  saved: number; not_evaluated: number; drafts: number; last_saved_at: string | null;
+  saved: number; not_evaluated: number; drafts: number; last_saved_at: string | null; called_not_done: number;
 };
 type SearchParams = Promise<{ season?: string }>;
 
@@ -63,7 +63,8 @@ async function ProgressContent({ searchParams }: { searchParams: SearchParams })
         </h1>
         <p className="text-sm text-muted-foreground">
           How far each coach and independent evaluator has got in each age group: players done (saved or not evaluated) out of the players
-          registered at that age. Updates every 30 seconds. Counts only; scores are on Data Review.
+          registered at that age. &quot;Called&quot; counts players the announcer has called up. Updates every 30 seconds. Counts only;
+          scores are on Data Review. After the day, the <Link href="/protected/end-of-day" className="underline">End-of-day check</Link> lists anyone who may have been missed.
         </p>
         {seasons.length > 1 && (
           <form className="flex items-end gap-2">
@@ -98,7 +99,7 @@ async function ProgressContent({ searchParams }: { searchParams: SearchParams })
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-lg font-bold text-foreground">Age {head.league_age}</h2>
                 <span className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="text-muted-foreground">{head.players} players{head.checked_in_today ? ` · ${head.checked_in_today} here today` : ""}</span>
+                  <span className="text-muted-foreground">{head.players} players{head.checked_in_today ? ` · ${head.checked_in_today} here today` : ""}{head.called ? ` · ${head.called} called` : ""}</span>
                   <span className={`rounded px-2 py-0.5 font-semibold ${status.className}`}>{status.label}{head.released ? " · released" : ""}</span>
                 </span>
               </div>
@@ -127,6 +128,11 @@ async function ProgressContent({ searchParams }: { searchParams: SearchParams })
                           {r.not_evaluated ? ` · ${r.not_evaluated} not evaluated` : ""}
                           {r.drafts ? ` · ${r.drafts} draft${r.drafts === 1 ? "" : "s"} (not counted)` : ""}
                         </p>
+                        {r.called_not_done > 0 && (
+                          <p className="text-xs font-medium text-sky-800 dark:text-sky-300">
+                            {r.called_not_done} called by the announcer but not scored by {r.evaluator_type === "coach" ? "this coach" : "this evaluator"} yet
+                          </p>
+                        )}
                       </li>
                     );
                   })}

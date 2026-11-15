@@ -6,7 +6,7 @@ import { CopyText } from "./copy-text";
 
 export type PendingPerson = { user_id: string; email: string; display_name: string | null; roles: string[]; invited_at: string | null };
 
-const ROLE: Record<string, string> = { coach: "Coach", independent_evaluator: "Evaluator", registrar: "Registrar" };
+const ROLE: Record<string, string> = { coach: "Coach", independent_evaluator: "Evaluator", registrar: "Registrar", announcer: "Announcer" };
 
 function daysAgo(iso: string | null) {
   if (!iso) return "";

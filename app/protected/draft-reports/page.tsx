@@ -3,7 +3,7 @@ import { ArrowLeft, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getMyRoles, onlyRegistrar } from "@/lib/my-roles";
+import { getMyRoles, onlyEventStaff } from "@/lib/my-roles";
 import { DraftReportTable, type DraftReportRow, type ReportNote } from "./draft-report-table";
 import type { ScoreIssue } from "./report-flags";
 import { fetchAllRows } from "@/lib/supabase/fetch-all";
@@ -48,7 +48,7 @@ export default async function DraftReportsPage({
 }) {
   const params = await searchParams;
   const supabase = await createClient();
-  if (onlyRegistrar(await getMyRoles(supabase))) redirect("/protected");
+  if (onlyEventStaff(await getMyRoles(supabase))) redirect("/protected");
   const { data: isAdmin } = await supabase.rpc("is_admin");
   const administrator = isAdmin === true;
 
@@ -67,6 +67,7 @@ export default async function DraftReportsPage({
   let exemptions: { player_season_id: number; scope: "attendance" | "evaluation" | "both" }[] = [];
   let stars: number[] = [];
   let scoreIssues: ScoreIssue[] = [];
+  let called: number[] | null = null;
   if (selected) {
     const [report, noteResult, roleResult] = await Promise.all([
       supabase.rpc("draft_report", { p_session_id: selected.session_id }),
@@ -92,6 +93,10 @@ export default async function DraftReportsPage({
       stars = (starResult.data ?? []).map((s) => s.player_season_id as number);
     }
     if (administrator) scoreIssues = await loadScoreIssues(supabase, selected.session_id);
+    // The announcer's calls (any event): "Not called" flags, only where calling was used in this age group.
+    const { data: callData } = await supabase.rpc("session_calls", { p_session_id: selected.session_id });
+    const callIds = ((callData ?? []) as { player_season_id: number }[]).map((c) => Number(c.player_season_id));
+    called = callIds.length ? [...new Set(callIds)] : null;
   }
 
   return (
@@ -167,6 +172,7 @@ export default async function DraftReportsPage({
               canWritePrivate={isCoach}
               returnTo={`/protected/draft-reports?sessionId=${selected.session_id}`}
               scoreIssues={scoreIssues}
+              called={called}
             />
           )}
         </>

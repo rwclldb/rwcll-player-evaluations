@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, CloudOff, History, Lock, MessageSquare, Search, StickyNote } from "lucide-react";
+import { ChevronLeft, ChevronRight, CloudOff, History, Lock, Megaphone, MessageSquare, Search, StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CoachKidBadge } from "@/components/coach-kid-badge";
 import { ExemptBadge, type ExemptScope } from "@/components/exempt-badge";
 import { useOnline, useUnsent } from "@/components/offline-sync";
 import { enqueue, isNetworkError, removeFromQueue, type SavePayload } from "@/lib/offline-queue";
-import { saveScores } from "./actions";
+import { saveScores, todaysCalls, type TodaysCall } from "./actions";
 import { inPreviewBrowser, PREVIEW_MESSAGE } from "@/lib/preview";
 import { RatingInputs } from "./rating-inputs";
 
@@ -63,6 +63,8 @@ export function ScoringSession(props: {
   notes: Record<number, string>;
   prior: Record<number, PriorYear>;
   noteKind: "private" | "shared" | null;
+  /** Players the announcer called today, newest first. Refreshed every 20 seconds while online. */
+  calls: TodaysCall[];
   initialPlayerId: number | null;
   /** Server-rendered schedule, shown on the player list. */
   children?: ReactNode;
@@ -76,6 +78,16 @@ export function ScoringSession(props: {
   const [busy, setBusy] = useState(false);
   const dirty = useRef(false);
   const online = useOnline();
+  const [calls, setCalls] = useState(props.calls);
+  useEffect(() => {
+    if (!online) return;
+    const timer = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      todaysCalls(sessionId).then(setCalls).catch(() => { /* no signal or a preview: keep what we have */ });
+    }, 20000);
+    return () => clearInterval(timer);
+  }, [online, sessionId]);
+  const calledAt = useMemo(() => new Map(calls.map((c) => [c.id, c.at])), [calls]);
 
   // Saves still on this device override what the server sent (they are newer).
   const unsent = useUnsent(userId);
@@ -233,6 +245,17 @@ export function ScoringSession(props: {
   const navLink = (target: ScoringPlayer | null, className: string, content: ReactNode) => (
     <a href={url(target?.id ?? null)} className={className} onClick={(e) => { e.preventDefault(); go(target?.id ?? null); }}>{content}</a>
   );
+  // The announcer's latest calls: tap a bib to open that player.
+  const recentCalls = calls.map((c) => players.find((p) => p.id === c.id)).filter((p): p is ScoringPlayer => Boolean(p)).slice(0, 5);
+  const nowUp = recentCalls.length > 0 && (
+    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-2" aria-label="Just called by the announcer">
+      <span className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-sky-800 dark:text-sky-300"><Megaphone className="h-4 w-4" /> Now up</span>
+      {recentCalls.map((p) => navLink(p, `min-h-9 rounded-md border px-2.5 py-1 font-mono text-base font-bold ${p.id === current ? "border-sky-600 bg-sky-600 text-white" : "border-sky-500/40 bg-card text-foreground hover:bg-accent"}`, bibLabel(p)))}
+    </div>
+  );
+  const calledChip = (id: number) => calledAt.has(id) && (
+    <span title="Called by the announcer" className="shrink-0 rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-800 dark:text-sky-300">Called</span>
+  );
   const navBar = (position: string) => player && (
     <div className="grid grid-cols-3 items-center gap-2" aria-label={`Player navigation ${position}`}>
       {previous ? navLink(previous, "inline-flex min-h-11 items-center justify-center gap-1 rounded-md border border-border bg-card px-2 text-sm font-medium hover:bg-accent",
@@ -250,6 +273,7 @@ export function ScoringSession(props: {
     return (
       <div className="space-y-4 rounded-xl border border-border bg-card p-4 sm:p-6">
         {navBar("top")}
+        {nowUp}
         {offlineBanner}
         {noticeBox}
         <div className="flex items-start justify-between gap-3 border-b border-border pb-3">
@@ -258,6 +282,7 @@ export function ScoringSession(props: {
             <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold text-foreground">
               {player.name}{player.coachKid && <CoachKidBadge />}{player.exempt && <ExemptBadge scope={player.exempt} />}
               {player.here && <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Here</span>}
+              {calledChip(player.id)}
             </h2>
             <p className="text-xs text-muted-foreground">
               LL age {player.leagueAge} · player {index + 1} of {players.length}
@@ -357,6 +382,7 @@ export function ScoringSession(props: {
         <p className="rounded-lg border border-border bg-background p-6 text-center text-sm font-semibold text-foreground">No players in this age group yet</p>
       ) : (
         <>
+          {nowUp}
           <form className="flex gap-2" role="search" onSubmit={(e) => {
             e.preventDefault();
             const raw = String(new FormData(e.currentTarget).get("bib") ?? "");
@@ -369,7 +395,7 @@ export function ScoringSession(props: {
             <Button type="submit" className="min-h-11"><Search className="mr-1 h-4 w-4" /> Go</Button>
           </form>
           <p className="text-xs text-muted-foreground">
-            {done} of {players.length} players done (saved or not evaluated).{hereCount > 0 && ` ${hereCount} checked in today ("Here").`} A player marked &quot;Draft (not counted)&quot; stays out of reports until you open it and save.
+            {done} of {players.length} players done (saved or not evaluated).{hereCount > 0 && ` ${hereCount} checked in today ("Here").`}{calls.length > 0 && ` ${calls.length} called by the announcer ("Called").`} A player marked &quot;Draft (not counted)&quot; stays out of reports until you open it and save.
             {Object.keys(props.prior).length > 0 && " Prior-year ratings are shown on each player's page."}
           </p>
           <ul className="divide-y divide-border rounded-lg border border-border">
@@ -377,10 +403,17 @@ export function ScoringSession(props: {
               <li key={p.id}>
                 {navLink(p, "flex min-h-12 items-center gap-3 px-3 py-2 hover:bg-accent", <>
                   <span className="w-14 shrink-0 font-mono text-base font-bold text-foreground">{p.bib ?? "—"}</span>
-                  <span className="min-w-0 flex-1 truncate text-sm text-foreground">{p.name}</span>
-                  {p.here && <span title="Checked in today" className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Here</span>}
-                  {p.coachKid && <CoachKidBadge short />}
-                  {p.exempt && <ExemptBadge scope={p.exempt} short />}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm text-foreground">{p.name}</span>
+                    {(p.here || calledAt.has(p.id) || p.coachKid || p.exempt) && (
+                      <span className="mt-0.5 flex flex-wrap items-center gap-1">
+                        {p.here && <span title="Checked in today" className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Here</span>}
+                        {calledChip(p.id)}
+                        {p.coachKid && <CoachKidBadge short />}
+                        {p.exempt && <ExemptBadge scope={p.exempt} short />}
+                      </span>
+                    )}
+                  </span>
                   {noteOf(p.id) && <StickyNote className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-label="Has your note" />}
                   <span className="hidden text-xs text-muted-foreground sm:inline">Age {p.leagueAge}</span>
                   <StatusChip status={statusOf(p.id)} />

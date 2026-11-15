@@ -18,12 +18,12 @@ const time = (t: string) => {
 const day = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 const when = (e: Event) => `${day(e.date)}, ${time(e.start)}–${time(e.end)}`;
 
-// Who scores which age group, and when. For registrars (to hand out) and admins. Names only; no scores.
+// Who scores which age group, and when. For registrars (to hand out), announcers and admins. Names only; no scores.
 async function TimetableContent({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams;
   const supabase = await createClient();
   const roles = await getMyRoles(supabase);
-  let season = roles.registrarSeason;
+  let season = roles.registrarSeason ?? roles.announcerSeason;
   if (roles.isAdmin) {
     const { data } = await supabase.from("seasons").select("id, name, is_closed, start_date").order("start_date", { ascending: false });
     const pick = (data ?? []).find((s) => String(s.id) === sp.season) ?? (data ?? []).find((s) => !s.is_closed) ?? data?.[0];

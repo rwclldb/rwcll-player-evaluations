@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { CalendarClock, ClipboardCheck, FileSpreadsheet, Printer, QrCode, UserPlus, Users, type LucideIcon } from "lucide-react";
+import { CalendarClock, ClipboardCheck, FileSpreadsheet, Megaphone, Printer, QrCode, UserPlus, Users, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { leagueToday } from "@/lib/roadmap";
 
 type Day = { event_date: string; has_primary: boolean; has_makeup: boolean; age_groups: number[] };
 
 const CARDS: { href: string; title: string; text: string; icon: LucideIcon }[] = [
+  { href: "/protected/announce", title: "Call players", text: "Read out bibs and tick each player off as they're called up.", icon: Megaphone },
   { href: "/protected/players/new", title: "Add a walk-up", text: "A child who shows up but isn't registered yet.", icon: UserPlus },
   { href: "/protected/roster?age=all", title: "Print rosters", text: "One page per age group, with Check-in and Notes columns.", icon: Printer },
   { href: "/protected/timetable", title: "Who scores when", text: "Each age group's time, place, coaches and evaluators.", icon: CalendarClock },
@@ -66,6 +67,53 @@ export async function EvaluationDayHub({ season }: { season: { id: number; name:
           </Link>
         ))}
       </div>
+    </section>
+  );
+}
+
+// Home page for announcers: the next evaluation day and a big Call players button.
+export async function AnnouncerHub({ season }: { season: { id: number; name: string } }) {
+  const supabase = await createClient();
+  const today = leagueToday();
+  const { data } = await supabase.rpc("announce_days", { p_season_id: season.id });
+  const days = (data ?? []) as Day[];
+  const next = days.find((d) => d.event_date >= today);
+  let progress: { called: number; total: number } | null = null;
+  if (next?.event_date === today) {
+    const { data: list } = await supabase.rpc("announce_list", { p_season_id: season.id, p_date: today });
+    const rows = (list ?? []) as { called_at: string | null }[];
+    progress = { called: rows.filter((r) => r.called_at).length, total: rows.length };
+  }
+
+  return (
+    <section className="space-y-4">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">{season.name} · Announcer</p>
+        <h1 className="text-2xl font-bold text-foreground">Evaluation Day</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {!next ? "No evaluation days are scheduled yet."
+            : next.event_date === today ? `Today: ${next.has_primary ? "evaluations" : "makeups"} for ages ${next.age_groups.join(", ")}.`
+            : `Next: ${longDate(next.event_date)} (${next.has_primary ? "evaluations" : "makeups"}, ages ${next.age_groups.join(", ")}).`}
+        </p>
+      </div>
+      <Link href="/protected/announce"
+        className="group flex items-center gap-4 rounded-2xl bg-emerald-600 p-5 text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-emerald-500 hover:shadow-md">
+        <Megaphone className="h-10 w-10 shrink-0" />
+        <span className="min-w-0">
+          <span className="block text-xl font-bold">Call players</span>
+          <span className="block text-sm text-white/85">
+            {progress ? `${progress.called} of ${progress.total} called so far` : "Pick the age group, read out the bibs, and tap each player as they're called."}
+          </span>
+        </span>
+      </Link>
+      <Link href="/protected/timetable"
+        className="group block rounded-2xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-emerald-500/50 hover:shadow-md">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-700 transition-colors group-hover:bg-emerald-600 group-hover:text-white dark:text-emerald-400">
+          <CalendarClock className="h-5 w-5" />
+        </span>
+        <h2 className="mt-3 font-semibold text-foreground">Who scores when</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">Each age group&apos;s time and place.</p>
+      </Link>
     </section>
   );
 }

@@ -406,6 +406,13 @@ async function stageDemo({ svc, admin, s2027, sessionByAge, userId, adminId, reg
     .map((r, i) => ({ player_season_id: r.id, event_id: eventFor(age), checked_in_by: registrar.user.id, checked_in_at: at(60 - i) })));
   await must(svc.from("player_checkins").insert(checkins), "check-ins");
 
+  // An announcer, who has called up the players already scored in ages 7 and 8 (oldest call first).
+  const announcer = await ensureUser(svc, existingUsers, "announcer.alex@example.com", password, "Alex Announcer");
+  await must(svc.from("user_roles").insert({ user_id: announcer, role_name: "announcer", season_id: s2027.id, created_by: adminId }), "announcer role");
+  const calls = [7, 8].flatMap((age) => byAge(age).filter((_, i, all) => i < Math.ceil(all.length * 0.6))
+    .map((r, i) => ({ player_season_id: r.id, event_id: eventFor(age), called_by: announcer, called_at: at(50 - i) })));
+  await must(svc.from("player_calls").insert(calls), "calls");
+
   // An injured age-7 player excused from attending.
   const injured = byAge(7).at(-1);
   await must(svc.from("player_exemptions").insert({ player_season_id: injured.id, scope: "attendance", reason: "Broken wrist; doctor's note on file", approved_by_name: "Safety officer", recorded_by: adminId }), "exemption");
@@ -428,6 +435,7 @@ async function stageDemo({ svc, admin, s2027, sessionByAge, userId, adminId, reg
   ]), "private notes");
 
   log(`DEMO staged for ${DEMO_DATE} (makeup ${addDays(DEMO_DATE, 7)}): ${saved} scores; ages 7-8 open, 9-12 released, 13-16 locked;`);
+  log(`  ${calls.length} players called by announcer.alex@example.com.`);
   log(`  ${checkins.length} check-ins, 1 exemption, ${kids.length} coach's kids, 1 possible duplicate (walk-up bib 990), prior-year shown while scoring.`);
   log("  Registrar: registrar.riley@example.com. Avery (coach.avery@example.com) has age 7 left to score.");
   if (BOARD_SEATS) log(`  Board seats: board1@example.com to board${BOARD_SEATS}@example.com, coaches assigned to age 8 (open).`);

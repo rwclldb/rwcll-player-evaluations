@@ -10,7 +10,7 @@
 export type HelpBlock = string | { steps: string[] } | { list: string[] } | { tip: string };
 export type HelpSection = { id: string; title: string; blocks: HelpBlock[] };
 export type HelpGuide = { key: GuideKey; title: string; audience: string; intro: string; sections: HelpSection[] };
-export type GuideKey = "coach" | "evaluator" | "registrar";
+export type GuideKey = "coach" | "evaluator" | "registrar" | "announcer";
 
 const signingIn: HelpSection = {
   id: "signing-in",
@@ -46,6 +46,7 @@ const scoring = (who: "coach" | "evaluator"): HelpSection => ({
     { list: [
       "**Saved**: your scores are in. **Not evaluated**: you marked the player as not evaluated. **Not started**: nothing saved yet.",
       "**Here**: the registrar checked the player in today.",
+      "**Called**: the announcer has called the player up. **Now up**, at the top of the list and on each player, shows the latest bibs called; tap one to open that player.",
       "**CK**: a coach's kid. Score them like everyone else; the league decides how coach's kids are drafted.",
       "**Exempt**: the league excused the player from attending, from being evaluated, or both. You can still score them if they take part.",
       "**Prior-year coach rating** (blue box): last season's coach ratings, when the league has turned them on.",
@@ -170,7 +171,7 @@ export const GUIDES: HelpGuide[] = [
         id: "home",
         title: "Your home page",
         blocks: [
-          "**Evaluation Day** shows the next evaluation day and, on the day, how many players are checked in. From there: [[Check players in]], [[Add a walk-up]], [[Print rosters]], [[Who scores when]], [[Players]] and [[Registration imports]].",
+          "**Evaluation Day** shows the next evaluation day and, on the day, how many players are checked in. From there: [[Check players in]], [[Call players]] (if there's no announcer), [[Add a walk-up]], [[Print rosters]], [[Who scores when]], [[Players]] and [[Registration imports]].",
         ],
       },
       {
@@ -185,7 +186,7 @@ export const GUIDES: HelpGuide[] = [
           ] },
           { list: [
             "[[Not here yet]] shows only players still to arrive; [[Everyone]] shows the whole list.",
-            "On makeup days, the list shows only players who weren't checked in earlier and haven't been scored.",
+            "On makeup days, the list shows only players who weren't called up earlier and haven't been scored, so a child who came but was missed is listed again.",
             "No bib yet? Tap [[+ Bib]], type the number and tap [[Save]]. A bib already in use is refused with the name of who has it.",
             "Several people can check in at once; the list refreshes every 30 seconds.",
             "Players marked **Exempt from attending** aren't expected: they're left out of [[Not here yet]], the count and makeup days. Check them in if they come anyway.",
@@ -247,6 +248,47 @@ export const GUIDES: HelpGuide[] = [
             "[[Who scores when]]: each age group's time and place with its coaches and evaluators, [[By age group]] or [[By person]] (handy to give each coach their times). Tap [[Print]].",
             "[[QR codes]]: printable codes that open the app, each age group's scoring list, and the coach quick start. Post them at the fields. Print them from the league's website, not a test computer.",
           ] },
+        ],
+      },
+    ],
+  },
+  {
+    key: "announcer",
+    title: "Announcer guide",
+    audience: "Announcers",
+    intro: "Calling players up by bib on evaluation day and ticking each one off, so every child is seen. Announcers see names, bibs and ages only: never scores, notes or reports.",
+    sections: [
+      signingIn,
+      {
+        id: "home",
+        title: "Your home page",
+        blocks: [
+          "**Evaluation Day** shows the next evaluation day and, on the day, how many players have been called. Tap [[Call players]] to start. [[Who scores when]] has each age group's time and place.",
+        ],
+      },
+      {
+        id: "calling",
+        title: "Calling players",
+        blocks: [
+          { steps: [
+            "Open [[Call players]]. Today is picked for you; tap another day to switch. Tap the age group on the field.",
+            "**Next up** shows the next bibs to call: players who are checked in and not called yet, in bib order. Read them out.",
+            "As each player comes up, tap their row. A green tick and **Called** with the time appear, and the scorers see **Called** and **Now up** on their phones.",
+            "Tapped the wrong bib? Tap it again. The message says **Undone**.",
+          ] },
+          { list: [
+            "Players who haven't checked in are greyed out with **Not here**. Tick [[Hide players not here]] to hide them. Late arrivals turn normal as soon as check-in taps them in (the list refreshes every 20 seconds).",
+            "Find a bib or name with the search box when a child comes up out of order.",
+            "**Exempt** players may be excused from being evaluated; they're not suggested in **Next up**. Call them if they take part.",
+            "**No bib: ask check-in** means the child has no bib yet; the registrar can give one at the check-in table.",
+          ] },
+        ],
+      },
+      {
+        id: "makeups",
+        title: "Makeup days",
+        blocks: [
+          "On a makeup day the list shows only players still to be seen: those never called and never scored, including children who came but were missed. Call them the same way.",
         ],
       },
     ],

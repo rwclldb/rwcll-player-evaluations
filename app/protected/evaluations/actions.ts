@@ -69,3 +69,23 @@ export async function saveScores(input: SavePayload): Promise<SaveResult> {
   // which is slow on weak signal. The screen keeps its own copy; other pages read fresh data when opened.
   return { ok: true };
 }
+
+export type TodaysCall = { id: number; at: string };
+
+// Players the announcer has called today in this age group, newest first (the "Called" marker and the "Now up"
+// strip). The scoring screen asks again every 20 seconds; the database checks the person can see the age group.
+export async function todaysCalls(sessionId: number): Promise<TodaysCall[]> {
+  if (!positive(sessionId)) return [];
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("session_calls", { p_session_id: sessionId });
+  return callsForToday(data);
+}
+
+export async function callsForToday(rows: unknown): Promise<TodaysCall[]> {
+  const day = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(d);
+  const today = day(new Date());
+  // Today's: the event is today, or the call was made today (Pacific).
+  return ((rows ?? []) as { player_season_id: number; called_at: string; event_date: string }[])
+    .filter((r) => r.event_date === today || day(new Date(r.called_at)) === today)
+    .map((r) => ({ id: Number(r.player_season_id), at: r.called_at }));
+}

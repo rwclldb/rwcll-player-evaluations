@@ -23,6 +23,8 @@ const ADMIN_ITEMS: NavItem[] = [
   ] },
   { label: "Evaluation day", links: [
     { href: "/protected/check-in", label: "Check-in" },
+    { href: "/protected/announce", label: "Call players" },
+    { href: "/protected/end-of-day", label: "End-of-day check" },
     { href: "/protected/roster", label: "Rosters" },
     { href: "/protected/timetable", label: "Who scores when" },
     { href: "/protected/qr", label: "QR codes" },
@@ -45,19 +47,30 @@ const EVALUATOR_LINKS: NavLink[] = [
 // Registrars: registrations and evaluation day for their season. No scores, notes or draft reports.
 const REGISTRAR_LINKS: NavLink[] = [
   { href: "/protected/check-in", label: "Check-in" },
+  { href: "/protected/announce", label: "Call players" },
   { href: "/protected/players", label: "Players" },
   { href: "/protected/import-batches", label: "Imports" },
   { href: "/protected/roster", label: "Rosters" },
   { href: "/protected/timetable", label: "Who scores when" },
 ];
 
+// Announcers: call bibs on evaluation day. Names, bibs and ages only.
+const ANNOUNCER_LINKS: NavLink[] = [
+  { href: "/protected/announce", label: "Call players" },
+  { href: "/protected/timetable", label: "Who scores when" },
+];
+
 export async function AppHeader({ user }: { user: User }) {
   const supabase = await createClient();
   const roles = await getMyRoles(supabase);
-  const items: NavItem[] = roles.isAdmin ? ADMIN_ITEMS : [
+  const staff = roles.registrarSeason !== null || roles.announcerSeason !== null;
+  const flat = [
     ...(roles.registrarSeason ? REGISTRAR_LINKS : []),
-    ...(roles.scores || !roles.registrarSeason ? EVALUATOR_LINKS : []),
+    ...(roles.announcerSeason ? ANNOUNCER_LINKS : []),
+    ...(roles.scores || !staff ? EVALUATOR_LINKS : []),
   ];
+  // Someone with two roles gets each page once.
+  const items: NavItem[] = roles.isAdmin ? ADMIN_ITEMS : flat.filter((l, i) => flat.findIndex((x) => x.href === l.href) === i);
   const email = user.email ?? "";
   // An admin's "View as" preview of this account (read-only), or null.
   const { data: preview } = await supabase.rpc("current_preview");

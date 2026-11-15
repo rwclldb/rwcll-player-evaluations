@@ -61,15 +61,22 @@ const myAverage = (ratings: Record<string, number>, codes: string[]) => {
 
 // notes: what the database lets this viewer see (player_notes). canWritePrivate: coaches get a private-note box.
 // coachKids: registrations marked as a coach's kid. stars: this viewer's private stars (toggled here).
-export function DraftReportTable({ rows, title, fileName, administrator, notes = [], canWritePrivate = false, returnTo, coachKids = [], stars = [], exemptions = [], scoreIssues = [] }: {
+export function DraftReportTable({ rows, title, fileName, administrator, notes = [], canWritePrivate = false, returnTo, coachKids = [], stars = [], exemptions = [], scoreIssues = [], called = null }: {
   rows: DraftReportRow[]; title: string; fileName: string; administrator: boolean;
   notes?: ReportNote[]; canWritePrivate?: boolean; returnTo: string; coachKids?: number[]; stars?: number[];
   exemptions?: { player_season_id: number; scope: ExemptScope }[];
   // Admins: evaluations behind the draft, blank-skill and not-evaluated flags, for the flags' Fix links.
   scoreIssues?: ScoreIssue[];
+  // Players the announcer called in this age group (null when calling wasn't used): the "Not called" flag.
+  called?: number[] | null;
 }) {
   const kids = useMemo(() => new Set(coachKids), [coachKids]);
   const exempt = useMemo(() => new Map(exemptions.map((x) => [x.player_season_id, x.scope])), [exemptions]);
+  const flagContext = useMemo(() => ({
+    issues: scoreIssues,
+    called: called ? new Set(called) : null,
+    exemptFromEvaluation: new Set(exemptions.filter((x) => x.scope === "evaluation" || x.scope === "both").map((x) => x.player_season_id)),
+  }), [scoreIssues, called, exemptions]);
   const [starred, setStarred] = useState<Set<number>>(() => new Set(stars));
   const [onlyStars, setOnlyStars] = useState(false);
   const [starError, setStarError] = useState<string | null>(null);
@@ -130,7 +137,7 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
       ...SKILLS.flatMap(([c]) => [fmt(r.skill_averages?.evaluator?.[c]), fmt(r.skill_averages?.coach?.[c]), fmt(r.skill_averages?.coach_trimmed?.[c]), fmt(r.skill_averages?.prior?.[c])]),
       fmt(r.skill_averages?.evaluator?.pitching), fmt(r.skill_averages?.coach?.pitching), fmt(r.skill_averages?.coach_trimmed?.pitching),
       fmt(r.skill_averages?.evaluator?.catching), fmt(r.skill_averages?.coach?.catching), fmt(r.skill_averages?.coach_trimmed?.catching),
-      reportFlags(r, administrator).map((f) => f.label).join("; "),
+      reportFlags(r, administrator, flagContext).map((f) => f.label).join("; "),
     ].map((v) => safeCsvCell(String(v === "—" ? "" : v))).join(","));
     const blob = new Blob([[head.map((h) => safeCsvCell(h)).join(","), ...lines].join("\r\n") + "\r\n"], { type: "text/csv;charset=utf-8" });
     const link = document.createElement("a");
@@ -174,7 +181,7 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
           fmt(r.prior_overall),
           ...SKILLS.map(([c]) => skillCell(r, c)),
           skillCell(r, "pitching"), skillCell(r, "catching"),
-          reportFlags(r, administrator).map((f) => f.label).join("; "),
+          reportFlags(r, administrator, flagContext).map((f) => f.label).join("; "),
         ]),
         numeric: [1, 3, 4, 5],
       });
@@ -266,7 +273,7 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
                     <td className="px-3 py-2 text-right font-mono text-xs">{bestOptional(r, "catching") === null ? "—" : <>E {fmt(r.skill_averages?.evaluator?.catching)} · C {fmt(r.skill_averages?.coach?.catching)}{trim(r.skill_averages?.coach_trimmed?.catching)}</>}</td>
                     <td className="px-3 py-2 text-xs">
                       <div className="flex flex-wrap gap-1">
-                        {reportFlags(r, administrator, scoreIssues).map((f) => <FlagChip key={f.key} flag={f} administrator={administrator} />)}
+                        {reportFlags(r, administrator, flagContext).map((f) => <FlagChip key={f.key} flag={f} administrator={administrator} />)}
                       </div>
                     </td>
                   </tr>

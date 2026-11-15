@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getMyRoles, onlyRegistrar } from "@/lib/my-roles";
+import { getMyRoles, onlyEventStaff } from "@/lib/my-roles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { ClipboardList, ArrowLeft, Layers, MapPin } from "lucide-react";
 import { ScoringSession, type MyScores, type PriorYear, type ScoringCategory, type ScoringPlayer } from "./scoring-session";
 import { HideWhileScoring } from "./hide-while-scoring";
 import { HelpLink } from "@/components/help-link";
+import { callsForToday, type TodaysCall } from "./actions";
 
 const OLDEST_TO_YOUNGEST = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7];
 
@@ -35,7 +36,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return redirect("/auth/login");
-  if (onlyRegistrar(await getMyRoles(supabase))) return redirect("/protected");
+  if (onlyEventStaff(await getMyRoles(supabase))) return redirect("/protected");
   const userId = user.id;
 
   // Administrators do not score; they are sent back to the workspace.
@@ -77,13 +78,13 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
   // An open age group is loaded in one go, so scoring keeps working with no signal (see scoring-session.tsx).
   let scoring: {
     players: ScoringPlayer[]; mine: Record<number, MyScores>; notes: Record<number, string>; prior: Record<number, PriorYear>;
-    noteKind: "private" | "shared" | null;
+    noteKind: "private" | "shared" | null; calls: TodaysCall[];
   } | null = null;
   let loadError: string | null = null;
 
   if (selectedSession?.status === "open" && selectedSession.league_age !== null) {
     // Evaluation eligibility is based on season and Little League age, not payment status.
-    const [regResult, evalResult, priorResult, assignmentResult, notesResult, hereResult] = await Promise.all([
+    const [regResult, evalResult, priorResult, assignmentResult, notesResult, hereResult, callResult] = await Promise.all([
       supabase.from("player_seasons")
         .select("id, evaluation_number, league_age, is_coach_kid, players(first_name, last_name)")
         .eq("season_id", selectedSession.season_id).eq("league_age", selectedSession.league_age),
@@ -98,7 +99,10 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
       supabase.rpc("player_notes", { p_session_id: selectedSession.id }),
       // Players the registrar checked in today (the "Here" marker).
       supabase.rpc("session_checked_in_today", { p_session_id: selectedSession.id }),
+      // Players the announcer called (the "Called" marker and "Now up" strip; today's only).
+      supabase.rpc("session_calls", { p_session_id: selectedSession.id }),
     ]);
+    const calls = await callsForToday(callResult.data);
     const { data: exemptData } = await supabase.rpc("session_exemptions", { p_session_id: selectedSession.id });
     const exempt = new Map(((exemptData ?? []) as { player_season_id: number; scope: "attendance" | "evaluation" | "both" }[]).map((x) => [x.player_season_id, x.scope]));
     if (regResult.error) loadError = `Could not load players: ${regResult.error.message}`;
@@ -113,6 +117,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
       (a, b) => (a.evaluation_number ?? Infinity) - (b.evaluation_number ?? Infinity) || playerName(a).localeCompare(playerName(b)),
     );
     scoring = {
+      calls,
       noteKind,
       players: registrations.map((r) => ({
         id: r.id, bib: r.evaluation_number, name: playerName(r), leagueAge: r.league_age,
@@ -177,7 +182,7 @@ async function EvaluatorWorkspaceContent({ searchParams }: { searchParams: Searc
           return (
             <ScoringSession userId={userId} sessionId={selectedSession.id} ageLabel={ageLabel} categories={categories}
               players={scoring.players} mine={scoring.mine} notes={scoring.notes} prior={scoring.prior} noteKind={scoring.noteKind}
-              initialPlayerId={initialPlayerId}>
+              calls={scoring.calls} initialPlayerId={initialPlayerId}>
               {schedule}
             </ScoringSession>
           );

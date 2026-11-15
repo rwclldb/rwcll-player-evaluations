@@ -7,7 +7,7 @@ import { leagueToday, STAGES, type RoadmapData, type StageKey } from "@/lib/road
 import { AdminRoadmap, Seasons } from "./admin-roadmap";
 import type { PendingPerson } from "./pending-signins";
 import { MySchedule, type ScheduleRow } from "./my-schedule";
-import { EvaluationDayHub } from "./evaluation-day-hub";
+import { AnnouncerHub, EvaluationDayHub } from "./evaluation-day-hub";
 import { getMyRoles } from "@/lib/my-roles";
 
 type SearchParams = Promise<{ season?: string; stage?: string; message?: string; error?: string }>;
@@ -60,12 +60,14 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
     supabase.rpc("my_evaluation_schedule"), supabase.rpc("my_account"), getMyRoles(supabase),
   ]);
   const name = (account as { display_name: string | null } | null)?.display_name || user.email;
-  // Registrars get the Evaluation Day hub; coaches and evaluators get their schedule and shortcuts (some people are both).
-  const scores = roles.scores || !roles.registrarSeason;
+  // Registrars get the Evaluation Day hub, announcers the calling card; coaches and evaluators get their schedule
+  // and shortcuts (some people are several).
+  const scores = roles.scores || (!roles.registrarSeason && !roles.announcerSeason);
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <p className="text-sm text-muted-foreground">Welcome, <span className="font-medium text-foreground">{name}</span></p>
       {roles.registrarSeason && <EvaluationDayHub season={roles.registrarSeason} />}
+      {roles.announcerSeason && !roles.registrarSeason && <AnnouncerHub season={roles.announcerSeason} />}
       {scores && <MySchedule rows={(schedule ?? []) as ScheduleRow[]} />}
       {scores && <div className="grid gap-3 sm:grid-cols-3">
         {SHORTCUTS.map(({ href, title, text, icon: Icon }) => (

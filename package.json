@@ -60,7 +60,8 @@
     "test:exemptions-runtime": "node scripts/test-exemptions-runtime.cjs",
     "test:birthdate-protection-runtime": "node scripts/test-birthdate-protection-runtime.cjs",
     "test:season-close-runtime": "node scripts/test-season-close-runtime.cjs",
-    "test:duplicate-players-runtime": "node scripts/test-duplicate-players-runtime.cjs"
+    "test:duplicate-players-runtime": "node scripts/test-duplicate-players-runtime.cjs",
+    "test:announcer-runtime": "node scripts/test-announcer-runtime.cjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.1",

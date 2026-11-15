@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { BookOpen, ClipboardCheck, ClipboardList, Eye } from "lucide-react";
+import { BookOpen, ClipboardCheck, ClipboardList, Eye, Megaphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getMyRoles } from "@/lib/my-roles";
 import { GUIDES, type GuideKey } from "@/lib/help";
 
-const ICONS: Record<GuideKey, typeof ClipboardList> = { coach: ClipboardList, evaluator: Eye, registrar: ClipboardCheck };
+const ICONS: Record<GuideKey, typeof ClipboardList> = { coach: ClipboardList, evaluator: Eye, registrar: ClipboardCheck, announcer: Megaphone };
 
 // Help: the guides, with the ones for the reader's own roles first.
 export default async function HelpPage() {
@@ -15,6 +15,7 @@ export default async function HelpPage() {
     ...(names.has("coach") ? ["coach" as const] : []),
     ...(names.has("independent_evaluator") ? ["evaluator" as const] : []),
     ...(roles.registrarSeason ? ["registrar" as const] : []),
+    ...(roles.announcerSeason ? ["announcer" as const] : []),
   ]);
   const ordered = [...GUIDES].sort((a, b) => Number(mine.has(b.key)) - Number(mine.has(a.key)));
 

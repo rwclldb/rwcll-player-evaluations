@@ -14,6 +14,7 @@ const ROLE_LABELS: Record<string, string> = {
   coach: "Coach",
   independent_evaluator: "Independent evaluator",
   registrar: "Registrar",
+  announcer: "Announcer",
 };
 const field = "mt-1 block h-11 w-full rounded-md border border-input bg-background px-3 text-base text-foreground";
 const card = "space-y-4 rounded-lg border border-border bg-card p-5";

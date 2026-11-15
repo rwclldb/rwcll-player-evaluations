@@ -109,15 +109,16 @@ SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000ea004');
 SELECT pg_temp.check((SELECT count(*) FROM public.session_checked_in_today((SELECT s9 FROM ctx))) = 0, 'someone unrelated sees no one');
 RESET ROLE;
 
--- Makeup day: Pia came on the main day, Quinn was scored; only Rory is left.
+-- Makeup day: Quinn was scored, so he's done. Pia came on the main day but was never called or scored, so she
+-- still needs evaluating (rule changed with the announcer role, migration 20261117220000); Rory never came.
 SET LOCAL session_replication_role = replica;
 INSERT INTO public.evaluations (evaluation_session_id, player_season_id, evaluator_user_id, evaluator_type, status, submitted_at)
   SELECT s9, :quinn, '00000000-0000-4000-8000-0000000ea003', 'coach', 'submitted', now() FROM ctx;
 SET LOCAL session_replication_role = origin;
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000ea002');
-SELECT pg_temp.check((SELECT array_agg(first_name) FROM public.checkin_list((SELECT season_id FROM ctx), (SELECT d1 + 7 FROM ctx))) = ARRAY['Rory'],
-  'a makeup day leaves out players checked in earlier or already scored');
+SELECT pg_temp.check((SELECT array_agg(first_name ORDER BY first_name) FROM public.checkin_list((SELECT season_id FROM ctx), (SELECT d1 + 7 FROM ctx))) = ARRAY['Pia', 'Rory'],
+  'a makeup day leaves out players already scored, and lists those who came but were never called or scored');
 SELECT pg_temp.check((SELECT count(*) FROM public.evaluations) = 0, 'a registrar cannot read scores');
 
 -- ---------- bibs ----------

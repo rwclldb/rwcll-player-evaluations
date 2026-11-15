@@ -243,6 +243,12 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
           links: [{ href: "/protected/check-in", label: "Check-in", primary: true }, { href: "/protected/timetable", label: "Who scores when" }],
         },
         {
+          key: "call", title: "Call players up",
+          status: "info",
+          detail: "The announcer reads out bibs and taps each player as they're called; scorers see \"Now up\" and \"Called\" on their phones. Give someone the Announcer role on People.",
+          links: [{ href: "/protected/announce", label: "Call players" }, { href: "/protected/end-of-day", label: "End-of-day check" }],
+        },
+        {
           key: "walkups", title: "Add a walk-up player",
           status: "info",
           detail: `Not registered yet? Add them on site with a bib. ${reg.on_site > 0 ? `${plural(reg.on_site, "player")} added on site so far.` : ""}`,
@@ -273,6 +279,12 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
           status: drafts > 0 ? "attention" : "done",
           detail: drafts > 0 ? `${plural(drafts, "draft")} won't count in reports until submitted.` : "No drafts left. Only submitted ratings count.",
           links: [{ href: "/protected/evaluation-review", label: "Data Review", primary: drafts > 0 }],
+        },
+        {
+          key: "missed", title: "Check nobody was missed",
+          status: "info",
+          detail: "Players checked in but never called, called but missing a score, or never checked in. Never-called players go on the makeup day's lists.",
+          links: [{ href: "/protected/end-of-day", label: "End-of-day check" }],
         },
         {
           key: "lock", title: "Lock each age group",

@@ -43,9 +43,18 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 const who = (i: ScoreIssue) => `${i.scorer} (${i.evaluator_type === "coach" ? "coach" : "evaluator"})`;
 const open = (i: ScoreIssue, what: string) => ({ href: `/protected/evaluation-review/${i.id}`, label: `${who(i)}: ${what}` });
 
+export type FlagContext = {
+  /** Admins: the evaluations behind draft, blank-skill and not-evaluated flags. */
+  issues?: ScoreIssue[];
+  /** Players the announcer called in this age group; null when calling wasn't used (no "Not called" flags). */
+  called?: Set<number> | null;
+  /** Players exempt from being evaluated (never flagged as not called). */
+  exemptFromEvaluation?: Set<number>;
+};
+
 // What each flag means, and for admins where to fix it. CSV, print and PDF use only the label.
-export function reportFlags(r: FlagRow, administrator: boolean, issues: ScoreIssue[] = []): ReportFlag[] {
-  const mine = issues.filter((i) => i.player_season_id === r.player_season_id);
+export function reportFlags(r: FlagRow, administrator: boolean, ctx: FlagContext = {}): ReportFlag[] {
+  const mine = (ctx.issues ?? []).filter((i) => i.player_season_id === r.player_season_id);
   const playerPage = { href: `/protected/players/${r.player_season_id}`, label: "Open the player's page" };
   const out: ReportFlag[] = [];
   if (r.evaluation_number === null) {
@@ -60,6 +69,13 @@ export function reportFlags(r: FlagRow, administrator: boolean, issues: ScoreIss
       key: "unrated", label: "Not rated",
       explain: "Nobody has a saved score for this player. If they missed evaluation day they may need a makeup; if the league excused them, record an exemption on their page.",
       fixes: administrator ? [{ href: "/protected/progress", label: "See who is scoring this age group" }, playerPage] : [],
+    });
+  }
+  if (ctx.called && !ctx.called.has(r.player_season_id) && !ctx.exemptFromEvaluation?.has(r.player_season_id)) {
+    out.push({
+      key: "not-called", label: "Not called",
+      explain: "The announcer never called this player up on evaluation day, so they may not have been seen by every scorer. Check the scores before the draft.",
+      fixes: administrator ? [{ href: "/protected/end-of-day", label: "Open the End-of-day check" }, playerPage] : [],
     });
   }
   if (r.blank_core_skills > 0) {

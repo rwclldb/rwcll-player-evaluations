@@ -8,9 +8,9 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-type Role = "coach" | "independent_evaluator" | "registrar" | "administrator";
+type Role = "coach" | "independent_evaluator" | "registrar" | "announcer" | "administrator";
 type Delivery = "email" | "link";
-const ROLES: Role[] = ["coach", "independent_evaluator", "registrar", "administrator"];
+const ROLES: Role[] = ["coach", "independent_evaluator", "registrar", "announcer", "administrator"];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const go = (path: string, kind: "message" | "error", text: string): never =>
