@@ -173,13 +173,14 @@ the real thing in your hand.
    next to you gave each player, and evaluators stay anonymous." Have them tap a
    **star** and then **My stars**: their own shortlist that nobody else sees.
 4. Window A: **Draft Reports** → **Age 8**: the admin's view, with **CSV**, **PDF**
-   and **Print**.
+   and **Print**. Tap a **flag** in the last column (for example **No bib** or an
+   **unsubmitted draft**): it says what it means and, for admins, links to the fix.
 
-### 7. Privacy and plan (slides 15 and 17, 2 min)
+### 7. Privacy and plan (slides 16 and 18, 2 min)
 
-### 8. Questions for the board (slides 18–21, 5+ min)
+### 8. Questions for the board (slides 19–22, 5+ min)
 
-The ten questions are on slides 19 and 20 (and in `DEMO-SCRIPT.md`). Write the
+The ten questions are on slides 20 and 21 (and in `DEMO-SCRIPT.md`). Write the
 answers down; they become settings or next year's work.
 
 ---
@@ -196,8 +197,8 @@ answers down; they become settings or next year's work.
 | No "Here" badges or check-in list | The data was loaded on a different day. Re-run step 5 (10 minutes) or skip that part. |
 
 **Slide for each step:** roadmap 4 · imports 5 · duplicates 6 · assignments 7 ·
-check-in 9 · scoring 10 · progress 11 · draft report 13 · coach view 14 ·
-help and QR codes 16.
+check-in 9 · scoring 10 · progress 11 · draft report 13 · flags 14 ·
+coach view 15 · help and QR codes 17.
 
 ## After the demo
 

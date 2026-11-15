@@ -9,6 +9,7 @@ import { CoachKidBadge } from "@/components/coach-kid-badge";
 import { EXEMPT_LABEL, ExemptBadge, type ExemptScope } from "@/components/exempt-badge";
 import { toggleStar } from "./actions";
 import { downloadPdf } from "@/lib/draft-report-pdf";
+import { FlagChip, reportFlags, type ScoreIssue } from "./report-flags";
 
 export type DraftReportRow = {
   player_season_id: number;
@@ -57,22 +58,15 @@ const myAverage = (ratings: Record<string, number>, codes: string[]) => {
   return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
 };
 
-function flags(r: DraftReportRow, administrator: boolean) {
-  const out: string[] = [];
-  if (r.evaluation_number === null) out.push("No bib");
-  if (r.coach_evaluations + r.evaluator_evaluations === 0) out.push("Not rated");
-  if (r.blank_core_skills > 0) out.push(`${r.blank_core_skills} blank skill${r.blank_core_skills === 1 ? "" : "s"}`);
-  if (r.not_evaluated_marks > 0) out.push(`${r.not_evaluated_marks} not evaluated`);
-  if (administrator && r.drafts_excluded > 0) out.push(`${r.drafts_excluded} unsubmitted draft${r.drafts_excluded === 1 ? "" : "s"}`);
-  return out;
-}
 
 // notes: what the database lets this viewer see (player_notes). canWritePrivate: coaches get a private-note box.
 // coachKids: registrations marked as a coach's kid. stars: this viewer's private stars (toggled here).
-export function DraftReportTable({ rows, title, fileName, administrator, notes = [], canWritePrivate = false, returnTo, coachKids = [], stars = [], exemptions = [] }: {
+export function DraftReportTable({ rows, title, fileName, administrator, notes = [], canWritePrivate = false, returnTo, coachKids = [], stars = [], exemptions = [], scoreIssues = [] }: {
   rows: DraftReportRow[]; title: string; fileName: string; administrator: boolean;
   notes?: ReportNote[]; canWritePrivate?: boolean; returnTo: string; coachKids?: number[]; stars?: number[];
   exemptions?: { player_season_id: number; scope: ExemptScope }[];
+  // Admins: evaluations behind the draft, blank-skill and not-evaluated flags, for the flags' Fix links.
+  scoreIssues?: ScoreIssue[];
 }) {
   const kids = useMemo(() => new Set(coachKids), [coachKids]);
   const exempt = useMemo(() => new Map(exemptions.map((x) => [x.player_season_id, x.scope])), [exemptions]);
@@ -136,7 +130,7 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
       ...SKILLS.flatMap(([c]) => [fmt(r.skill_averages?.evaluator?.[c]), fmt(r.skill_averages?.coach?.[c]), fmt(r.skill_averages?.coach_trimmed?.[c]), fmt(r.skill_averages?.prior?.[c])]),
       fmt(r.skill_averages?.evaluator?.pitching), fmt(r.skill_averages?.coach?.pitching), fmt(r.skill_averages?.coach_trimmed?.pitching),
       fmt(r.skill_averages?.evaluator?.catching), fmt(r.skill_averages?.coach?.catching), fmt(r.skill_averages?.coach_trimmed?.catching),
-      flags(r, administrator).join("; "),
+      reportFlags(r, administrator).map((f) => f.label).join("; "),
     ].map((v) => safeCsvCell(String(v === "—" ? "" : v))).join(","));
     const blob = new Blob([[head.map((h) => safeCsvCell(h)).join(","), ...lines].join("\r\n") + "\r\n"], { type: "text/csv;charset=utf-8" });
     const link = document.createElement("a");
@@ -180,7 +174,7 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
           fmt(r.prior_overall),
           ...SKILLS.map(([c]) => skillCell(r, c)),
           skillCell(r, "pitching"), skillCell(r, "catching"),
-          flags(r, administrator).join("; "),
+          reportFlags(r, administrator).map((f) => f.label).join("; "),
         ]),
         numeric: [1, 3, 4, 5],
       });
@@ -272,9 +266,7 @@ export function DraftReportTable({ rows, title, fileName, administrator, notes =
                     <td className="px-3 py-2 text-right font-mono text-xs">{bestOptional(r, "catching") === null ? "—" : <>E {fmt(r.skill_averages?.evaluator?.catching)} · C {fmt(r.skill_averages?.coach?.catching)}{trim(r.skill_averages?.coach_trimmed?.catching)}</>}</td>
                     <td className="px-3 py-2 text-xs">
                       <div className="flex flex-wrap gap-1">
-                        {flags(r, administrator).map((f) => (
-                          <span key={f} className="rounded bg-amber-500/15 px-1.5 py-0.5 text-amber-800 dark:text-amber-300 print:bg-transparent print:p-0 print:text-black">{f}</span>
-                        ))}
+                        {reportFlags(r, administrator, scoreIssues).map((f) => <FlagChip key={f.key} flag={f} administrator={administrator} />)}
                       </div>
                     </td>
                   </tr>

@@ -244,6 +244,8 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 
 - **Admin top bar grouped** (no migration; `components/app-nav.tsx`, `components/app-header.tsx`): admins see Roadmap, **Players ▾** (Players, Imports, Possible duplicates), **Evaluations ▾** (Sessions, Assignments, Scoring progress, Data Review), **Evaluation day ▾** (Check-in, Rosters, Who scores when, QR codes), **Reports ▾** (Draft Reports, Season Export) and People, in one row from 1024px (`lg`). On the right: Help and an account menu (Your account, Light/Dark/System, Sign out or End preview). The seconds clock and the separate theme switch and Sign Out button are gone. Below `lg` the menu button lists the same groups. Coaches, evaluators and registrars keep their short flat menus.
 
+- **Draft report flags explain themselves** (no migration; `app/protected/draft-reports/report-flags.tsx`): each flag (No bib, Not rated, N blank skills, N not evaluated, and for admins N unsubmitted drafts) is a button that opens what it means. Admins also get Fix links: the player's page (No bib, Not rated), Scoring progress (Not rated), and each scorer's View / correct page for that player (drafts, Not Evaluated marks, saved evaluations with blank core skills; loaded by `loadScoreIssues` in the page from `evaluations` + `ratings` + `user_profiles`). Coaches see the explanation and "A league admin can fix this." CSV, PDF and print keep the plain labels. Coach help mentions tapping a flag.
+
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)

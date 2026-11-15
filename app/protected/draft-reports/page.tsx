@@ -5,6 +5,32 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getMyRoles, onlyRegistrar } from "@/lib/my-roles";
 import { DraftReportTable, type DraftReportRow, type ReportNote } from "./draft-report-table";
+import type { ScoreIssue } from "./report-flags";
+import { fetchAllRows } from "@/lib/supabase/fetch-all";
+
+const CORE = ["hitting", "throwing", "grounders", "fly_balls", "running_awareness"];
+type IssueRow = {
+  id: number; player_season_id: number; evaluator_user_id: string; evaluator_type: ScoreIssue["evaluator_type"]; status: ScoreIssue["status"];
+  ratings: { rating_categories: { code: string } | { code: string }[] | null }[];
+};
+
+// Admins: the evaluations behind the draft, Not Evaluated and blank-skill flags, so each flag can link to
+// that scorer's View / correct page. Admins read evaluations, ratings and names directly (RLS).
+async function loadScoreIssues(supabase: Awaited<ReturnType<typeof createClient>>, sessionId: number): Promise<ScoreIssue[]> {
+  const { data } = await fetchAllRows<IssueRow>((from, to) => supabase.from("evaluations")
+    .select("id, player_season_id, evaluator_user_id, evaluator_type, status, ratings(rating_categories(code))")
+    .eq("evaluation_session_id", sessionId).order("id").range(from, to));
+  const issues = data
+    .map((e) => ({ ...e, blank: CORE.filter((c) => !e.ratings.some((r) => [r.rating_categories].flat().some((rc) => rc?.code === c))).length }))
+    .filter((e) => e.status !== "submitted" || e.blank > 0);
+  const ids = [...new Set(issues.map((e) => e.evaluator_user_id))];
+  const { data: profiles } = ids.length ? await supabase.from("user_profiles").select("user_id, display_name").in("user_id", ids) : { data: [] };
+  const name = new Map((profiles ?? []).map((p) => [p.user_id as string, (p.display_name as string) || "A scorer"]));
+  return issues.map((e) => ({
+    id: e.id, player_season_id: e.player_season_id, evaluator_type: e.evaluator_type, status: e.status, blank: e.blank,
+    scorer: name.get(e.evaluator_user_id) ?? "A scorer",
+  }));
+}
 
 type ReportSession = {
   session_id: number;
@@ -40,6 +66,7 @@ export default async function DraftReportsPage({
   let coachKids: number[] = [];
   let exemptions: { player_season_id: number; scope: "attendance" | "evaluation" | "both" }[] = [];
   let stars: number[] = [];
+  let scoreIssues: ScoreIssue[] = [];
   if (selected) {
     const [report, noteResult, roleResult] = await Promise.all([
       supabase.rpc("draft_report", { p_session_id: selected.session_id }),
@@ -64,6 +91,7 @@ export default async function DraftReportsPage({
       coachKids = (kidResult.data ?? []).map((k) => k.id as number);
       stars = (starResult.data ?? []).map((s) => s.player_season_id as number);
     }
+    if (administrator) scoreIssues = await loadScoreIssues(supabase, selected.session_id);
   }
 
   return (
@@ -138,6 +166,7 @@ export default async function DraftReportsPage({
               notes={notes}
               canWritePrivate={isCoach}
               returnTo={`/protected/draft-reports?sessionId=${selected.session_id}`}
+              scoreIssues={scoreIssues}
             />
           )}
         </>

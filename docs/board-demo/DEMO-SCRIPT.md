@@ -127,22 +127,24 @@ players, 18 test accounts. Nothing touches the hosted site.
   mixed: independent evaluators, coaches, last year's coach. The number in
   parentheses drops the highest and lowest coach score." Click **Martin, Roman**
   to open each skill. Show the **CSV**, **PDF** and **Print** buttons.
-- Flags: "unsubmitted draft", "No bib": "it tells us what to double-check
-  before release."
+- **Flags** (last column): tap **1 unsubmitted draft** on Martin, Roman. "Every
+  flag says what it means, and for admins where to fix it": the link opens that
+  coach's scores for this player. Tap **No bib** on Vale, Indigo: the link goes to
+  the player's page. (Press Esc to close a flag.)
 - **Window B (coach):** **Draft Reports** → **Age 9** → **My stars (3)**. "Coaches
   see averages only, never another coach's scores, never evaluator names. Stars
   and private notes are theirs alone; even admins can't read them." Open
   **Vale, Indigo** to show the private note.
 
-### 6. Privacy and plan (slides 15 and 17, 3 min)
+### 6. Privacy and plan (slides 16 and 18, 3 min)
 
-- Back to PowerPoint: **slide 15** (protecting kids' information) and
-  **slide 17** (where we are: everything tested by Dec 31, evaluation day
+- Back to PowerPoint: **slide 16** (protecting kids' information) and
+  **slide 18** (where we are: everything tested by Dec 31, evaluation day
   Jan 23, 2027).
 
-### 7. Questions for the board (slides 18–21, 5+ min)
+### 7. Questions for the board (slides 19–22, 5+ min)
 
-Go through slides 19 and 20. Write down answers; they become settings or
+Go through slides 20 and 21. Write down answers; they become settings or
 next year's work. The questions:
 
 1. Should coaches score only the age groups they're assigned to? *(today: yes)*
@@ -170,7 +172,7 @@ next year's work. The questions:
 
 **Slide for each demo step:** roadmap 4 · imports 5 · duplicates 6 ·
 assignments 7 · check-in 9 · scoring 10 · progress 11 · draft report 13 ·
-coach view 14 · help and QR codes 16.
+flags 14 · coach view 15 · help and QR codes 17.
 
 ## After the demo
 
