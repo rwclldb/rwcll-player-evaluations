@@ -135,7 +135,7 @@ Review decisions are audit-recorded decisions about staged rows. They do not the
 ### Database snapshot and migration safety
 As of 2026-11-03, the initial tables, helper/trigger functions, triggers, and RLS policies have been created directly in the hosted RWCLL Supabase project. The four checked tables (`players`, `player_seasons`, `teams`, `evaluations`) currently contain zero records. A schema-only reference snapshot named `schema-baseline-review.sql` was exported from the `public` schema (60,543 bytes) to the local repository root. It is a review artifact, not yet an approved or replayable migration, and it has not been confirmed committed to Git.
 
-Do not run `npx supabase db pull`, `npx supabase db push`, or `npx supabase db reset` as a shortcut. In this CLI version, `db pull` can update remote migration history. First review the snapshot and reconcile the live schema, establish the baseline deliberately, and validate migrations locally. The database schema and access policies are not launch-ready; do not import real league data yet.
+(History, 2026-11-03. Every table now comes from the migrations in `supabase/migrations/`; to wipe a database and start again, see "Start fresh: clear the demo data and go live" below.) Do not run `npx supabase db pull`, `npx supabase db push`, or `npx supabase db reset` as a shortcut. In this CLI version, `db pull` can update remote migration history. First review the snapshot and reconcile the live schema, establish the baseline deliberately, and validate migrations locally. The database schema and access policies are not launch-ready; do not import real league data yet.
 
 ## Season lifecycle (design confirmed; implementation pending)
 - Each season is a separate record; creating a new season must not overwrite previous seasons, rosters, or evaluations.
@@ -401,6 +401,53 @@ Use this to test on phones with the fictional league. Hosted data is disposable 
 4. **Sign in on your phone** with any fixture account, for example `coach.avery@example.com` or `eval.kendall@example.com`, using the `FIXTURE_PASSWORD` you chose. Each account's age groups are listed in `rwcll-fictional-test-league/README.md`.
 
 To start over, repeat step 1, then step 3.
+
+## Start fresh: clear the demo data and go live (you run this, not Claude Code)
+
+Use this once, when you're done with test and demo data and want the hosted site ready for the real season. The same steps work any time you want to wipe everything and start again. **Everything is deleted**: players, registrations, scores, notes, prior-year ratings, the audit log and every season. There is no undo, so download anything you want to keep first (Season Export, draft report CSVs).
+
+**Before you start**
+
+- `main` has everything you want live, and Vercel has deployed it.
+- You have the hosted project ref (Supabase → Project Settings → General).
+
+**1. Wipe the hosted database and rebuild it from the migrations.** In PowerShell, from the project folder:
+```
+npx supabase login
+npx supabase link --project-ref <your project ref>
+npx supabase db reset --linked
+npx supabase migration list --linked
+```
+`db reset --linked` drops every table, runs every migration in `supabase/migrations/`, then runs `supabase/seed.sql` (the 11 rating categories). Check that `migration list` shows every migration under both Local and Remote.
+
+**2. Delete the test sign-in accounts.** The reset doesn't remove sign-in accounts: they live in Supabase Auth, not in the app's tables. Go to Supabase → **Authentication → Users** and delete every `@example.com` account (`admin.jordan`, `coach.avery`, `board1`..., `registrar.riley`, `announcer.alex` and the rest). If your own real account is there, you can keep it. It has no roles now, so do step 3 for it.
+
+**3. Create the first admin.** Only the first admin is made in the dashboard. Everyone else, including other admins, is invited from the app.
+1. **Authentication → Users → Add user → Create new user.** Enter your real email and a strong password, and leave **Auto Confirm User** checked. (Skip this if you kept your account in step 2.)
+2. **SQL Editor → New query**, change the email, and **Run**:
+   ```sql
+   INSERT INTO public.user_roles (user_id, role_name, season_id)
+   SELECT id, 'administrator', NULL FROM auth.users WHERE email = 'you@example.org';
+   ```
+   It should say `INSERT 0 1`.
+
+**4. Clean up local secrets.** Delete `.env.hosted.local` if you made one for loading test data (it holds the secret key). `FIXTURE_PASSWORD` is only for test accounts and isn't needed live. Nothing on Vercel changes: the URL, publishable key and `SUPABASE_SECRET_KEY` all stay the same.
+
+**5. Set up the season in the app.** Sign in on the live site. The admin Roadmap starts at "Before evaluations":
+1. **Create the season** on the Roadmap (for example "Spring 2027" with start and end dates). It gets AA, AAA, Majors, Juniors and Seniors with the RWCLL default ages automatically; check them under Sessions → Season-wide settings.
+2. **Sessions → Create missing sessions** for ages 7–16, then set each age group's primary event (date, time, place).
+3. **People → Invite** a second admin ("League admin (all seasons)") so you're never the only one who can sign in, then registrars, coaches (with divisions), evaluators and announcers.
+4. Follow the rest of the Roadmap: Sports Connect import, bibs, prior-year upload, assignments, duplicates check.
+
+There's no need to create last year's season to import prior-year ratings. The prior-year upload goes into the current season, and the file's "Program Name" is kept as a label.
+
+**Hosted settings that survive the wipe:** Site URL, Redirect URLs, SMTP and email link lifetime (Authentication settings) are kept, so you don't redo "Hosted setup for the People page and invitations".
+
+**Starting over on your own computer (local)**
+
+- `npx supabase db reset` wipes local Supabase completely, including sign-in accounts, and rebuilds it from the migrations. Then create an admin as in "How do I create a user and make them an administrator?" (the Studio steps), or:
+- `npm run fixtures:load -- --reset --bare` does the wipe and creates only the two fixture admin accounts and the two seasons, ready to walk through setup.
+- `npm run fixtures:load -- --reset` (or `--scored`, `npm run demo:load`) brings back the full fictional league.
 
 ## Hosted setup for the People page and invitations (you run these)
 
