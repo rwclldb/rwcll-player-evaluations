@@ -408,6 +408,7 @@ Use this once, when you're done with test and demo data and want the hosted site
 
 **Before you start**
 
+- If anything in the database is worth keeping, make a full copy first (see "Back up and restore the whole database" below).
 - `main` has everything you want live, and Vercel has deployed it.
 - You have the hosted project ref (Supabase → Project Settings → General).
 
@@ -448,6 +449,63 @@ There's no need to create last year's season to import prior-year ratings. The p
 - `npx supabase db reset` wipes local Supabase completely, including sign-in accounts, and rebuilds it from the migrations. Then create an admin as in "How do I create a user and make them an administrator?" (the Studio steps), or:
 - `npm run fixtures:load -- --reset --bare` does the wipe and creates only the two fixture admin accounts and the two seasons, ready to walk through setup.
 - `npm run fixtures:load -- --reset` (or `--scored`, `npm run demo:load`) brings back the full fictional league.
+
+## Backups: what protects the league's data
+
+Three layers, from least to most work:
+
+1. **Supabase's own backups (hosted plan).** The free plan takes **no** backups, and it pauses a project after about a week with no activity. The Pro plan takes a daily backup, keeps about 7 days of them, and restores one with a click (Database → Backups). Check Supabase's pricing page for the current price. The simplest protection is Pro for January through March (evaluations, draft and the start of the season).
+2. **Season backup in the app** (below): a zip of spreadsheets, one click. Use it as a copy you can read without the app, for example on draft night if the app is down. The app does not restore from it.
+3. **A full database copy you make yourself** (below): everything, including sign-in accounts and birthdates. This is the copy to restore from if Supabase loses data or you're on the free plan.
+
+Good times to back up: after the Sports Connect import and bibs, the night before evaluation day, the end of evaluation day (and each makeup day), after the draft reports are released, and before closing the season.
+
+### Season backup (in the app)
+
+Admins: **Roadmap → Seasons → Backup** (or the season's page), then **Download season backup**. The roadmap also offers it under After evaluations and End of season. You get a zip named `rwcll-backup-<season>-<date>-<time>.zip`:
+
+- `draft-report.csv`: per-player averages (evaluator, coach, coach with high and low dropped, prior-year), every age group, the same numbers as Draft Reports.
+- `scores.csv`: every saved score, one row per scorer per player, with experience answers and evaluator notes.
+- `players.csv`, `prior-year.csv`, `people.csv` (names, emails, roles, divisions, age groups) and `schedule.csv`.
+- `tables/`: each database table for the season, column for column, to rebuild data later if ever needed.
+- `README.txt`: what's in it and when it was made.
+
+Left out on purpose: birthdates (Sports Connect has them), coaches' private notes and stars (only their owner may read them), import staging rows and the audit log. Each download is recorded in the audit log (`season_backup_downloaded`), and the Season page shows the last three. The zip has children's names and coaches' emails: keep it in a private place (for example a league-only Google Drive folder), not email.
+
+### Back up and restore the whole database (you run this, not Claude Code)
+
+A full copy of the hosted database: every table, sign-in accounts with their passwords, birthdates, private notes and the audit log. Restoring it into a **new** Supabase project gives you the app back exactly as it was. Claude Code is blocked from the hosted database, so you run these. They need Docker Desktop running (the Supabase CLI uses it to run `pg_dump`).
+
+**Get the connection string.** In the Supabase dashboard, click **Connect** (top of the project) → **Session pooler**, and copy the URI. It looks like `postgresql://postgres.<project ref>:[YOUR-PASSWORD]@aws-0-<region>.pooler.supabase.com:5432/postgres`. Put in the database password. If you don't know it, reset it in Project Settings → Database. The app doesn't use this password, so resetting it is safe. Treat the string like the secret key: never commit it or paste it anywhere public.
+
+**Make a copy** (PowerShell, from the project folder; `backups/` is ignored by Git):
+```
+$env:DB_URL = "<session pooler URI>"
+$day = Get-Date -Format "yyyy-MM-dd-HHmm"
+New-Item -ItemType Directory -Force backups | Out-Null
+npx supabase db dump --db-url $env:DB_URL -f "backups/$day-roles.sql" --role-only
+npx supabase db dump --db-url $env:DB_URL -f "backups/$day-schema.sql"
+npx supabase db dump --db-url $env:DB_URL -f "backups/$day-data.sql" --use-copy --data-only
+Remove-Item Env:DB_URL
+```
+Check it worked: the three files exist, `data.sql` is several MB once real scores are in, and it contains `COPY "public"."evaluations"` and `COPY "auth"."users"` (search the file in VS Code). Copy the three files somewhere private and off this laptop (a league-only Drive folder), because they hold birthdates and sign-in data. Delete old copies you no longer need.
+
+**Restore into a new project** (the old one is left untouched):
+1. Create a new Supabase project (any plan). Copy its Session pooler URI the same way.
+2. Load the copy into it, all at once (if any step fails, nothing is kept):
+   ```
+   $env:NEW_DB_URL = "<new project's session pooler URI>"
+   $day = "<the date-time part of the file names>"
+   docker run --rm -v "${PWD}\backups:/backups" postgres:17 psql --single-transaction --variable ON_ERROR_STOP=1 `
+     --file "/backups/$day-roles.sql" --file "/backups/$day-schema.sql" `
+     --command "SET session_replication_role = replica" --file "/backups/$day-data.sql" --dbname $env:NEW_DB_URL
+   Remove-Item Env:NEW_DB_URL
+   ```
+3. Point the app at it. In Vercel → Settings → Environment Variables, change `NEXT_PUBLIC_SUPABASE_URL`, the publishable key and `SUPABASE_SECRET_KEY` to the new project's values, then redeploy. In the new project, set Site URL and Redirect URLs (and SMTP, if you use it) as in "Hosted setup for the People page and invitations".
+4. Sign in with your normal password (accounts and passwords come across) and check the Roadmap, Players, Scoring progress and a draft report.
+5. Run `npx supabase link --project-ref <new ref>`, then `npx supabase migration list --linked`. Every migration should show as applied. If the list is empty, ask Claude Code to help fix the migration history **before** the next `db push`.
+
+**Rehearse once before January.** Make a copy of the test site, restore it into a throwaway free project, and sign in. A backup you've never restored is only a hope. Then delete the throwaway project.
 
 ## Hosted setup for the People page and invitations (you run these)
 

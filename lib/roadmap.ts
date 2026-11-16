@@ -287,6 +287,12 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
           links: [{ href: "/protected/end-of-day", label: "End-of-day check" }],
         },
         {
+          key: "backup", title: "Download a season backup",
+          status: "info",
+          detail: "A zip of spreadsheets with every score and the draft report averages, in case the app is down on draft night. Keep it somewhere private.",
+          links: [{ href: `/protected/seasons/${d.season.id}#backup`, label: "Season backup" }],
+        },
+        {
           key: "lock", title: "Lock each age group",
           status: S.length > 0 && stillOpen.length === 0 ? "done" : "todo",
           detail: stillOpen.length > 0 ? `${ages(stillOpen)} ${stillOpen.length === 1 ? "is" : "are"} not locked. Locking stops all edits; you can unlock if needed.` : "All age groups are locked.",
@@ -317,6 +323,7 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
       return [
         { key: "teams", title: "Record teams from the draft", status: "later", detail: "Coming later: assign each player a division and team after the draft.", links: [] },
         { key: "rerate", title: "Coaches re-rate their own players", status: "later", detail: "Coming later. For now, collect ratings in a spreadsheet and use the Prior-year upload next season.", links: [{ href: "/protected/prior-year", label: "Prior-year upload" }] },
+        { key: "final-backup", title: "Download a final backup", status: "info", detail: "Before closing, keep a copy of the season's scores, reports and people as spreadsheets.", links: [{ href: `/protected/seasons/${d.season.id}#backup`, label: "Season backup" }] },
         { key: "close", title: "Close the season", status: d.season.is_closed ? "done" : "todo", detail: d.season.is_closed ? "Closed. Nothing in it can change unless an admin reopens it (audited)." : "Freezes scores, imports, bibs and player edits. Needs a reason and the season's name typed; reopening is audited too.", links: [{ href: `/protected/seasons/${d.season.id}`, label: d.season.is_closed ? "Season page" : "Close the season" }] },
         { key: "next", title: "Set up next season", status: "info", detail: "Division setup carries forward. Teams, roles and evaluations don't.", links: [{ href: "#seasons", label: "Create a season" }] },
       ];

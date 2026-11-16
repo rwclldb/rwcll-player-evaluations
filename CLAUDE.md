@@ -262,6 +262,11 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 
 - **DOB marker on handled import rows** (`components/import-row-dob.tsx`): committed, ignored and already-registered Sports Connect rows forget their birthdate copy, so the batch page and Row Review used to say "! No DOB" for every committed row. They now show the player record's birthdate (✓ Show / ! No DOB, labelled "player record"), and ignored rows show a dash. Both pages also page through all rows instead of `.limit(5000)` (capped at 1,000).
 
+## Built 2026-11-16 (migration not on hosted)
+
+- **Season backup** (migration 20261118090000, test `test:season-backup-runtime`): Season page → "Download season backup" (also Roadmap → Seasons → Backup, and steps in After evaluations and End of season). `admin_season_backup(season)` (admins) returns every season table as JSON and audits `season_backup_downloaded` with row counts; the route `app/protected/seasons/[id]/backup/route.ts` adds `draft_report` per age group and zips (`fflate`) readable CSVs (draft-report, scores, players, prior-year, people, schedule), `tables/*.csv` and a README (`lib/season-backup.ts`). Never birthdates (only `has_birth_date`), private notes, stars, import staging rows or the audit log. The app does not restore from it.
+- **Full database copy and restore** are user-run steps in docs/FAQ.md ("Backups", "Start fresh"). `backups/` is git-ignored.
+
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)

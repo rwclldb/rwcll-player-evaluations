@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { AlertTriangle, ArrowLeft, CheckCircle2, History, Lock, LockOpen, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle2, Download, History, Lock, LockOpen, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { closeSeason, reopenSeason } from "../actions";
@@ -63,10 +63,18 @@ async function SeasonContent({ params, searchParams }: { params: Params; searchP
   const seasonId = Number(id);
   const { data: season } = await supabase.from("seasons").select("id, name, start_date, end_date, is_closed, closed_at").eq("id", seasonId).maybeSingle();
   if (!season) redirect("/protected");
-  const [{ data: checkData }, { data: historyData }] = await Promise.all([
+  const [{ data: checkData }, { data: historyData }, { data: backupData }] = await Promise.all([
     supabase.rpc("admin_season_close_check", { p_season_id: seasonId }),
     supabase.rpc("admin_season_status_history", { p_season_id: seasonId }),
+    supabase.from("audit_log").select("created_at, actor_user_id").eq("action", "season_backup_downloaded")
+      .eq("target_table", "seasons").eq("target_id", String(seasonId)).order("created_at", { ascending: false }).limit(3),
   ]);
+  const backups = (backupData ?? []) as { created_at: string; actor_user_id: string | null }[];
+  const backupActors = [...new Set(backups.map((b) => b.actor_user_id).filter((x): x is string => Boolean(x)))];
+  const { data: actorData } = backupActors.length
+    ? await supabase.from("user_profiles").select("user_id, display_name").in("user_id", backupActors)
+    : { data: [] };
+  const actorName = new Map(((actorData ?? []) as { user_id: string; display_name: string | null }[]).map((p) => [p.user_id, p.display_name ?? "An admin"]));
   const check = checkData as Check | null;
   const history = (historyData ?? []) as HistoryRow[];
   const lastClose = history.find((h) => h.action === "season_closed");
@@ -100,6 +108,26 @@ async function SeasonContent({ params, searchParams }: { params: Params; searchP
 
       {sp.message && <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">{sp.message}</div>}
       {sp.error && <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-700 dark:text-rose-300">{sp.error}</div>}
+
+      <section id="backup" className="scroll-mt-20 space-y-3 rounded-2xl border border-border bg-card p-5">
+        <h2 className="flex items-center gap-2 text-lg font-semibold"><Download className="h-5 w-5" /> Season backup</h2>
+        <p className="text-sm text-muted-foreground">
+          A zip of spreadsheets with everything this season holds: every score, the draft report averages, players, prior-year
+          ratings, check-ins, calls, people and the schedule. If the app is down on draft night, open <span className="font-mono">draft-report.csv</span>.
+          Birthdates and coaches&apos; private notes are left out. Download one at the end of evaluation day and after the draft, and keep it
+          somewhere private: it has children&apos;s names and coaches&apos; emails.
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button asChild>
+            {/* A plain link: the route sends the zip as a download. */}
+            <a href={`/protected/seasons/${season.id}/backup`} download><Download className="mr-1 h-4 w-4" /> Download season backup</a>
+          </Button>
+          <span className="text-xs text-muted-foreground">Takes a few seconds. Each download is recorded in the audit log.</span>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {backups.length === 0 ? "No backup downloaded yet." : <>Last downloaded: {backups.map((b) => `${when(b.created_at)} by ${actorName.get(b.actor_user_id ?? "") ?? "an admin"}`).join(" · ")}</>}
+        </p>
+      </section>
 
       {season.is_closed ? (
         <section className="space-y-4 rounded-2xl border border-border bg-card p-5">

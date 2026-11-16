@@ -43,6 +43,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# database copies (docs/FAQ.md, "Back up and restore the whole database")
+/backups/
+
 # other
 rwcll-fictional-test-league/generated/bib-numbers-test-step4-7.csv
 rwcll-fictional-test-league/rwcll_people.csv
