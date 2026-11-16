@@ -258,6 +258,10 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
   - **Makeup days**: check-in and calling lists now leave out players called at an earlier event or already scored, instead of anyone checked in earlier, so a child who came but was never called or scored is listed again.
   - Help: announcer guide; coach/evaluator scoring lists **Called** and **Now up**; registrar home and makeup wording. Demo loader adds `announcer.alex@example.com` and calls for the scored players in ages 7–8.
 
+## Built 2026-11-16 (no migration)
+
+- **DOB marker on handled import rows** (`components/import-row-dob.tsx`): committed, ignored and already-registered Sports Connect rows forget their birthdate copy, so the batch page and Row Review used to say "! No DOB" for every committed row. They now show the player record's birthdate (✓ Show / ! No DOB, labelled "player record"), and ignored rows show a dash. Both pages also page through all rows instead of `.limit(5000)` (capped at 1,000).
+
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)

@@ -1,5 +1,5 @@
-import { DobMarker } from "@/components/dob-marker";
-import { RevealBirthdate } from "@/components/reveal-birthdate";
+import { ImportRowDob } from "@/components/import-row-dob";
+import { fetchAllByIds, fetchAllRows } from "@/lib/supabase/fetch-all";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -34,6 +34,7 @@ type Row = {
   review_state: string;
   matched_player_id: number | null;
   committed_player_season_id: number | null;
+  existing_player_season_id: number | null;
   duplicate_player_id_resolved_at: string | null;
   duplicate_player_id_resolved_by: string | null;
   duplicate_player_id_resolution_reason: string | null;
@@ -134,12 +135,23 @@ async function ImportBatchReviewContent({ params, searchParams }: { params: Prom
   }
 
   // Fetch staged rows
-  const { data: rows, error: rowsError } = await supabase
+  const { data: rows, error: rowsError } = await fetchAllRows((from, to) => supabase
     .from("sports_connect_import_rows")
-    .select("id, source_row_number, external_player_id, first_name, last_name, has_birth_date, source_program, source_division, registration_number, payment_status, league_age, review_flags, review_state, matched_player_id, committed_player_season_id, duplicate_player_id_resolved_at, duplicate_player_id_resolved_by, duplicate_player_id_resolution_reason")
+    .select("id, source_row_number, external_player_id, first_name, last_name, has_birth_date, source_program, source_division, registration_number, payment_status, league_age, review_flags, review_state, matched_player_id, committed_player_season_id, existing_player_season_id, duplicate_player_id_resolved_at, duplicate_player_id_resolved_by, duplicate_player_id_resolution_reason")
     .eq("import_batch_id", id)
     .order("source_row_number", { ascending: true })
-    .limit(5000);
+    .order("id", { ascending: true })
+    .range(from, to));
+
+  // Handled rows have forgotten their birthdate, so their DOB reads the player record instead.
+  const linkedRegistrationIds = [...new Set((rows ?? []).flatMap((r) => {
+    const linked = (r as Row).committed_player_season_id ?? (r as Row).existing_player_season_id;
+    return linked ? [linked] : [];
+  }))];
+  const { data: linkedData } = await fetchAllByIds(linkedRegistrationIds, (ids, from, to) => supabase
+    .from("player_seasons").select("id, players(has_birth_date)").in("id", ids).order("id").range(from, to));
+  const registrationHasDob = new Map(((linkedData ?? []) as unknown as { id: number; players: { has_birth_date: boolean } | null }[])
+    .map((r) => [r.id, r.players?.has_birth_date ?? false]));
 
   // Possible matches for each open row, compared on name and birthdate in the database (every player, not just 1,000).
   const { data: candidateData, error: playersError } = await supabase.rpc("import_batch_candidates", { p_batch_id: id });
@@ -275,7 +287,12 @@ async function ImportBatchReviewContent({ params, searchParams }: { params: Prom
                     </div>
                     <div>
                       <span className="text-muted-foreground block font-mono text-[11px]">Birth Date</span>
-                      <span className="text-foreground">{rowData.has_birth_date ? <RevealBirthdate kind="import_row" id={rowData.id} context="Import row review" label="✓ Show" /> : <DobMarker has={false} />}</span>
+                      <span className="text-foreground">
+                        <ImportRowDob rowId={rowData.id} reviewState={rowData.review_state} stagedHas={rowData.has_birth_date}
+                          registrationId={rowData.committed_player_season_id ?? rowData.existing_player_season_id}
+                          registrationHas={registrationHasDob.get(rowData.committed_player_season_id ?? rowData.existing_player_season_id ?? -1)}
+                          context="Import row review" />
+                      </span>
                     </div>
                     <div>
                       <span className="text-muted-foreground block font-mono text-[11px]">Program / Division</span>

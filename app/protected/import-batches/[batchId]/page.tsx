@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BulkPanel } from "./bulk-panel";
 import { DobMarker } from "@/components/dob-marker";
-import { RevealBirthdate } from "@/components/reveal-birthdate";
+import { ImportRowDob } from "@/components/import-row-dob";
+import { fetchAllByIds, fetchAllRows } from "@/lib/supabase/fetch-all";
 import { SyncPanel } from "./sync-panel";
 import { 
   ArrowLeft, 
@@ -36,6 +37,8 @@ type StagedRow = {
   league_age: number | null;
   review_flags: unknown;
   review_state: string;
+  committed_player_season_id: number | null;
+  existing_player_season_id: number | null;
 };
 
 // Possible existing players, worked out in the database (import_batch_candidates) so no birthdates reach the page.
@@ -130,12 +133,23 @@ async function ImportBatchDetailContent({ batchId, bulkMessage, bulkError, syncM
   }
 
   // Fetch staged rows for this batch
-  const { data: rows, error: rowsError } = await supabase
+  const { data: rows, error: rowsError } = await fetchAllRows((from, to) => supabase
     .from("sports_connect_import_rows")
-    .select("id, source_row_number, external_player_id, first_name, last_name, has_birth_date, source_program, source_division, registration_number, payment_status, league_age, review_flags, review_state")
+    .select("id, source_row_number, external_player_id, first_name, last_name, has_birth_date, source_program, source_division, registration_number, payment_status, league_age, review_flags, review_state, committed_player_season_id, existing_player_season_id")
     .eq("import_batch_id", numericId)
     .order("source_row_number", { ascending: true })
-    .limit(5000);
+    .order("id", { ascending: true })
+    .range(from, to));
+
+  // Handled rows have forgotten their birthdate, so their DOB column reads the player record instead.
+  const linkedRegistrationIds = [...new Set((rows ?? []).flatMap((r) => {
+    const id = (r as StagedRow).committed_player_season_id ?? (r as StagedRow).existing_player_season_id;
+    return id ? [id] : [];
+  }))];
+  const { data: linkedData } = await fetchAllByIds(linkedRegistrationIds, (ids, from, to) => supabase
+    .from("player_seasons").select("id, players(has_birth_date)").in("id", ids).order("id").range(from, to));
+  const registrationHasDob = new Map(((linkedData ?? []) as unknown as { id: number; players: { has_birth_date: boolean } | null }[])
+    .map((r) => [r.id, r.players?.has_birth_date ?? false]));
 
   // Possible existing players for each open row (top 3), compared on name and birthdate in the database.
   const { data: candidateData, error: playersError } = await supabase.rpc("import_batch_candidates", { p_batch_id: numericId });
@@ -287,7 +301,12 @@ async function ImportBatchDetailContent({ batchId, bulkMessage, bulkError, syncM
                         <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{row.source_row_number}</td>
                         <td className="px-4 py-3 font-mono text-xs text-emerald-700 dark:text-emerald-400 font-semibold">{row.external_player_id || "—"}</td>
                         <td className="px-4 py-3 font-medium text-foreground text-xs">{row.first_name} {row.last_name}</td>
-                        <td className="px-4 py-3 text-xs">{row.has_birth_date ? <RevealBirthdate kind="import_row" id={row.id} context="Import batch page" label="✓ Show" /> : <DobMarker has={false} />}</td>
+                        <td className="px-4 py-3 text-xs">
+                          <ImportRowDob rowId={row.id} reviewState={row.review_state} stagedHas={row.has_birth_date}
+                            registrationId={row.committed_player_season_id ?? row.existing_player_season_id}
+                            registrationHas={registrationHasDob.get(row.committed_player_season_id ?? row.existing_player_season_id ?? -1)}
+                            context="Import batch page" />
+                        </td>
                         <td className="px-4 py-3 font-mono text-xs text-slate-700 dark:text-slate-300">{row.league_age ?? "Review"}</td>
                         <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{row.source_program || "—"}</td>
                         <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{row.source_division || "—"}</td>
