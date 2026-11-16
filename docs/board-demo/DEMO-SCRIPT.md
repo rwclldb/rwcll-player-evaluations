@@ -1,6 +1,6 @@
 # Board demo: run sheet
 
-About 30 minutes: 5 minutes of slides, 18 minutes of live demo, then questions.
+About 30 minutes: 5 minutes of slides, 19 minutes of live demo, then questions.
 The deck `RWCLL-Player-Evaluations-Board.pptx` (same folder) is the backup: every
 demo step has a matching slide with speaker notes, so you can switch to slides at
 any point.
@@ -55,6 +55,8 @@ players, 18 test accounts. Nothing touches the hosted site.
 - 46 players checked in, one injured player excused (Luke Rivera, age 7), four
   coach's kids, and one possible duplicate (a walk-up, Elliot Carter, bib 990).
 - Avery has starred three age 9 players and written two private notes.
+- An announcer (`announcer.alex@example.com`) has called about 60% of ages 7–8
+  (the players already scored).
 
 ---
 
@@ -101,14 +103,23 @@ players, 18 test accounts. Nothing touches the hosted site.
 - Optional: point at step **Board decision: prior-year ratings while scoring**.
   "That's one of my questions for you at the end."
 
-### 4. Evaluation day (Windows C, B, A, 8 min)
+### 4. Evaluation day (Windows C, B, A, 9 min)
 
 - **Window C (registrar):** "This is the check-in table." Tap **Check players
   in** → filter **7** → **Not here yet** → tap **Barnes, Eli (301)**.
   "One tap. Tap again to undo." Point out "1 exempt from attending" (the
   injured player).
+- **Window C (registrar), calling players:** menu → **Call players** → age **7**.
+  "Someone at the field calls bib numbers so players know when to go."
+  **Next up** shows the next players who are here and haven't been called; Eli
+  Barnes, whom you just checked in, is there. Tap **Eli Barnes** → he's marked
+  **Called** (tap again to undo). "A parent volunteer can do just this job with an
+  announcer account: names, bibs and ages, nothing else." (Show the announcer
+  slide here if you like.)
 - **Window B (coach):** Home shows "Evaluation day is today!" and Avery's age
-  groups. Tap **Score** on age 7. Refresh: **Eli Barnes now shows Here**.
+  groups. Tap **Score** on age 7. Refresh: **Eli Barnes now shows Here and
+  Called**, and he's first in the **Now up** strip at the top. "Coaches always
+  know who's on the field; tap a name in Now up to open that player."
 - Tap **#201 Arbor, Alex**. Tap a score for each of the five skills
   (for example 3, 4, 3, 2, 4) → **Save & Next**. "Big buttons, built for a
   phone in the sun."
@@ -119,7 +130,9 @@ players, 18 test accounts. Nothing touches the hosted site.
   field has no signal."
 - **Window A (admin):** **Roadmap** → **3 Evaluation day** → **Watch scoring
   progress**. "Avery has started: 2 of 13. If a scorer goes quiet for 15
-  minutes, it says so."
+  minutes, it says so." Point at Age 7's **called** count: "And who was called
+  but not scored yet." (After the day, **Evaluation day → End-of-day check**
+  lists anyone called but missing a score, or checked in but never called.)
 
 ### 5. Draft reports (Windows A and B, 4 min)
 

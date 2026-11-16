@@ -70,7 +70,8 @@ It creates:
   assigned to **age 8**. They show as "Board Member 1" to "Board Member 6".
 - The usual test accounts: `admin.jordan@example.com` (admin),
   `coach.avery@example.com` (coach, hasn't started age 7),
-  `registrar.riley@example.com` (registrar).
+  `registrar.riley@example.com` (registrar), and `announcer.alex@example.com`
+  (announcer), who has called about 60% of ages 7–8 (the players already scored).
 
 Need more than six seats? Add `--board-seats=10` (up to 20).
 
@@ -136,13 +137,21 @@ the real thing in your hand.
 - Step **Assign age groups** → **Assignments**: coaches only score their own age
   groups. Point at the six Board Members on **Age 8**: "That's you, in a minute."
 
-### 4. Evaluation day (Windows C and B, 6 min)
+### 4. Evaluation day (Windows C and B, 7 min)
 
 - **Window C (registrar):** **Check players in** → age **7** → **Not here yet** →
   tap **Barnes, Eli (301)**. One tap; tap again to undo. "1 exempt from
   attending" is the injured player.
+- **Window C (registrar), calling players:** menu → **Call players** → age **7**.
+  "Someone at the field calls bib numbers so players know when to go."
+  **Next up** shows the next players who are here and haven't been called; Eli
+  Barnes, whom you just checked in, is there. Tap **Eli Barnes** → he's marked
+  **Called** (tap again to undo). "A parent volunteer can do just this job with an
+  announcer account: names, bibs and ages, nothing else." (Show the announcer
+  slide here if you like.)
 - **Window B (coach Avery):** Home says "Evaluation day is today!". **Score** on
-  age 7: Eli Barnes now shows **Here**. Tap **#201 Arbor, Alex**, tap a score for
+  age 7: Eli Barnes now shows **Here** and **Called**, first in the **Now up**
+  strip at the top. Tap **#201 Arbor, Alex**, tap a score for
   each skill, **Save & Next**.
 - **No signal (optional, 1 min):** F12 → **Network** → **Offline**; score #202 →
   **Save & Next**; point at "On phone (not sent)" and the **1 not sent** badge;
