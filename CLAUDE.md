@@ -269,6 +269,8 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 
 ## Tracked additions (confirmed requirements, not yet built)
 
+- **Teams and the draft** (scoped 2026-11-19; spec `docs/DRAFT-SPEC.md`, waiting for approval): teams with a Manager, Coach and assistants; coach's kids linked to a parent; sibling groups; per-division drafts (Juniors Feb 1, Majors Feb 2, AAA Feb 4, 2027) with pool rules, a draw, snake order and rule switches copied forward; a live draft room (admins pick; the division's managers and coaches watch, sort and keep stars and notes); undrafted players fall through to the next division; a team generator for AA (rosters by Feb 6) and Seniors; Move player with notes; a roster CSV.
+
 - **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)
 - **Shared test server.** Vercel + hosted Supabase is running; `SUPABASE_SECRET_KEY` is set on Vercel (2026-11-11). Hosted needs every 2026-11-11 migration and Site URL / Redirect URLs (user-run steps; see docs/FAQ.md). The hosted plan can't edit email templates, so the app doesn't depend on them.
 
