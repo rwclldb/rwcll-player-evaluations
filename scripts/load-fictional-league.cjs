@@ -5,6 +5,9 @@
 //   npm run fixtures:load -- --reset --scored         same, plus all Spring 2027 evaluations (for draft reports)
 //   npm run fixtures:load                             load into an empty local DB (refuses if players exist)
 //   npm run fixtures:load -- --reset --demo           board demo: scored league mid-evaluation-day (docs/DEMO-SCRIPT.md); includes --teams
+//   npm run demo:draft-day                            jump an already-loaded league to draft day (no wipe): every fixture score
+//                                                     not yet entered is saved, every age group is locked and released, and
+//                                                     teams and drafts are added if missing (= --draft-day; also with --hosted)
 //   add --teams                                       teams and staff (from the volunteer report), coach's kids, siblings, and
 //                                                     the Juniors, Majors and AAA drafts set up with their order (not started)
 //                                                     [--demo-date=YYYY-MM-DD] (default: today, Pacific)
@@ -48,6 +51,9 @@ const addDays = (iso, n) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDa
 const OPEN_SESSIONS = args.has("--open-sessions");
 // TEAMS: teams, staff, coach's kids, siblings and drafts in setup (the board demo includes them).
 const TEAMS = args.has("--teams") || DEMO;
+// DRAFT_DAY: advance the loaded league to draft day without wiping it.
+const DRAFT_DAY = args.has("--draft-day");
+if (DRAFT_DAY && (args.has("--reset") || args.has("--bare"))) { console.error("--draft-day works on an already-loaded league: load it first (npm run demo:load), then run it alone."); process.exit(1); }
 // BARE: admin accounts and seasons only; everything else is done by hand in the app.
 const BARE = args.has("--bare");
 // HOSTED mode is meant to be run by the user, never by Claude Code (hosted Supabase is off limits to it).
@@ -118,6 +124,19 @@ async function ensureUser(svc, existingUsers, email, password, displayName) {
   return id;
 }
 
+// Fixture key (PLY-, SMP-, DRF-) -> registration, by name and birthdate.
+function buildRefToReg(byNameDob) {
+  const scenario = readCsv(path.join(gen, "scenario-notes.csv"));
+  const sample = readCsv(path.join(root, "docs/test-fixtures/sports-connect-sample-spring-2027-fake.csv"));
+  const draftPlayers = readCsv(path.join(gen, "draft-players-spring-2027.csv"));
+  const key = (s) => `${s["Player First Name"]}|${s["Player Last Name"]}|${usToIso(s["Player Birth Date"]) ?? ""}`;
+  return (ref) => {
+    if (ref.startsWith("PLY-")) return byNameDob.get(key(scenario.find((x) => x["Fixture Key"] === ref)));
+    if (ref.startsWith("DRF-")) return byNameDob.get(key(draftPlayers.find((x) => x["Fixture Key"] === ref)));
+    return byNameDob.get(key(sample[Number(ref.slice(4)) - 1]));
+  };
+}
+
 async function must(promise, what) {
   const { data, error } = await promise;
   if (error) fail(`${what}: ${error.message}`);
@@ -144,6 +163,7 @@ async function main() {
     if (i > 30) fail(`database API not ready: ${error.message}`);
     await new Promise((r) => setTimeout(r, 1000));
   }
+  if (DRAFT_DAY) return draftDay({ svc, anonKey });
   const { count: existing } = await svc.from("players").select("id", { count: "exact", head: true });
   if (existing > 0) fail(`database already has ${existing} players. ${HOSTED ? "Wipe it first (npx supabase db reset --linked)." : "Re-run with --reset to wipe it first."}`);
   const { count: categoryCount } = await svc.from("rating_categories").select("id", { count: "exact", head: true });
@@ -247,14 +267,7 @@ PASS: bare league loaded: ${Object.keys(userId).length} admin accounts, Spring 2
   // ---------- prior-year coach ratings of players (SIMULATED: historical import not built yet) ----------
   const hist = readCsv(path.join(gen, "spring-2026-coach-ratings.csv"));
   const expected = readCsv(path.join(gen, "spring-2026-expected-matches.csv"));
-  const scenario = readCsv(path.join(gen, "scenario-notes.csv"));
-  const sample = readCsv(path.join(root, "docs/test-fixtures/sports-connect-sample-spring-2027-fake.csv"));
-  const draftPlayers = readCsv(path.join(gen, "draft-players-spring-2027.csv"));
-  const refToReg = (ref) => {
-    if (ref.startsWith("PLY-")) { const s = scenario.find((x) => x["Fixture Key"] === ref); return byNameDob.get(`${s["Player First Name"]}|${s["Player Last Name"]}|${usToIso(s["Player Birth Date"]) ?? ""}`); }
-    if (ref.startsWith("DRF-")) { const s = draftPlayers.find((x) => x["Fixture Key"] === ref); return byNameDob.get(`${s["Player First Name"]}|${s["Player Last Name"]}|${usToIso(s["Player Birth Date"])}`); }
-    const s = sample[Number(ref.slice(4)) - 1]; return byNameDob.get(`${s["Player First Name"]}|${s["Player Last Name"]}|${usToIso(s["Player Birth Date"])}`);
-  };
+  const refToReg = buildRefToReg(byNameDob);
   const categories = await must(svc.from("rating_categories").select("id, code, name"), "read categories");
   const coachUser = Object.fromEntries(people.filter((p) => p.coached_spring_2026 === "YES").map((p) => [p.fictional_person_key, userId[p.fictional_person_key] ?? null]));
   const coachKeyByName = { "Avery Linden": "COA-01", "Bailey Marsh": "COA-02", "Cameron Reyes": "COA-03", "Elliott Brandt": "COA-05", "Finley Moss": "COA-06", "Gray Whitfield": "COA-07", "Indigo Ferris": "COA-09" };
@@ -503,6 +516,67 @@ async function loadTeams({ svc, admin, s2027, adminId, password, refToReg }) {
     await must(admin.rpc("admin_draw_draft_order", { p_draft_id: draftId }), `${name} order`);
   }
   log("REAL drafts: Juniors (2 x 13), Majors (8 x 12) and AAA (8 x 12) set up with a drawn order; start them from Drafts once their age groups are released");
+}
+
+// ---------- draft day: jump a loaded league to after evaluations (REAL app functions; scores as each evaluator) ----------
+async function draftDay({ svc, anonKey }) {
+  const season = await must(svc.from("seasons").select("id, name").eq("name", "Spring 2027").maybeSingle(), "find Spring 2027");
+  if (!season) fail("No Spring 2027 season: load the league first (npm run demo:load).");
+  const admin = createClient(status.API_URL, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  await must(admin.auth.signInWithPassword({ email: "admin.jordan@example.com", password }), "sign in as admin.jordan");
+  const adminId = (await admin.auth.getUser()).data.user.id;
+  const regs = await must(svc.from("player_seasons").select("id, player_id, league_age, players(first_name, last_name, date_of_birth)").eq("season_id", season.id), "read registrations");
+  const refToReg = buildRefToReg(new Map(regs.map((r) => [`${r.players.first_name}|${r.players.last_name}|${r.players.date_of_birth ?? ""}`, r])));
+  const sessions = await must(svc.from("evaluation_sessions").select("id, league_age, status, published_at").eq("season_id", season.id), "read sessions");
+  const sessionByAge = Object.fromEntries(sessions.map((x) => [x.league_age, x]));
+  const { data: users } = await svc.auth.admin.listUsers({ perPage: 1000 });
+  const userByEmail = Object.fromEntries((users?.users ?? []).map((u) => [u.email, u.id]));
+
+  // Fixture scores not entered yet (anything already saved, including live demo scoring, is kept).
+  const done = new Set();
+  for (let from = 0; ; from += 1000) {
+    const page = await must(svc.from("evaluations").select("evaluator_user_id, player_season_id").range(from, from + 999), "read evaluations");
+    for (const e of page) done.add(`${e.evaluator_user_id}|${e.player_season_id}`);
+    if (page.length < 1000) break;
+  }
+  const todo = readCsv(path.join(gen, "scored/spring-2027-evaluations.csv")).map((r) => ({ r, reg: refToReg(r["Fixture Key"]), user: userByEmail[r["Evaluator Email"]] }))
+    .filter((x) => x.reg && x.user && !done.has(`${x.user}|${x.reg.id}`));
+  // Age groups with scores to add must be Open: step back (with a reason) or open them.
+  for (const age of [...new Set(todo.map((x) => x.reg.league_age))]) {
+    const sess = sessionByAge[age];
+    if (!sess) fail(`no age group for age ${age}`);
+    if (sess.published_at) await must(admin.rpc("change_evaluation_session_stage", { p_session_id: sess.id, p_action: "unrelease", p_reason: "Draft day fixture: add the remaining scores" }), `unrelease age ${age}`);
+    if (sess.status === "locked") await must(admin.rpc("change_evaluation_session_stage", { p_session_id: sess.id, p_action: "unlock", p_reason: "Draft day fixture: add the remaining scores" }), `unlock age ${age}`);
+    if (sess.status === "setup") await must(svc.from("evaluation_sessions").update({ status: "open" }).eq("id", sess.id), `open age ${age}`); // SIMULATED admin "Open"
+  }
+  const categories = await must(svc.from("rating_categories").select("code"), "read categories");
+  const byEvaluator = todo.reduce((m, x) => ((m[x.r["Evaluator Email"]] ??= []).push(x), m), {});
+  let saved = 0;
+  for (const [email, rows] of Object.entries(byEvaluator)) {
+    const client = createClient(status.API_URL, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    await must(client.auth.signInWithPassword({ email, password }), `sign in as ${email}`);
+    for (const { r, reg } of rows) {
+      const ratings = Object.fromEntries(categories.map((c) => c.code).filter((c) => r[c] !== "").map((c) => [c, Number(r[c])]));
+      await must(client.rpc("save_evaluation", { p_session_id: sessionByAge[reg.league_age].id, p_player_season_id: reg.id, p_ratings: ratings, p_experience_answers: {}, p_status: r.Status }), `${email} score`);
+      saved++;
+    }
+    await client.auth.signOut();
+  }
+  log(`REAL scoring: ${saved} remaining fixture scores saved by ${Object.keys(byEvaluator).length} evaluators (${done.size} already there were kept)`);
+
+  // REAL: the Sessions page's lock and release for every age group.
+  let locked = 0, released = 0;
+  for (const sess of await must(svc.from("evaluation_sessions").select("id, league_age, status, published_at").eq("season_id", season.id).order("league_age"), "re-read sessions")) {
+    if (sess.status === "setup") await must(svc.from("evaluation_sessions").update({ status: "open" }).eq("id", sess.id), `open age ${sess.league_age}`);
+    if (sess.status !== "locked") { await must(admin.rpc("change_evaluation_session_stage", { p_session_id: sess.id, p_action: "lock" }), `lock age ${sess.league_age}`); locked++; }
+    if (!sess.published_at) { await must(admin.rpc("change_evaluation_session_stage", { p_session_id: sess.id, p_action: "release" }), `release age ${sess.league_age}`); released++; }
+  }
+  log(`REAL sessions: ${locked} age groups locked, ${released} released; every age group is now released to coaches`);
+
+  const { count: teams } = await svc.from("teams").select("id", { count: "exact", head: true }).eq("season_id", season.id);
+  if (!teams) await loadTeams({ svc, admin, s2027: season, adminId, password, refToReg });
+  else log(`Teams already there (${teams}); drafts left as they are.`);
+  log("\nPASS: draft day. Every age group is scored, locked and released; start a draft from Drafts (Juniors, then Majors, then AAA).");
 }
 
 main().catch((e) => fail(e.stack || e.message));

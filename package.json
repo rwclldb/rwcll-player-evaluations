@@ -33,6 +33,7 @@
     "fixtures:generate": "node scripts/generate-fictional-league.cjs",
     "fixtures:load": "node scripts/load-fictional-league.cjs",
     "demo:load": "node scripts/load-fictional-league.cjs --reset --demo",
+    "demo:draft-day": "node scripts/load-fictional-league.cjs --draft-day",
     "test:evaluation-submit-runtime": "node scripts/test-evaluation-submit-runtime.cjs",
     "test:session-stage-runtime": "node scripts/test-session-stage-runtime.cjs",
     "test:draft-report-runtime": "node scripts/test-draft-report-runtime.cjs",

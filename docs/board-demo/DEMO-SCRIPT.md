@@ -193,5 +193,8 @@ flags 14 · coach view 15 · help and QR codes 17.
 
 ## After the demo
 
+To show the draft next: `npm run demo:draft-day` jumps the same league to draft day (every player scored, every
+age group locked and released; nothing is wiped). Then **Draft ▾ → Drafts** and start Juniors, Majors or AAA.
+
 The demo data is disposable. Load it again any time with `npm run demo:load`,
 or go back to the usual test league with `npm run fixtures:load -- --reset`.

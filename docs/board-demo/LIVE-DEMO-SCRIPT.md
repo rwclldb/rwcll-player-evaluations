@@ -211,6 +211,8 @@ coach view 15 · help and QR codes 17.
 
 ## After the demo
 
+- **To show the draft:** `npm run fixtures:load -- --hosted --confirm-project=<your project ref> --draft-day`
+  jumps the live league to draft day (every player scored, every age group locked and released; nothing is wiped).
 - **To demo again:** steps 3 and 5.
 - **Before real use:** wipe the live database (step 3). Then, in Supabase,
   **Authentication → Users**, delete every `@example.com` account: the demo
