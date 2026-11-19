@@ -118,6 +118,21 @@ export const GUIDES: HelpGuide[] = [
       noSignal,
       draftReports("coach"),
       {
+        id: "draft-room",
+        title: "Watching the draft",
+        blocks: [
+          "If you're the Manager or Coach of a team, you can follow your division's draft live on your phone or laptop. League admins make every pick; you watch and plan.",
+          { steps: [
+            "On the home page, tap [[Watch the draft]] under Drafts.",
+            "The [[Board]] shows every pick by round and team; your team is marked (you), and the team on the clock is highlighted. Picks appear within a few seconds.",
+            "[[Players]] lists who is still available. Sort by the evaluator average, the coach average, the coach average with the high and low left out, last year's rating, or your own scores. The top player is marked [[Next best]].",
+            "Tap the star to add a player to [[My stars]], and the note icon to write a private note. Only you can see them; they're the same stars and notes as on the draft report.",
+            "[[My team]] lists your players so far.",
+          ] },
+          "Coach's kids go to their parent's team automatically, and siblings play together. Picks marked [[Must draft]] near the end are kept for players who have to be drafted, such as every 12-year-old in Majors.",
+        ],
+      },
+      {
         id: "faq",
         title: "Questions",
         blocks: [
@@ -277,6 +292,21 @@ export const GUIDES: HelpGuide[] = [
             "Look through [[The pool]]. To put a player in, take one out, or move one to another division, use Change… or Add a player to this pool, with a short note saying why. Every change is logged.",
           ] },
           "The box at the top lists anything still to do before the draft can start, such as an order that isn't set or age groups not released to coaches yet.",
+        ],
+      },
+      {
+        id: "running-the-draft",
+        title: "Running the draft",
+        blocks: [
+          { steps: [
+            "On the setup page, tap [[Start the draft…]] and confirm. The rules, order and roster sizes lock.",
+            "In the draft room, tap a player in the list, check the bar at the bottom, and tap Pick for the team on the clock.",
+            "Coach's kids and siblings are picked automatically when their turn comes. When a sibling doesn't have to be in this draft, choose [[Take with next pick]] or [[Send down]].",
+            "Near the end, picks marked must draft only take must-draft players. To pick someone else, type a short note saying why; it's kept with the pick.",
+            "Use [[Pause]] for a break and [[Resume]] to carry on. Open [[Projector]] on the screen in the room.",
+            "When the picks are done, tap [[Finish draft]]. Undrafted players drop to the next division whose ages fit.",
+          ] },
+          "There's no undo. A wrong pick is fixed afterwards by moving the player, with a note.",
         ],
       },
     ],

@@ -82,7 +82,10 @@ async function DraftsContent({ searchParams }: { searchParams: SearchParams }) {
               )}
               <div className="mt-auto flex flex-wrap gap-2 pt-3">
                 {d.draft ? (
-                  <Button asChild size="sm"><Link href={`/protected/drafts/${d.season_division_id}`}>Open setup <ArrowRight className="ml-1 h-4 w-4" /></Link></Button>
+                  <>
+                    {d.draft.status !== "setup" && <Button asChild size="sm"><Link href={`/protected/drafts/${d.season_division_id}/room`}>Draft room <ArrowRight className="ml-1 h-4 w-4" /></Link></Button>}
+                    <Button asChild size="sm" variant={d.draft.status === "setup" ? "default" : "outline"}><Link href={`/protected/drafts/${d.season_division_id}`}>{d.draft.status === "setup" ? <>Open setup <ArrowRight className="ml-1 h-4 w-4" /></> : "Setup"}</Link></Button>
+                  </>
                 ) : (
                   <>
                     <form action={createDraft}>

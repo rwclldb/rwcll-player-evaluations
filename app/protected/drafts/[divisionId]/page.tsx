@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { AlertTriangle, ArrowLeft, Baby, CheckCircle2, Dices, Info, ListOrdered, Plus, Settings2, Users, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Baby, CheckCircle2, Dices, Info, ListOrdered, Play, Plus, Settings2, Users, XCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import {
   KID_RULE_LABEL, REASON_LABEL, STATUS_LABEL, defaultKidRound, setupChecks, type DraftSetup, type PoolPlayer,
 } from "@/lib/drafts";
 import { createDraft, deleteDraft, drawOrder, poolOverride, saveSettings, setKidRound, setOrder, setRosterSize } from "../actions";
+import { startDraft } from "../room-actions";
 
 type Params = Promise<{ divisionId: string }>;
 type SearchParams = Promise<{ show?: string; age?: string; message?: string; error?: string }>;
@@ -102,7 +103,7 @@ async function SetupContent({ params, searchParams }: { params: Params; searchPa
         <section className={`${card} space-y-2`} aria-label="Ready to start?">
           <h2 className="flex items-center gap-2 font-bold text-foreground">
             {blocks ? <XCircle className="h-5 w-5 text-rose-600" /> : <CheckCircle2 className="h-5 w-5 text-emerald-600" />}
-            {blocks ? `${blocks} ${blocks === 1 ? "thing" : "things"} to do before the draft can start` : "Ready to start once the draft room is built (next step)"}
+            {d.status !== "setup" ? `The draft is ${STATUS_LABEL[d.status].toLowerCase()}.` : blocks ? `${blocks} ${blocks === 1 ? "thing" : "things"} to do before the draft can start` : "Ready to start"}
           </h2>
           <ul className="space-y-1 text-sm">
             {checks.map((c, i) => (
@@ -113,6 +114,18 @@ async function SetupContent({ params, searchParams }: { params: Params; searchPa
             ))}
             {checks.length === 0 && <li className="text-muted-foreground">Nothing to fix.</li>}
           </ul>
+          {d.status === "setup" && editable && blocks === 0 && (
+            <details className="pt-1">
+              <summary className="inline-flex cursor-pointer items-center gap-1 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"><Play className="h-4 w-4" /> Start the draft…</summary>
+              <form action={startDraft} className="mt-2 flex flex-wrap items-center gap-2 text-sm">{hidden}
+                <span className="text-muted-foreground">Starting locks the rules, the order and the roster sizes, and places any coach&apos;s kids whose turn comes first. Managers and coaches can watch from then on.</span>
+                <Button type="submit"><Play className="mr-1 h-4 w-4" /> Yes, start the {s.division.name} draft</Button>
+              </form>
+            </details>
+          )}
+          {d.status !== "setup" && (
+            <Button asChild><Link href={`/protected/drafts/${divisionId}/room`}>Open the draft room <ArrowRight className="ml-1 h-4 w-4" /></Link></Button>
+          )}
         </section>
       )}
 

@@ -45,6 +45,10 @@ if (passes < 16) {
 const jiti = require("jiti")(__filename);
 const rm = jiti(path.join(root, "lib/roadmap.ts"));
 const dr = jiti(path.join(root, "lib/drafts.ts"));
+const room = jiti(path.join(root, "lib/draft-room.ts"));
+const B = (o = {}) => ({ draft: { age_order: "open", status: "live", pick_timer_seconds: 120, clock_started_at: "2027-02-02T18:00:00Z" }, teams: [{ team_id: 1, name: "Aces" }, { team_id: 2, name: "Bats" }],
+  next: { overall: 3, round: 2, pick_in_round: 1, team_id: 2, must_only: false }, tier_age: null, reserved: {}, ...o });
+const RP = (o = {}) => ({ player_season_id: 1, league_age: 11, must_draft: false, bib: 1, evaluator_overall: null, coach_overall: null, coach_trimmed_overall: null, prior_overall: null, my_overall: null, ...o });
 const T0 = { divisions: [], coachKids: 0, coachKidsUnlinked: 0, siblingGroups: 0, suggestions: 0 };
 const setup = (o = {}) => ({ division: { season_division_id: 3, name: "Majors", min_age: 10, max_age: 12, season_id: 2, season: "S", season_closed: false },
   draft: { id: 1, status: "setup", must_draft_ages: [12], roster_size: 12, coach_kid_rule: "fixed_rounds", coach_kid_rounds: [1, 2], coach_kid_by_round: 2, order_set_at: "x" },
@@ -86,6 +90,13 @@ const checks = [
   ["setup check: a ready draft has nothing blocking", dr.setupChecks(setup({ pool: P(20) })).every((c) => c.level !== "block")],
   ["kid round default: fixed rounds in order, manager's kid first; otherwise the suggested round", dr.defaultKidRound(setup().draft, { kid_order: 2, suggested_round: 5 }) === 2
     && dr.defaultKidRound({ ...setup().draft, coach_kid_rule: "round_per_kid" }, { kid_order: 1, suggested_round: 5 }) === 5 && dr.defaultKidRound({ ...setup().draft, coach_kid_rule: "by_round" }, { kid_order: 1, suggested_round: 5 }) === null],
+  ["room: another team's coach's kid can't be picked", room.pickRule(B({ reserved: { "1": 1 } }), RP()).allowed === false],
+  ["room: a must-draft-only pick needs a note for anyone else", room.pickRule(B({ next: { overall: 3, round: 2, pick_in_round: 1, team_id: 2, must_only: true } }), RP()).needsNote
+    && !room.pickRule(B({ next: { overall: 3, round: 2, pick_in_round: 1, team_id: 2, must_only: true } }), RP({ must_draft: true })).needsNote],
+  ["room: oldest first needs a note for a younger player", room.pickRule(B({ draft: { age_order: "oldest_first", status: "live" }, tier_age: 12 }), RP()).needsNote],
+  ["room: sorting puts players without a number last", room.sortPlayers([RP({ player_season_id: 1, evaluator_overall: null }), RP({ player_season_id: 2, evaluator_overall: 3 }), RP({ player_season_id: 3, evaluator_overall: 4 })], "evaluator").map((p) => p.player_season_id).join() === "3,2,1"],
+  ["room: the trimmed sort falls back to the plain coach average", room.sortValue(RP({ coach_overall: 3, coach_trimmed_overall: null }), "trimmed") === 3],
+  ["room: the pick clock counts down from when the pick came up", room.clockLeft(B(), 0, Date.parse("2027-02-02T18:00:30Z")) === 90 && room.clockLeft(B(), 0, Date.parse("2027-02-02T18:03:00Z")) === -60],
   ["dates format without a time-zone shift", rm.formatDate("2027-01-23") === "Sat, Jan 23" && rm.formatTime("15:30:00") === "3:30 PM"],
 ];
 for (const [label, ok] of checks) {

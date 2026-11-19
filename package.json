@@ -64,6 +64,7 @@
     "test:announcer-runtime": "node scripts/test-announcer-runtime.cjs",
     "test:teams-families-runtime": "node scripts/test-teams-families-runtime.cjs",
     "test:draft-setup-runtime": "node scripts/test-draft-setup-runtime.cjs",
+    "test:draft-room-runtime": "node scripts/test-draft-room-runtime.cjs",
     "test:season-backup-runtime": "node scripts/test-season-backup-runtime.cjs"
   },
   "dependencies": {

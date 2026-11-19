@@ -62,9 +62,11 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
     );
   }
 
-  const [{ data: schedule }, { data: account }, roles] = await Promise.all([
-    supabase.rpc("my_evaluation_schedule"), supabase.rpc("my_account"), getMyRoles(supabase),
+  const [{ data: schedule }, { data: account }, roles, { data: draftRows }] = await Promise.all([
+    supabase.rpc("my_evaluation_schedule"), supabase.rpc("my_account"), getMyRoles(supabase), supabase.rpc("my_drafts"),
   ]);
+  // Drafts this person watches or runs (managers and coaches of the division; registrars), once set up.
+  const drafts = (draftRows ?? []) as { draft_id: number; season_division_id: number; division: string; status: string }[];
   const name = (account as { display_name: string | null } | null)?.display_name || user.email;
   // Registrars get the Evaluation Day hub, announcers the calling card; coaches and evaluators get their schedule
   // and shortcuts (some people are several).
@@ -72,6 +74,19 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <p className="text-sm text-muted-foreground">Welcome, <span className="font-medium text-foreground">{name}</span></p>
+      {drafts.length > 0 && (
+        <section className="rounded-2xl border border-emerald-500/40 bg-card p-4">
+          <h2 className="font-bold text-foreground">Draft{drafts.length === 1 ? "" : "s"}</h2>
+          <ul className="mt-2 space-y-2">
+            {drafts.map((d) => (
+              <li key={d.draft_id} className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-sm"><strong>{d.division}</strong> <span className="text-muted-foreground">{d.status === "live" ? "· happening now" : d.status === "paused" ? "· paused" : d.status === "done" ? "· finished" : "· not started yet"}</span></span>
+                <Link href={`/protected/drafts/${d.season_division_id}/room`} className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500">{d.status === "live" || d.status === "paused" ? "Watch the draft" : "Draft room"}</Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {roles.registrarSeason && <EvaluationDayHub season={roles.registrarSeason} />}
       {roles.announcerSeason && !roles.registrarSeason && <AnnouncerHub season={roles.announcerSeason} />}
       {scores && <MySchedule rows={(schedule ?? []) as ScheduleRow[]} />}

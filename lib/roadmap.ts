@@ -400,7 +400,19 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
             links: [{ href: "/protected/drafts", label: "Drafts", primary: missing.length + noOrder.length > 0 }],
           };
         })(),
-        { key: "run-drafts", title: "Run the Juniors, Majors and AAA drafts", status: "later", detail: "Coming next: the draft room. Admins and registrars pick; the division's managers and coaches watch live.", links: [] },
+        (() => {
+          const ds = (t.drafts ?? []).filter((x) => ["Juniors", "Majors", "AAA"].includes(x.name) && x.draft);
+          const live = ds.filter((x) => x.status === "live" || x.status === "paused").map((x) => x.name);
+          const done = ds.filter((x) => x.status === "done").map((x) => x.name);
+          return {
+            key: "run-drafts", title: "Run the Juniors, Majors and AAA drafts",
+            status: (ds.length === 3 && done.length === 3 ? "done" : "todo") as StepStatus,
+            detail: live.length ? `Happening now: ${live.join(", ")}. Open the draft room to pick; managers and coaches watch on their own screens.`
+              : done.length ? `Finished: ${done.join(", ")}. Undrafted players have dropped to the next division whose ages fit.`
+              : "Oldest first: Juniors, then Majors, then AAA. Start each from its setup page; admins and registrars pick, the division's managers and coaches watch live.",
+            links: [{ href: "/protected/drafts", label: "Drafts", primary: live.length > 0 }],
+          };
+        })(),
         { key: "aa-teams", title: "Make the AA teams", status: "later", detail: "Coming next: balanced teams from the ratings, with coach's kids and siblings kept together.", links: [] },
         { key: "team-rosters", title: "Release rosters and export", status: "later", detail: "Coming next: every team's roster, moves with notes, and a CSV for Sports Connect.", links: [] },
       ];
