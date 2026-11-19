@@ -264,6 +264,21 @@ export const GUIDES: HelpGuide[] = [
           "Siblings in the same division go to the same team in the draft. Add a group with [[New sibling group]] if the suggestions missed one.",
         ],
       },
+      {
+        id: "draft-setup",
+        title: "Setting up a draft",
+        blocks: [
+          "Drafts run oldest first: Juniors, then Majors, then AAA. Players a draft doesn't take drop to the next division whose ages fit.",
+          { steps: [
+            "Open [[Drafts]] and tap [[Open setup]] on a division (or set one up). A new draft starts with last season's rules for that division.",
+            "Check the [[Rules]]: the must-draft ages, roster size, snake or straight order, open or oldest first, the coach's-kid rule, siblings, and the pick timer. Tap [[Save rules]].",
+            "Under [[Teams and first-round order]], tap [[Draw the order]], or set it by hand if the draw happened outside the app. One team can have a bigger roster.",
+            "Under [[Coach's kids]], check each kid's round. Rounds come from the rule; change one if needed.",
+            "Look through [[The pool]]. To put a player in, take one out, or move one to another division, use Change… or Add a player to this pool, with a short note saying why. Every change is logged.",
+          ] },
+          "The box at the top lists anything still to do before the draft can start, such as an order that isn't set or age groups not released to coaches yet.",
+        ],
+      },
     ],
   },
   {

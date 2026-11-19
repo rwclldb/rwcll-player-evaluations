@@ -1,6 +1,6 @@
 # Teams and the draft: spec
 
-Status: **approved 2026-11-19.** Step 1 (teams and staff, coach's kids, siblings) is built locally (migration 20261119090000). Steps 2–6 to do.
+Status: **approved 2026-11-19.** Built locally: step 1 (teams and staff, coach's kids, siblings; migration 20261119090000) and step 2 (draft setup; migration 20261120090000). Steps 3–6 to do.
 
 The league runs its spring draft inside the app, straight from the evaluation data:
 the Juniors, Majors and AAA drafts, players who aren't drafted moving down a

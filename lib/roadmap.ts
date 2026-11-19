@@ -51,12 +51,15 @@ export type TeamsSummary = {
   coachKidsUnlinked: number;
   siblingGroups: number;
   suggestions: number;
+  /** Per division: is there a draft, and is its first-round order set (drafts_overview). */
+  drafts?: { name: string; draft: boolean; orderSet: boolean; status: string | null }[];
 };
 
 type SetupJson = { divisions: { name: string; teams: { staff: { role: string }[] }[] }[] };
 type FamilyJson = { coach_kids: { parents: unknown[] }[]; sibling_groups: unknown[]; suggestions: unknown[] };
+type DraftsJson = { name: string; draft: { status: string; order_set: boolean } | null }[];
 /** Roadmap numbers from team_setup() and family_overview(). */
-export function teamsSummary(setup: SetupJson | null, families: FamilyJson | null): TeamsSummary {
+export function teamsSummary(setup: SetupJson | null, families: FamilyJson | null, drafts: DraftsJson | null = null): TeamsSummary {
   return {
     divisions: (setup?.divisions ?? []).map((d) => ({
       name: d.name, teams: d.teams.length,
@@ -66,6 +69,7 @@ export function teamsSummary(setup: SetupJson | null, families: FamilyJson | nul
     coachKidsUnlinked: families?.coach_kids.filter((k) => k.parents.length === 0).length ?? 0,
     siblingGroups: families?.sibling_groups.length ?? 0,
     suggestions: families?.suggestions.length ?? 0,
+    drafts: (drafts ?? []).map((x) => ({ name: x.name, draft: !!x.draft, orderSet: !!x.draft?.order_set, status: x.draft?.status ?? null })),
   };
 }
 
@@ -384,7 +388,18 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
           links: [{ href: families, label: "Siblings", primary: t.suggestions > 0 }],
         },
         { key: "release-first", title: "Release the draft reports", status: "info", detail: "A draft can't start until its age groups are released to coaches (After evaluations).", links: [{ href: "/protected/sessions", label: "Sessions" }] },
-        { key: "setup-drafts", title: "Set up each draft", status: "later", detail: "Coming next: each division's pool, roster size, pick order and rules.", links: [] },
+        (() => {
+          const want = ["Juniors", "Majors", "AAA"].filter((n) => (t.drafts ?? []).some((x) => x.name === n));
+          const missing = want.filter((n) => !(t.drafts ?? []).some((x) => x.name === n && x.draft));
+          const noOrder = want.filter((n) => (t.drafts ?? []).some((x) => x.name === n && x.draft && !x.orderSet));
+          return {
+            key: "setup-drafts", title: "Set up each draft",
+            status: (want.length > 0 && missing.length === 0 && noOrder.length === 0 ? "done" : "todo") as StepStatus,
+            detail: missing.length ? `Not set up yet: ${missing.join(", ")}. Each draft has its pool, roster size, first-round order and rules (copied from last year).`
+              : noOrder.length ? `First-round order not set: ${noOrder.join(", ")}.` : "Juniors, Majors and AAA are set up with their order.",
+            links: [{ href: "/protected/drafts", label: "Drafts", primary: missing.length + noOrder.length > 0 }],
+          };
+        })(),
         { key: "run-drafts", title: "Run the Juniors, Majors and AAA drafts", status: "later", detail: "Coming next: the draft room. Admins and registrars pick; the division's managers and coaches watch live.", links: [] },
         { key: "aa-teams", title: "Make the AA teams", status: "later", detail: "Coming next: balanced teams from the ratings, with coach's kids and siblings kept together.", links: [] },
         { key: "team-rosters", title: "Release rosters and export", status: "later", detail: "Coming next: every team's roster, moves with notes, and a CSV for Sports Connect.", links: [] },

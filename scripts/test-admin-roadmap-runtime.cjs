@@ -44,6 +44,13 @@ if (passes < 16) {
 // Step rules in lib/roadmap.ts (pure functions).
 const jiti = require("jiti")(__filename);
 const rm = jiti(path.join(root, "lib/roadmap.ts"));
+const dr = jiti(path.join(root, "lib/drafts.ts"));
+const T0 = { divisions: [], coachKids: 0, coachKidsUnlinked: 0, siblingGroups: 0, suggestions: 0 };
+const setup = (o = {}) => ({ division: { season_division_id: 3, name: "Majors", min_age: 10, max_age: 12, season_id: 2, season: "S", season_closed: false },
+  draft: { id: 1, status: "setup", must_draft_ages: [12], roster_size: 12, coach_kid_rule: "fixed_rounds", coach_kid_rounds: [1, 2], coach_kid_by_round: 2, order_set_at: "x" },
+  previous: null, teams: [{ team_id: 1, name: "A", position: 1, roster_size: null, manager: "M", coach: "C" }, { team_id: 2, name: "B", position: 2, roster_size: null, manager: "M2", coach: "C2" }],
+  pool: [], kids: [], overrides: [], ages: [{ league_age: 10, status: "locked", released: true }], other_divisions: [], players: [], ...o });
+const P = (n, must = false, evaluations = 2) => Array.from({ length: n }, (_, i) => ({ player_season_id: i, must_draft: must, evaluations }));
 const sess = (o) => ({ id: 1, league_age: 9, status: "open", released: false, players: 10, no_bib: 0, coaches: 1, evaluators: 1,
   submitted: 0, drafts: 0, players_scored_by_evaluator: 0, players_scored_by_coach: 0, players_touched: 0,
   primary_date: "2027-01-23", primary_start: "09:00:00", makeups: 0, last_event_date: "2027-01-23", ...o });
@@ -69,6 +76,16 @@ const checks = [
   ["teams are done when every drafted division has complete teams", step(data({ teams: { divisions: ["AA", "AAA", "Majors", "Juniors"].map((name) => ({ name, teams: 4, incomplete: 0 })), coachKids: 0, coachKidsUnlinked: 0, siblingGroups: 0, suggestions: 0 } }), "draft", "teams").status === "done"],
   ["a coach's kid with no parent linked needs attention", step(data({ teams: { divisions: [], coachKids: 3, coachKidsUnlinked: 1, siblingGroups: 0, suggestions: 0 } }), "draft", "kids").status === "attention"],
   ["waiting sibling suggestions need attention", step(data({ teams: { divisions: [], coachKids: 0, coachKidsUnlinked: 0, siblingGroups: 1, suggestions: 2 } }), "draft", "siblings").status === "attention"],
+  ["drafts not set up yet leave the setup step to do", step(data({ teams: { ...T0, drafts: [{ name: "Juniors", draft: true, orderSet: true, status: "setup" }, { name: "Majors", draft: false, orderSet: false, status: null }] } }), "draft", "setup-drafts").detail.includes("Majors")],
+  ["the setup step is done when Juniors, Majors and AAA have drafts with an order", step(data({ teams: { ...T0, drafts: ["Juniors", "Majors", "AAA", "AA"].map((name) => ({ name, draft: name !== "AA", orderSet: name !== "AA", status: "setup" })) } }), "draft", "setup-drafts").status === "done"],
+  ["setup check: an unreleased age group blocks the start", dr.setupChecks(setup({ ages: [{ league_age: 10, status: "locked", released: false }] })).some((c) => c.level === "block" && c.text.includes("Age 10"))],
+  ["setup check: no order blocks the start", dr.setupChecks(setup({ teams: [{ team_id: 1, name: "A", position: null, roster_size: null, manager: "M", coach: "C" }] })).some((c) => c.level === "block" && c.text.includes("order"))],
+  ["setup check: more must-draft players than roster spots blocks", dr.setupChecks(setup({ pool: P(25, true) })).some((c) => c.level === "block" && c.text.includes("25 players must be drafted"))],
+  ["setup check: more players than spots warns how many won't be drafted", dr.setupChecks(setup({ pool: P(26) })).some((c) => c.level === "warn" && c.text.includes("2 won't be drafted"))],
+  ["setup check: a bigger roster for one team counts", !dr.setupChecks(setup({ pool: P(26), teams: [{ team_id: 1, name: "A", position: 1, roster_size: 14, manager: "M", coach: "C" }, { team_id: 2, name: "B", position: 2, roster_size: null, manager: "M", coach: "C" }] })).some((c) => c.text.includes("won't be drafted"))],
+  ["setup check: a ready draft has nothing blocking", dr.setupChecks(setup({ pool: P(20) })).every((c) => c.level !== "block")],
+  ["kid round default: fixed rounds in order, manager's kid first; otherwise the suggested round", dr.defaultKidRound(setup().draft, { kid_order: 2, suggested_round: 5 }) === 2
+    && dr.defaultKidRound({ ...setup().draft, coach_kid_rule: "round_per_kid" }, { kid_order: 1, suggested_round: 5 }) === 5 && dr.defaultKidRound({ ...setup().draft, coach_kid_rule: "by_round" }, { kid_order: 1, suggested_round: 5 }) === null],
   ["dates format without a time-zone shift", rm.formatDate("2027-01-23") === "Sat, Jan 23" && rm.formatTime("15:30:00") === "3:30 PM"],
 ];
 for (const [label, ok] of checks) {
