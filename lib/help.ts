@@ -133,6 +133,14 @@ export const GUIDES: HelpGuide[] = [
         ],
       },
       {
+        id: "your-team",
+        title: "Your team",
+        blocks: [
+          "Once the league releases your division's rosters, your home page shows your team. Tap [[See the roster]] for the players with their bib numbers and ages. Managers, coaches and assistant coaches all see it.",
+          "Tap [[Print]] to print it or save it as a PDF. If a player is missing or on the wrong team, ask a league admin: they move players and every move is logged.",
+        ],
+      },
+      {
         id: "faq",
         title: "Questions",
         blocks: [
@@ -306,7 +314,20 @@ export const GUIDES: HelpGuide[] = [
             "Use [[Pause]] for a break and [[Resume]] to carry on. Open [[Projector]] on the screen in the room.",
             "When the picks are done, tap [[Finish draft]]. Undrafted players drop to the next division whose ages fit.",
           ] },
-          "There's no undo. A wrong pick is fixed afterwards by moving the player, with a note.",
+          "There's no undo. To fix a wrong pick while the draft is running, move that player back to the pool on [[Team rosters]]: the pick opens again and comes up next.",
+        ],
+      },
+      {
+        id: "team-rosters",
+        title: "Team rosters and moves",
+        blocks: [
+          { steps: [
+            "Open [[Team rosters]]. Each division lists its teams with their staff and players, and how each player got there (round and pick, coach's kid, sibling, or moved).",
+            "To move a player, tap the arrows next to their name, choose the team (or back to the pool) and type a short note. Every move is logged and listed under [[Moves]].",
+            "Players not on a team are listed under [[Unplaced]], grouped by the pool they're in. Place them on a team the same way.",
+            "When a division is final, tap [[Release rosters]]. Each team's manager, coach and assistants then see their own team on their home page.",
+            "Tap [[Download CSV]] for a spreadsheet of every team's players, to rename the columns for Sports Connect.",
+          ] },
         ],
       },
     ],

@@ -3,7 +3,7 @@
 
 export type BoardPick = {
   player_season_id: number; first_name: string; last_name: string; league_age: number | null; bib: number | null;
-  kind: "pick" | "coach_kid" | "sibling"; made_at: string; override: boolean; override_note: string | null;
+  kind: "pick" | "coach_kid" | "sibling"; made_at: string; override: boolean; override_note: string | null; moved_to?: string | null;
 };
 export type Slot = { overall: number; round: number; pick_in_round: number; team_id: number; marked: boolean; pick: BoardPick | null };
 export type BoardTeam = { team_id: number; name: string; position: number | null; roster_size: number; manager: string | null; coach: string | null };

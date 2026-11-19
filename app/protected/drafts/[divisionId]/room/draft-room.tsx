@@ -75,7 +75,7 @@ function BoardGrid({ board, big = false, labels }: { board: Board; big?: boolean
                       <div>
                         <div className="font-semibold leading-tight text-foreground">{s.pick.bib ? `#${s.pick.bib} ` : ""}{name(s.pick)}</div>
                         <div className="text-[10px] text-muted-foreground">
-                          age {s.pick.league_age ?? "?"}{KIND[s.pick.kind] ? ` · ${KIND[s.pick.kind]}` : ""}{s.pick.override ? " · override" : ""}
+                          age {s.pick.league_age ?? "?"}{KIND[s.pick.kind] ? ` · ${KIND[s.pick.kind]}` : ""}{s.pick.override ? " · override" : ""}{s.pick.moved_to ? ` · moved to ${s.pick.moved_to}` : ""}
                         </div>
                       </div>
                     ) : current ? (

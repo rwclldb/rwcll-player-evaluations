@@ -37,6 +37,7 @@ const ADMIN_ITEMS: NavItem[] = [
     { href: "/protected/teams", label: "Teams" },
     { href: "/protected/teams/families", label: "Coach's kids and siblings" },
     { href: "/protected/drafts", label: "Drafts" },
+    { href: "/protected/team-rosters", label: "Team rosters" },
   ] },
   { href: "/protected/people", label: "People" },
 ];
@@ -59,6 +60,7 @@ const REGISTRAR_LINKS: NavLink[] = [
   { href: "/protected/timetable", label: "Who scores when" },
   { href: "/protected/teams", label: "Teams" },
   { href: "/protected/drafts", label: "Drafts" },
+  { href: "/protected/team-rosters", label: "Team rosters" },
 ];
 
 // Announcers: call bibs on evaluation day. Names, bibs and ages only.

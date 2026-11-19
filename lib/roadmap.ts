@@ -53,13 +53,16 @@ export type TeamsSummary = {
   suggestions: number;
   /** Per division: is there a draft, and is its first-round order set (drafts_overview). */
   drafts?: { name: string; draft: boolean; orderSet: boolean; status: string | null }[];
+  /** Divisions with teams whose rosters are released, and how many players aren't on a team (season_rosters). */
+  rosters?: { released: string[]; withTeams: string[]; unplaced: number };
 };
 
 type SetupJson = { divisions: { name: string; teams: { staff: { role: string }[] }[] }[] };
 type FamilyJson = { coach_kids: { parents: unknown[] }[]; sibling_groups: unknown[]; suggestions: unknown[] };
 type DraftsJson = { name: string; draft: { status: string; order_set: boolean } | null }[];
+type RostersJson = { divisions: { name: string; released_at: string | null; teams: unknown[] }[]; unplaced: unknown[] };
 /** Roadmap numbers from team_setup() and family_overview(). */
-export function teamsSummary(setup: SetupJson | null, families: FamilyJson | null, drafts: DraftsJson | null = null): TeamsSummary {
+export function teamsSummary(setup: SetupJson | null, families: FamilyJson | null, drafts: DraftsJson | null = null, rosters: RostersJson | null = null): TeamsSummary {
   return {
     divisions: (setup?.divisions ?? []).map((d) => ({
       name: d.name, teams: d.teams.length,
@@ -70,6 +73,7 @@ export function teamsSummary(setup: SetupJson | null, families: FamilyJson | nul
     siblingGroups: families?.sibling_groups.length ?? 0,
     suggestions: families?.suggestions.length ?? 0,
     drafts: (drafts ?? []).map((x) => ({ name: x.name, draft: !!x.draft, orderSet: !!x.draft?.order_set, status: x.draft?.status ?? null })),
+    rosters: rosters ? { released: rosters.divisions.filter((d) => d.released_at).map((d) => d.name), withTeams: rosters.divisions.filter((d) => d.teams.length).map((d) => d.name), unplaced: rosters.unplaced.length } : undefined,
   };
 }
 
@@ -414,7 +418,17 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
           };
         })(),
         { key: "aa-teams", title: "Make the AA teams", status: "later", detail: "Coming next: balanced teams from the ratings, with coach's kids and siblings kept together.", links: [] },
-        { key: "team-rosters", title: "Release rosters and export", status: "later", detail: "Coming next: every team's roster, moves with notes, and a CSV for Sports Connect.", links: [] },
+        (() => {
+          const r = t.rosters;
+          const waiting = r ? r.withTeams.filter((n) => !r.released.includes(n)) : [];
+          return {
+            key: "team-rosters", title: "Release rosters and export",
+            status: (r && r.withTeams.length > 0 && waiting.length === 0 ? "done" : "todo") as StepStatus,
+            detail: !r || r.withTeams.length === 0 ? "Each team's players, moves with notes, release to managers and coaches, and a CSV for Sports Connect."
+              : [waiting.length ? `Not released yet: ${waiting.join(", ")}.` : "Every division's rosters are released.", r.unplaced ? `${plural(r.unplaced, "player")} not on a team.` : ""].filter(Boolean).join(" "),
+            links: [{ href: `/protected/team-rosters?season=${sid}`, label: "Team rosters", primary: waiting.length > 0 }],
+          };
+        })(),
       ];
     }
 

@@ -97,6 +97,8 @@ const checks = [
   ["room: sorting puts players without a number last", room.sortPlayers([RP({ player_season_id: 1, evaluator_overall: null }), RP({ player_season_id: 2, evaluator_overall: 3 }), RP({ player_season_id: 3, evaluator_overall: 4 })], "evaluator").map((p) => p.player_season_id).join() === "3,2,1"],
   ["room: the trimmed sort falls back to the plain coach average", room.sortValue(RP({ coach_overall: 3, coach_trimmed_overall: null }), "trimmed") === 3],
   ["room: the pick clock counts down from when the pick came up", room.clockLeft(B(), 0, Date.parse("2027-02-02T18:00:30Z")) === 90 && room.clockLeft(B(), 0, Date.parse("2027-02-02T18:03:00Z")) === -60],
+  ["rosters step: unreleased divisions with teams are listed", step(data({ teams: { ...T0, rosters: { released: ["Majors"], withTeams: ["Majors", "AAA"], unplaced: 3 } } }), "draft", "team-rosters").detail.includes("Not released yet: AAA")],
+  ["rosters step is done when every division with teams is released", step(data({ teams: { ...T0, rosters: { released: ["Majors", "AAA"], withTeams: ["Majors", "AAA"], unplaced: 0 } } }), "draft", "team-rosters").status === "done"],
   ["dates format without a time-zone shift", rm.formatDate("2027-01-23") === "Sat, Jan 23" && rm.formatTime("15:30:00") === "3:30 PM"],
 ];
 for (const [label, ok] of checks) {

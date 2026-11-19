@@ -43,14 +43,15 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
     if (error || !data) {
       return <p role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-700 dark:text-rose-300">Could not load the roadmap: {error?.message ?? "no data"}</p>;
     }
-    const [{ data: duplicates }, { data: teamSetup }, { data: families }, { data: drafts }] = await Promise.all([
+    const [{ data: duplicates }, { data: teamSetup }, { data: families }, { data: drafts }, { data: rosters }] = await Promise.all([
       supabase.rpc("admin_possible_duplicate_count"),
       supabase.rpc("team_setup", { p_season_id: season.id }),
       supabase.rpc("family_overview", { p_season_id: season.id }),
       supabase.rpc("drafts_overview", { p_season_id: season.id }),
+      supabase.rpc("season_rosters", { p_season_id: season.id }),
     ]);
     const base = data as RoadmapData;
-    const roadmap: RoadmapData = { ...base, stage: suggestedStage(base), duplicates: Number(duplicates ?? 0), teams: teamsSummary(teamSetup, families, drafts) };
+    const roadmap: RoadmapData = { ...base, stage: suggestedStage(base), duplicates: Number(duplicates ?? 0), teams: teamsSummary(teamSetup, families, drafts, rosters) };
     const viewing = (STAGES.some((s) => s.key === sp.stage) ? sp.stage : roadmap.stage) as StageKey;
     const { data: pending } = await supabase.rpc("admin_people_not_signed_in", { p_season_id: season.id });
     return (
@@ -65,6 +66,8 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
   const [{ data: schedule }, { data: account }, roles, { data: draftRows }] = await Promise.all([
     supabase.rpc("my_evaluation_schedule"), supabase.rpc("my_account"), getMyRoles(supabase), supabase.rpc("my_drafts"),
   ]);
+  const { data: myTeamRows } = await supabase.rpc("my_team_rosters");
+  const myTeams = (myTeamRows ?? []) as { team_id: number; team: string; division: string; players: unknown[] }[];
   // Drafts this person watches or runs (managers and coaches of the division; registrars), once set up.
   const drafts = (draftRows ?? []) as { draft_id: number; season_division_id: number; division: string; status: string }[];
   const name = (account as { display_name: string | null } | null)?.display_name || user.email;
@@ -74,6 +77,19 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <p className="text-sm text-muted-foreground">Welcome, <span className="font-medium text-foreground">{name}</span></p>
+      {myTeams.length > 0 && (
+        <section className="rounded-2xl border border-emerald-500/40 bg-card p-4">
+          <h2 className="font-bold text-foreground">Your team{myTeams.length === 1 ? "" : "s"}</h2>
+          <ul className="mt-2 space-y-2">
+            {myTeams.map((t) => (
+              <li key={t.team_id} className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-sm"><strong>{t.team}</strong> <span className="text-muted-foreground">· {t.division} · {t.players.length} {t.players.length === 1 ? "player" : "players"}</span></span>
+                <Link href="/protected/my-team" className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500">See the roster</Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {drafts.length > 0 && (
         <section className="rounded-2xl border border-emerald-500/40 bg-card p-4">
           <h2 className="font-bold text-foreground">Draft{drafts.length === 1 ? "" : "s"}</h2>
