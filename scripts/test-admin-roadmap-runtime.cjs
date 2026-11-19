@@ -63,6 +63,12 @@ const checks = [
   ["an age group in Setup leaves Open scoring to do", step(data({ sessions: [sess({ status: "setup" })] }), "week", "open").status === "todo"],
   ["release is done only when every age group is released", step(data({ sessions: [sess({ status: "locked", released: true }), sess({ id: 2, league_age: 10, status: "locked" })] }), "after", "release").status === "todo"],
   ["end-of-season re-rating is marked coming later", step(data(), "end", "rerate").status === "later"],
+  ["every age group released and the season open: the Teams and draft stage", rm.suggestedStage({ stage: "end", season: { is_closed: false } }) === "draft"
+    && rm.suggestedStage({ stage: "end", season: { is_closed: true } }) === "end" && rm.suggestedStage({ stage: "after", season: { is_closed: false } }) === "after"],
+  ["a team without a manager or coach needs attention", step(data({ teams: { divisions: [{ name: "Majors", teams: 2, incomplete: 1 }], coachKids: 0, coachKidsUnlinked: 0, siblingGroups: 0, suggestions: 0 } }), "draft", "teams").status === "attention"],
+  ["teams are done when every drafted division has complete teams", step(data({ teams: { divisions: ["AA", "AAA", "Majors", "Juniors"].map((name) => ({ name, teams: 4, incomplete: 0 })), coachKids: 0, coachKidsUnlinked: 0, siblingGroups: 0, suggestions: 0 } }), "draft", "teams").status === "done"],
+  ["a coach's kid with no parent linked needs attention", step(data({ teams: { divisions: [], coachKids: 3, coachKidsUnlinked: 1, siblingGroups: 0, suggestions: 0 } }), "draft", "kids").status === "attention"],
+  ["waiting sibling suggestions need attention", step(data({ teams: { divisions: [], coachKids: 0, coachKidsUnlinked: 0, siblingGroups: 1, suggestions: 2 } }), "draft", "siblings").status === "attention"],
   ["dates format without a time-zone shift", rm.formatDate("2027-01-23") === "Sat, Jan 23" && rm.formatTime("15:30:00") === "3:30 PM"],
 ];
 for (const [label, ok] of checks) {

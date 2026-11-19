@@ -5,6 +5,7 @@ import { useMemo, useState, useRef, type ChangeEvent, type DragEvent } from "rea
 import { stageSportsConnectImport } from "./actions";
 import {
   ACTIVE_DIVISIONS,
+  accountKey,
   makePreview,
   safeCsvCell,
   type PreviewRow,
@@ -148,7 +149,9 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
     }
     setStaging(true);
     try {
-      const result = await stageSportsConnectImport({ seasonId: Number(seasonId), fileName, rows });
+      // The account email never leaves the browser: only its fingerprint goes up (for sibling and coach's-kid suggestions).
+      const sendRows = await Promise.all(rows.map(async ({ accountEmail, ...row }) => ({ ...row, accountKey: await accountKey(accountEmail) })));
+      const result = await stageSportsConnectImport({ seasonId: Number(seasonId), fileName, rows: sendRows });
       if (!result.ok) {
         setStageMessage(result.message);
         return;
@@ -217,7 +220,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
             Upload Sports Connect CSV
           </CardTitle>
           <CardDescription className="text-xs text-muted-foreground">
-            Expected source headers are checked. Account names, emails, order numbers, and dates are excluded.
+            Expected source headers are checked. Account names, order numbers and dates are excluded. The account email is not stored: only a fingerprint of it, used to suggest siblings and coach&apos;s kids.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

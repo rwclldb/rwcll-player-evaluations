@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {
-  Activity, AlertTriangle, Archive, ArrowRight, CalendarClock, CalendarDays, CheckCircle2, Circle, ClipboardList, Clock,
+  Activity, AlertTriangle, Archive, ArrowRight, Baby, ListOrdered, Settings2, Shuffle, CalendarClock, CalendarDays, CheckCircle2, Circle, ClipboardList, Clock,
   DoorOpen, Download, Eye, FileSearch, FileWarning, Flag, Hash, History, Info, KeyRound, Layers, LifeBuoy, Lock,
   PartyPopper, PlusCircle, Printer, Search, Send, Shirt, ShieldCheck, Star, Trophy, UploadCloud, UserPlus, Users,
   type LucideIcon,
@@ -14,12 +14,13 @@ import {
 
 type SeasonItem = { id: number; name: string; start_date: string | null; end_date: string | null; is_closed: boolean };
 
-const STAGE_ICON: Record<StageKey, LucideIcon> = { before: ClipboardList, week: CalendarClock, day: Flag, after: Lock, end: Trophy };
+const STAGE_ICON: Record<StageKey, LucideIcon> = { before: ClipboardList, week: CalendarClock, day: Flag, after: Lock, draft: Shirt, end: Trophy };
 const STEP_ICON: Record<string, LucideIcon> = {
   "age-groups": Layers, registrations: UploadCloud, bibs: Hash, "prior-year": History, people: UserPlus, assignments: Users,
   schedule: CalendarDays, "prior-switch": Eye, readiness: ShieldCheck, open: DoorOpen, signin: KeyRound, rosters: Printer,
   progress: Activity, walkups: UserPlus, help: LifeBuoy, find: Search, drafts: FileWarning, lock: Lock, check: FileSearch,
   release: Send, export: Download, teams: Shirt, rerate: Star, close: Archive, next: PlusCircle,
+  kids: Baby, siblings: Users, "release-first": Send, "setup-drafts": Settings2, "run-drafts": ListOrdered, "aa-teams": Shuffle, "team-rosters": Download,
 };
 
 const STATUS: Record<StepStatus, { icon: LucideIcon; badge: string; card: string; dot: string; label: string }> = {
@@ -74,12 +75,13 @@ function Countdown({ d }: { d: RoadmapData }) {
 
 function Stepper({ d, viewing }: { d: RoadmapData; viewing: StageKey }) {
   const current = stageIndex(d.stage);
+  const inset = 50 / STAGES.length; // centre of the first and last column
   return (
     <nav aria-label="Season stages" className="relative">
-      <div aria-hidden className="absolute left-[10%] right-[10%] top-8 h-1.5 rounded-full bg-border" />
-      <div aria-hidden className="absolute left-[10%] top-8 h-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all"
-        style={{ width: `${(80 * current) / (STAGES.length - 1)}%` }} />
-      <ol className="relative grid grid-cols-5 gap-2">
+      <div aria-hidden className="absolute top-8 h-1.5 rounded-full bg-border" style={{ left: `${inset}%`, right: `${inset}%` }} />
+      <div aria-hidden className="absolute top-8 h-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all"
+        style={{ left: `${inset}%`, width: `${((100 - 2 * inset) * current) / (STAGES.length - 1)}%` }} />
+      <ol className="relative grid grid-cols-6 gap-1 sm:gap-2">
         {STAGES.map((st, i) => {
           const Icon = STAGE_ICON[st.key];
           const state = i < current ? "past" : i === current ? "current" : "future";
@@ -162,7 +164,7 @@ function StepCard({ step, n, extra }: { step: Step; n: number; extra?: React.Rea
 }
 
 function AgeGroups({ d, viewing }: { d: RoadmapData; viewing: StageKey }) {
-  const scoring = viewing === "day" || viewing === "after" || viewing === "end";
+  const scoring = viewing === "day" || viewing === "after" || viewing === "draft" || viewing === "end";
   return (
     <section className="rounded-2xl border border-border bg-card p-4">
       <div className="mb-3 flex items-center justify-between">
@@ -278,7 +280,7 @@ export function AdminRoadmap({ data, viewing, seasons, pending = [], seasonId }:
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">Admin roadmap</p>
             <h1 className="mt-1 text-3xl font-black tracking-tight sm:text-4xl">{data.season.name}</h1>
             <p className="mt-2 flex items-center gap-2 text-sm text-white/90">
-              <span className="rounded-full bg-white/20 px-2.5 py-0.5 font-semibold">Stage {stageIndex(data.stage) + 1} of 5</span>
+              <span className="rounded-full bg-white/20 px-2.5 py-0.5 font-semibold">Stage {stageIndex(data.stage) + 1} of {STAGES.length}</span>
               {STAGES[stageIndex(data.stage)].title}
             </p>
             {seasons.length > 1 && (

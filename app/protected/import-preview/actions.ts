@@ -18,6 +18,8 @@ type StageRow = {
   paymentStatus: string;
   leagueAge: number | null;
   coachKid?: boolean | null;
+  /** SHA-256 hex fingerprint of the Sports Connect account email (computed in the browser). */
+  accountKey?: string | null;
   issues: string[];
 };
 
@@ -71,5 +73,10 @@ export async function stageSportsConnectImport(input: {
   if (error || typeof batchId !== "number") {
     return { ok: false, message: error?.message ?? "The staging request did not return a batch ID." };
   }
+  // Account fingerprints for sibling and coach's-kid suggestions. Not essential: a failure doesn't undo the staging.
+  const keys = input.rows
+    .map((row) => ({ line: Number(row.line), key: typeof row.accountKey === "string" && /^[0-9a-f]{64}$/.test(row.accountKey) ? row.accountKey : null }))
+    .filter((k) => k.key);
+  if (keys.length) await supabase.rpc("set_import_account_keys", { p_batch_id: batchId, p_keys: keys });
   return { ok: true, batchId, rowCount: rows.length };
 }

@@ -181,7 +181,10 @@ PASS: bare league loaded: ${Object.keys(userId).length} admin accounts, Spring 2
   const csvName = "sports-connect-spring-2027-full.csv";
   const { rows: previewRows, missingHeaders } = preview.makePreview(fs.readFileSync(path.join(gen, csvName), "utf8"));
   if (missingHeaders.length) fail(`CSV missing headers: ${missingHeaders.join(", ")}`);
-  const batchId = await must(admin.rpc("stage_sports_connect_import", { p_season_id: s2027.id, p_source_file_name: csvName, p_rows: previewRows }), "stage import");
+  // Like the import screen: account emails stay here; only their fingerprints are sent.
+  const batchId = await must(admin.rpc("stage_sports_connect_import", { p_season_id: s2027.id, p_source_file_name: csvName, p_rows: previewRows.map(({ accountEmail, ...r }) => r) }), "stage import");
+  const accountKeys = await Promise.all(previewRows.map(async (r) => ({ line: r.line, key: await preview.accountKey(r.accountEmail) })));
+  await must(admin.rpc("set_import_account_keys", { p_batch_id: batchId, p_keys: accountKeys.filter((k) => k.key) }), "account fingerprints");
   const staged = await must(svc.from("sports_connect_import_rows").select("id, source_row_number, first_name, last_name, source_division, review_flags").eq("import_batch_id", batchId).order("source_row_number"), "read staged rows");
   log(`REAL import: staged ${staged.length} rows as batch ${batchId}`);
 

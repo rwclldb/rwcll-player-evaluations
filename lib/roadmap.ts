@@ -1,7 +1,7 @@
 // Admin roadmap: turns admin_season_roadmap() output into stages and steps with a live status.
 // Pure functions (no React, no Supabase) so the rules can be tested on their own.
 
-export type StageKey = "before" | "week" | "day" | "after" | "end";
+export type StageKey = "before" | "week" | "day" | "after" | "draft" | "end";
 export type StepStatus = "done" | "attention" | "todo" | "info" | "later";
 export type StepLink = { href: string; label: string; primary?: boolean };
 export type Step = { key: string; title: string; detail: string; status: StepStatus; links: StepLink[] };
@@ -31,6 +31,8 @@ export type RoadmapData = {
   season: { id: number; name: string; is_closed: boolean };
   /** Possible-duplicate player pairs waiting for a decision (all seasons); filled in by the page. */
   duplicates?: number;
+  /** Teams and family links for the Teams and draft stage; filled in by the page (teamsSummary). */
+  teams?: TeamsSummary;
   stage: StageKey;
   today: string;
   first_primary_date: string | null;
@@ -42,11 +44,42 @@ export type RoadmapData = {
   sessions: RoadmapSession[];
 };
 
+export type TeamsSummary = {
+  /** Per division: how many teams, and how many lack a manager or a coach. */
+  divisions: { name: string; teams: number; incomplete: number }[];
+  coachKids: number;
+  coachKidsUnlinked: number;
+  siblingGroups: number;
+  suggestions: number;
+};
+
+type SetupJson = { divisions: { name: string; teams: { staff: { role: string }[] }[] }[] };
+type FamilyJson = { coach_kids: { parents: unknown[] }[]; sibling_groups: unknown[]; suggestions: unknown[] };
+/** Roadmap numbers from team_setup() and family_overview(). */
+export function teamsSummary(setup: SetupJson | null, families: FamilyJson | null): TeamsSummary {
+  return {
+    divisions: (setup?.divisions ?? []).map((d) => ({
+      name: d.name, teams: d.teams.length,
+      incomplete: d.teams.filter((t) => !t.staff.some((x) => x.role === "manager") || !t.staff.some((x) => x.role === "coach")).length,
+    })),
+    coachKids: families?.coach_kids.length ?? 0,
+    coachKidsUnlinked: families?.coach_kids.filter((k) => k.parents.length === 0).length ?? 0,
+    siblingGroups: families?.sibling_groups.length ?? 0,
+    suggestions: families?.suggestions.length ?? 0,
+  };
+}
+
+/** The database suggests End of season once every age group is released; until the season is closed, that's Teams and draft. */
+export function suggestedStage(d: Pick<RoadmapData, "stage" | "season">): StageKey {
+  return d.stage === "end" && !d.season.is_closed ? "draft" : d.stage;
+}
+
 export const STAGES: Stage[] = [
   { key: "before", title: "Before evaluations", short: "Before", blurb: "Get players, bibs, people and the schedule in place. Most of this happens weeks ahead." },
   { key: "week", title: "Evaluation week", short: "Eval week", blurb: "Final checks in the days before. Open scoring, print rosters, make sure everyone can sign in." },
   { key: "day", title: "Evaluation day", short: "Eval day", blurb: "Keep an eye on scoring, add walk-ups, and help anyone who's stuck." },
   { key: "after", title: "After evaluations", short: "After", blurb: "Tidy up, lock each age group, check the numbers, then release draft reports to coaches." },
+  { key: "draft", title: "Teams and draft", short: "Draft", blurb: "Set up teams with a manager and coach, link coach's kids and siblings, then run the Juniors, Majors and AAA drafts and make the AA teams." },
   { key: "end", title: "End of season", short: "End", blurb: "Coaches re-rate their own players for next year, then the season is closed." },
 ];
 
@@ -319,9 +352,47 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
       ];
     }
 
+    case "draft": {
+      const t = d.teams ?? { divisions: [], coachKids: 0, coachKidsUnlinked: 0, siblingGroups: 0, suggestions: 0 };
+      const drafted = t.divisions.filter((x) => ["Juniors", "Majors", "AAA", "AA"].includes(x.name));
+      const noTeams = drafted.filter((x) => x.teams === 0).map((x) => x.name);
+      const incomplete = t.divisions.reduce((n, x) => n + x.incomplete, 0);
+      const total = t.divisions.reduce((n, x) => n + x.teams, 0);
+      const teamsPage = `/protected/teams?season=${sid}`;
+      const families = `/protected/teams/families?season=${sid}`;
+      return [
+        {
+          key: "teams", title: "Set up teams, managers and coaches",
+          status: total > 0 && noTeams.length === 0 && incomplete === 0 ? "done" : incomplete > 0 ? "attention" : "todo",
+          detail: total === 0 ? "No teams yet. Add them by hand, or upload a spreadsheet (the Sports Connect volunteer report works)."
+            : [noTeams.length ? `No teams yet in ${noTeams.join(", ")}.` : "", incomplete ? `${plural(incomplete, "team")} without a manager or coach.` : "",
+               !noTeams.length && !incomplete ? `${plural(total, "team")}: ${t.divisions.filter((x) => x.teams).map((x) => `${x.name} ${x.teams}`).join(", ")}.` : ""].filter(Boolean).join(" "),
+          links: [{ href: teamsPage, label: "Teams", primary: true }],
+        },
+        {
+          key: "kids", title: "Link coach's kids to their parent",
+          status: t.coachKidsUnlinked > 0 ? "attention" : t.coachKids > 0 ? "done" : "todo",
+          detail: t.coachKidsUnlinked > 0 ? `${plural(t.coachKidsUnlinked, "coach's kid")} with no parent linked. The draft places a kid on the parent's team only when they're linked.`
+            : t.coachKids > 0 ? `${plural(t.coachKids, "coach's kid")}, all linked.` : "None yet. Kids registered with a coach's sign-in email are suggested.",
+          links: [{ href: families, label: "Coach's kids", primary: t.coachKidsUnlinked > 0 }],
+        },
+        {
+          key: "siblings", title: "Confirm siblings and suggestions",
+          status: t.suggestions > 0 ? "attention" : t.siblingGroups > 0 ? "done" : "todo",
+          detail: t.suggestions > 0 ? `${plural(t.suggestions, "suggestion")} from the registration file waiting (same family account, or a coach's email).`
+            : `${plural(t.siblingGroups, "sibling group")}. Siblings in the same division go to the same team.`,
+          links: [{ href: families, label: "Siblings", primary: t.suggestions > 0 }],
+        },
+        { key: "release-first", title: "Release the draft reports", status: "info", detail: "A draft can't start until its age groups are released to coaches (After evaluations).", links: [{ href: "/protected/sessions", label: "Sessions" }] },
+        { key: "setup-drafts", title: "Set up each draft", status: "later", detail: "Coming next: each division's pool, roster size, pick order and rules.", links: [] },
+        { key: "run-drafts", title: "Run the Juniors, Majors and AAA drafts", status: "later", detail: "Coming next: the draft room. Admins and registrars pick; the division's managers and coaches watch live.", links: [] },
+        { key: "aa-teams", title: "Make the AA teams", status: "later", detail: "Coming next: balanced teams from the ratings, with coach's kids and siblings kept together.", links: [] },
+        { key: "team-rosters", title: "Release rosters and export", status: "later", detail: "Coming next: every team's roster, moves with notes, and a CSV for Sports Connect.", links: [] },
+      ];
+    }
+
     case "end":
       return [
-        { key: "teams", title: "Record teams from the draft", status: "later", detail: "Coming later: assign each player a division and team after the draft.", links: [] },
         { key: "rerate", title: "Coaches re-rate their own players", status: "later", detail: "Coming later. For now, collect ratings in a spreadsheet and use the Prior-year upload next season.", links: [{ href: "/protected/prior-year", label: "Prior-year upload" }] },
         { key: "final-backup", title: "Download a final backup", status: "info", detail: "Before closing, keep a copy of the season's scores, reports and people as spreadsheets.", links: [{ href: `/protected/seasons/${d.season.id}#backup`, label: "Season backup" }] },
         { key: "close", title: "Close the season", status: d.season.is_closed ? "done" : "todo", detail: d.season.is_closed ? "Closed. Nothing in it can change unless an admin reopens it (audited)." : "Freezes scores, imports, bibs and player edits. Needs a reason and the season's name typed; reopening is audited too.", links: [{ href: `/protected/seasons/${d.season.id}`, label: d.season.is_closed ? "Season page" : "Close the season" }] },

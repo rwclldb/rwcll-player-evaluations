@@ -115,5 +115,22 @@ check("people: an account without a role this season gets the role", pp.status =
 const gone = PS.missingFromFile([avery, { email: "none@x.test", name: "No Role", role: null, divisions: [] }, { email: "k@x.test", name: "Kendall", role: "independent_evaluator", divisions: [] }], ["AVERY@x.test"]);
 check("people: people with a role who are not in the file are listed", gone.map((p) => p.email).join() === "k@x.test", gone);
 
+// Teams upload: one row per team, or the Sports Connect volunteer report (one row per person).
+const TC = jiti(path.join(root, "lib/teams-csv.ts"));
+let tp = TC.parseTeamsCsv(readCsv(names(T.TEAMS_TEMPLATE).join(",") + "\nMajors,Giants,m@x.test,c@x.test,a1@x.test; a2@x.test\n"));
+check("teams template: every column recognised; assistants split on ;", !("error" in tp) && tp.rows.length === 1 && tp.rows[0].manager === "m@x.test"
+  && tp.rows[0].coach === "c@x.test" && tp.rows[0].assistants.join() === "a1@x.test,a2@x.test", tp);
+tp = TC.parseTeamsCsv(readCsv(fs.readFileSync(path.join(root, "rwcll-fictional-test-league/sports-connect-volunteers-spring-2027.csv"), "utf8")));
+check("teams: the volunteer report with every team still Unallocated gives no teams", !("error" in tp) && tp.rows.length === 0 && tp.skipped.length === 10, tp);
+tp = TC.parseTeamsCsv(readCsv([
+  "Program Name,Division Name,Team Name,Volunteer Role,Volunteer First Name,Volunteer Last Name,Volunteer Email Address",
+  "2027,Majors,Giants,Team Manager,A,A,m@x.test", "2027,Majors,Giants,Coach,B,B,c@x.test", "2027,Majors,Giants,Assistant Coach,C,C,a@x.test",
+  "2027,Majors,Giants,Team Parent,D,D,p@x.test", "2027,Majors,Cubs,Coach,E,E,c1@x.test", "2027,Majors,Cubs,Coach,F,F,c2@x.test",
+].join("\n")));
+check("teams: volunteer report rows group into teams by role; other roles skipped; two coaches flagged",
+  !("error" in tp) && tp.rows.length === 2 && tp.rows[0].manager === "m@x.test" && tp.rows[0].coach === "c@x.test" && tp.rows[0].assistants.join() === "a@x.test"
+  && tp.skipped.length === 1 && tp.problems.length === 1 && tp.problems[0].team === "Cubs", tp);
+check("teams: a file without a team column is refused", "error" in TC.parseTeamsCsv(readCsv("Division,Email\nAA,x@x.test")));
+
 if (failed) { console.error(`FAIL: ${failed} CSV import check(s) failed`); process.exit(1); }
 console.log("PASS: CSV import parsing and templates");

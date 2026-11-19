@@ -250,6 +250,20 @@ export const GUIDES: HelpGuide[] = [
           ] },
         ],
       },
+      {
+        id: "teams",
+        title: "Teams, coach's kids and siblings",
+        blocks: [
+          "Before the draft, every team needs a Manager and a Coach. They are the two who sit in the draft room, and their kids follow the coach's-kid draft rules. Assistant coaches are listed on the team only.",
+          { steps: [
+            "Open [[Teams]]. Under each division, tap the Add team button, or upload a spreadsheet with [[Upload teams from a spreadsheet]]. The Sports Connect volunteer report works as is.",
+            "On each team, choose the Manager and the Coach, add any assistants, and tap [[Save]]. Only people with the coach role this season are listed; someone already on another team in the same division is greyed out.",
+            "Tap [[Coach's kids and siblings]]. Accept or dismiss each suggestion: players registered by the same family account ([[Group as siblings]]), or with a coach's own email (link as that coach's kid).",
+            "Every player marked \"Coach's kid\" needs a parent linked. Choose the coach and tap [[Link]]. Twins: link each twin to the same parent.",
+          ] },
+          "Siblings in the same division go to the same team in the draft. Add a group with [[New sibling group]] if the suggestions missed one.",
+        ],
+      },
     ],
   },
   {

@@ -14,8 +14,21 @@ export type PreviewRow = {
   leagueAge: number | null;
   /** Optional "Coaches Kid" column: true/false, or null when the file has no such column or the cell is blank. */
   coachKid: boolean | null;
+  /** The Sports Connect account email ("User Email"). Stays in the browser: only its fingerprint is sent (accountKey). */
+  accountEmail: string;
   issues: string[];
 };
+
+// The account email column, used only to suggest siblings and coach's kids (as a fingerprint).
+export const ACCOUNT_EMAIL_HEADERS = ["User Email", "Account Email", "Account Email Address", "Parent Email", "Primary Email"];
+
+/** SHA-256 hex of the lower-cased email: the same fingerprint the database computes (private.email_key). */
+export async function accountKey(email: string): Promise<string | null> {
+  const e = email.trim().toLowerCase();
+  if (!e || !e.includes("@")) return null;
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(e));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 // Optional column marking a coach's child. Yes/No style values; anything else is flagged for review.
 export const COACH_KID_HEADERS = ["Coaches Kid", "Coach's Kid", "Coach Kid", "Coaches Child", "Coach's Child"];
@@ -109,6 +122,7 @@ export function makePreview(text: string): { rows: PreviewRow[]; missingHeaders:
   if (missingHeaders.length) return { rows: [], missingHeaders };
   const get = (cells: string[], header: string) => (cells[indexes.get(header)!] ?? "").trim();
   const kidHeader = headers.find((h) => COACH_KID_HEADERS.some((k) => headerKey(k) === headerKey(h)));
+  const emailHeader = ACCOUNT_EMAIL_HEADERS.map((a) => headers.find((h) => headerKey(h) === headerKey(a))).find(Boolean);
   const rows = parsed.slice(1).map((cells, index): PreviewRow => {
     const playerId = get(cells, "Player Id");
     const firstName = get(cells, "Player First Name");
@@ -141,6 +155,7 @@ export function makePreview(text: string): { rows: PreviewRow[]; missingHeaders:
       paymentStatus,
       leagueAge,
       coachKid: kid === "bad" ? null : kid,
+      accountEmail: emailHeader ? (cells[indexes.get(emailHeader)!] ?? "").trim() : "",
       issues,
     };
   });

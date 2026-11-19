@@ -20,6 +20,7 @@ export const SPORTS_CONNECT_TEMPLATE: CsvTemplate = {
       note: name === "Registration Number" ? "the bib, if filled in; may be blank" : undefined,
     })),
     { name: "Coaches Kid", need: "optional", note: "Yes/No (or true/false); marks a coach's child" },
+    { name: "User Email", need: "optional", note: "the family's account email; only a fingerprint is kept, to suggest siblings and coach's kids" },
   ],
   tip: "Export the Enrollment Details report from Sports Connect; it already has these columns. A whole-number Registration Number becomes the player's bib when the row is committed (unless another player has that bib). Extra columns are ignored.",
 };
@@ -46,6 +47,18 @@ export const PEOPLE_TEMPLATE: CsvTemplate = {
     { name: "Division Name", need: "optional", note: "AA, AAA, Majors, Juniors, Seniors; one row per team" },
   ],
   tip: "The Sports Connect volunteer report works as is. A coach with two teams can be on two rows.",
+};
+
+export const TEAMS_TEMPLATE: CsvTemplate = {
+  file: "teams-template.csv",
+  columns: [
+    { name: "Division", need: "required", note: "AA, AAA, Majors, Juniors, Seniors" },
+    { name: "Team", need: "required", note: "the team's name" },
+    { name: "Manager Email", need: "optional", note: "sign-in email; blank keeps the current manager" },
+    { name: "Coach Email", need: "optional", note: "sign-in email; blank keeps the current coach" },
+    { name: "Assistant Emails", need: "optional", note: "separate several with ; (added, never removed)" },
+  ],
+  tip: "The Sports Connect volunteer report also works as is (Division Name, Team Name, Volunteer Role, Volunteer Email Address): Team Manager becomes the manager, Coach the coach, Assistant Coach an assistant. Rows still \"Unallocated\" are skipped. Everyone must already have the coach role this season (People page).",
 };
 
 export const PRIOR_YEAR_TEMPLATE: CsvTemplate = {
