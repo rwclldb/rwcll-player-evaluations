@@ -5,7 +5,7 @@ the real website, so the board can **take part on their own phones**: they scan 
 QR code, sign in with a seat card, score a few players, and then see the draft
 report appear once you release it.
 
-All the data is fictional (290 made-up players at "Fixture Park"). The live site
+All the data is fictional (357 made-up players at "Fixture Park"). The live site
 holds nothing real yet, so wiping and reloading it is fine.
 
 The deck `RWCLL-Player-Evaluations-Board.pptx` is the backup if the site or the
@@ -62,7 +62,7 @@ on another day: add `--demo-date=2026-12-10`. It ends with
 
 It creates:
 
-- 290 players; ages **7 and 8 open for scoring** (about 60% scored), ages 9–12
+- 357 players; ages **7 and 8 open for scoring** (about 60% scored), ages 9–12
   released to coaches, 13–16 locked.
 - 46 players checked in, an injured player excused, coach's kids, a possible
   duplicate (Elliot Carter, a walk-up with bib 990).
@@ -118,10 +118,10 @@ the real thing in your hand.
 ### 3. Getting ready: the Before evaluations steps (Window A, 5 min)
 
 - Step **Import registrations** → **Review imports** → **View Rows** on batch #1:
-  the Sports Connect export, 368 rows.
+  the Sports Connect export, 444 rows.
   - The **Bulk review** box shows 0 and 0: that was done when the league was
     loaded. **Don't click** "Ignore out-of-scope rows" or "Approve and commit clean
-    rows". Say: "Normally two clicks: 77 rows from other programs ignored, 290
+    rows". Say: "Normally two clicks: 86 rows from other programs ignored, 357
     players added."
   - **Open Administrator Row Review** → **Needs work**: one row, **Harper Oak**,
     "Duplicate Player ID in file". "Two children came in with the same Player Id.

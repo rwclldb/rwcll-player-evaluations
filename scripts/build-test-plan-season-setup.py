@@ -83,10 +83,10 @@ PHASES = [
     ("Phase 2: Registrations (Sports Connect import)", 20, "Stage the registration file, use the two bulk buttons, then decide the 17 rows that need a person.", [
         ("2.1", "Admin", "Imports, Sports Connect import",
          "Choose rwcll-fictional-test-league/generated/sports-connect-spring-2027-full.csv and season Spring 2027. Press Save Batch for Review, then open the batch.",
-         "\"Saved staging batch #N with 368 rows.\" The batch page shows a Bulk review panel at the top.", True),
+         "\"Saved staging batch #N with 444 rows.\" The batch page shows a Bulk review panel at the top.", True),
         ("2.2", "Admin", "Import batch, Bulk review",
          "Read the out-of-scope programs listed, then press Ignore out-of-scope rows.",
-         "\"77 out-of-scope row(s) ignored.\" (A, Tee Ball, softball, Challenger and similar.)", True),
+         "\"86 out-of-scope row(s) ignored.\" (A, Tee Ball, softball, Challenger and similar.)", True),
         ("2.3", "Admin", "Import batch, Bulk review",
          "Press Approve and commit clean rows.",
          "\"274 clean row(s) approved as new players and committed.\" The panel then shows 0 and 0.", True),
@@ -104,7 +104,7 @@ PHASES = [
          "Val commits.", False),
         ("2.7", "Admin", "Players",
          "Open Players, then the No age group filter.",
-         "290 registrations. No age group (1): Val Hayes.", True),
+         "357 registrations. No age group (1): Val Hayes.", True),
         ("2.8", "Admin", "Players, Val Hayes",
          "Open Val. Age group 11, Reason \"No birthdate; parent confirmed age 11\". Save changes.",
          "\"Saved.\" Change history shows Age group: - -> 11. On the list Val shows \"Age set by admin\" and No age group is (0).", True),
@@ -140,7 +140,7 @@ PHASES = [
          "Open the No bib filter.",
          "3 players: Gale Oak, Indigo Vale, Jamie Carter (the fixture leaves them without bibs on purpose).", False),
         ("4.4", "Admin", "Players, each of the three",
-         "Give them bibs 901, 902 and 903 on their edit pages (no reason needed for a bib). These are outside the fixture range (201-548).",
+         "Give them bibs 901, 902 and 903 on their edit pages (no reason needed for a bib). These are outside the fixture range (201-676).",
          "\"Saved.\" No bib shows (0).", True),
         ("4.5", "Admin", "Players, any other player",
          "Give a fourth player bib 901.",
@@ -237,7 +237,7 @@ DB_CHECKS = [
      "select (select count(*) from public.player_seasons) as registrations,\n"
      "       (select count(*) from public.player_seasons where league_age is null) as no_age_group;\n"
      "select review_state, count(*) from public.sports_connect_import_rows group by 1 order by 1;",
-     "290 registrations, 0 with no age group (after 2.8). Import rows: committed 290, ignored 77, and Harper Oak's row not committed."),
+     "357 registrations, 0 with no age group (after 2.8). Import rows: committed 357, ignored 86, and Harper Oak's row not committed."),
     ("3", "After Phase 3", "Prior-year ratings",
      "select (select count(*) from public.historical_evaluations) as ratings_imported;\n"
      "select review_state, match_status, count(*) from public.historical_evaluation_import_rows group by 1, 2 order by 1, 2;",
@@ -246,7 +246,7 @@ DB_CHECKS = [
      "select count(*) filter (where evaluation_number is not null) as with_bib,\n       count(*) filter (where evaluation_number is null) as without_bib\n"
      "from public.player_seasons;\n"
      "select evaluation_number, count(*) from public.player_seasons where evaluation_number is not null group by 1 having count(*) > 1;",
-     "with_bib 290, without_bib 0. The second query returns no rows (no bib used twice)."),
+     "with_bib 357, without_bib 0. The second query returns no rows (no bib used twice)."),
     ("5", "After Phase 5", "Walk-up player",
      "select p.first_name, p.last_name, ps.league_age, ps.evaluation_number, ps.registration_source, ps.external_player_id\n"
      "from public.player_seasons ps join public.players p on p.id = ps.player_id where ps.registration_source = 'on_site';",

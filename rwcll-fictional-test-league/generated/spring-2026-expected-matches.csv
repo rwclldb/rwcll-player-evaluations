@@ -37,3 +37,7 @@ Row,Player First Name,Player Last Name,Expected Match,Admin Action,Reason
 36,Silas,Hall,SMP-211,Confirm match,"Player Id, name, and birthdate all agree"
 37,Noah,Cooper,SMP-243,Confirm match,"Player Id, name, and birthdate all agree"
 38,Logan,Morales,SMP-314,Confirm match,"Player Id, name, and birthdate all agree"
+39,Gabe,Ortiz,DRF-006,Confirm match,"Player Id, name, and birthdate all agree"
+40,Sol,Galloway,DRF-014,Confirm match,"Player Id, name, and birthdate all agree"
+41,Milo,Northcott,DRF-033,Confirm match,"Player Id, name, and birthdate all agree"
+42,Rhys,Zielinski,DRF-068,Confirm match,"Player Id, name, and birthdate all agree"

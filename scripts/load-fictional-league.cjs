@@ -4,7 +4,9 @@
 //   npm run fixtures:load -- --reset --open-sessions  same, with every age group already Open for scoring
 //   npm run fixtures:load -- --reset --scored         same, plus all Spring 2027 evaluations (for draft reports)
 //   npm run fixtures:load                             load into an empty local DB (refuses if players exist)
-//   npm run fixtures:load -- --reset --demo           board demo: scored league mid-evaluation-day (docs/DEMO-SCRIPT.md)
+//   npm run fixtures:load -- --reset --demo           board demo: scored league mid-evaluation-day (docs/DEMO-SCRIPT.md); includes --teams
+//   add --teams                                       teams and staff (from the volunteer report), coach's kids, siblings, and
+//                                                     the Juniors, Majors and AAA drafts set up with their order (not started)
 //                                                     [--demo-date=YYYY-MM-DD] (default: today, Pacific)
 //                                                     [--board-seats=N] (default 6: board1@example.com... score age 8)
 //   Live-site demo (you run it): npm run fixtures:load -- --hosted --confirm-project=<ref> --demo
@@ -44,6 +46,8 @@ const DEMO_DATE = (argv.find((a) => a.startsWith("--demo-date=")) ?? "").split("
 if (DEMO && !/^\d{4}-\d{2}-\d{2}$/.test(DEMO_DATE)) { console.error("--demo-date must be YYYY-MM-DD"); process.exit(1); }
 const addDays = (iso, n) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const OPEN_SESSIONS = args.has("--open-sessions");
+// TEAMS: teams, staff, coach's kids, siblings and drafts in setup (the board demo includes them).
+const TEAMS = args.has("--teams") || DEMO;
 // BARE: admin accounts and seasons only; everything else is done by hand in the app.
 const BARE = args.has("--bare");
 // HOSTED mode is meant to be run by the user, never by Claude Code (hosted Supabase is off limits to it).
@@ -245,8 +249,10 @@ PASS: bare league loaded: ${Object.keys(userId).length} admin accounts, Spring 2
   const expected = readCsv(path.join(gen, "spring-2026-expected-matches.csv"));
   const scenario = readCsv(path.join(gen, "scenario-notes.csv"));
   const sample = readCsv(path.join(root, "docs/test-fixtures/sports-connect-sample-spring-2027-fake.csv"));
+  const draftPlayers = readCsv(path.join(gen, "draft-players-spring-2027.csv"));
   const refToReg = (ref) => {
     if (ref.startsWith("PLY-")) { const s = scenario.find((x) => x["Fixture Key"] === ref); return byNameDob.get(`${s["Player First Name"]}|${s["Player Last Name"]}|${usToIso(s["Player Birth Date"]) ?? ""}`); }
+    if (ref.startsWith("DRF-")) { const s = draftPlayers.find((x) => x["Fixture Key"] === ref); return byNameDob.get(`${s["Player First Name"]}|${s["Player Last Name"]}|${usToIso(s["Player Birth Date"])}`); }
     const s = sample[Number(ref.slice(4)) - 1]; return byNameDob.get(`${s["Player First Name"]}|${s["Player Last Name"]}|${usToIso(s["Player Birth Date"])}`);
   };
   const categories = await must(svc.from("rating_categories").select("id, code, name"), "read categories");
@@ -308,6 +314,7 @@ PASS: bare league loaded: ${Object.keys(userId).length} admin accounts, Spring 2
   const { count: bibCount } = await svc.from("player_seasons").select("id", { count: "exact", head: true }).eq("season_id", s2027.id).not("evaluation_number", "is", null);
   log(`\nVerify: ${pool} registrations in ages 7-16 (expected ${expectedPool}); ${bibCount} with bibs (expected ${expectedBibs})`);
   if (pool !== expectedPool || bibCount !== expectedBibs) fail("loaded counts do not match the fixture files");
+  if (TEAMS) await loadTeams({ svc, admin, s2027, adminId, password, refToReg });
   if (!SCORED) {
     if (OPEN_SESSIONS) {
       // SIMULATED admin "Open Session" for every age group, so scoring can start right away.
@@ -420,9 +427,6 @@ async function stageDemo({ svc, admin, s2027, sessionByAge, userId, adminId, reg
   const injured = byAge(7).at(-1);
   await must(svc.from("player_exemptions").insert({ player_season_id: injured.id, scope: "attendance", reason: "Broken wrist; doctor's note on file", approved_by_name: "Safety officer", recorded_by: adminId }), "exemption");
 
-  // Coach's kids (the league's draft rules decide what that means).
-  const kids = [9, 10, 11, 12].map((age) => byAge(age)[2]);
-  await must(svc.from("player_seasons").update({ is_coach_kid: true }).in("id", kids.map((k) => k.id)), "coach kids");
 
   // A walk-up who was already registered: shows up under Possible duplicates.
   const twin = byAge(8)[1];
@@ -439,10 +443,66 @@ async function stageDemo({ svc, admin, s2027, sessionByAge, userId, adminId, reg
 
   log(`DEMO staged for ${DEMO_DATE} (makeup ${addDays(DEMO_DATE, 7)}): ${saved} scores; ages 7-8 open, 9-12 released, 13-16 locked;`);
   log(`  ${calls.length} players called by announcer.alex@example.com.`);
-  log(`  ${checkins.length} check-ins, 1 exemption, ${kids.length} coach's kids, 1 possible duplicate (walk-up bib 990), prior-year shown while scoring.`);
+  log(`  ${checkins.length} check-ins, 1 exemption, 1 possible duplicate (walk-up bib 990), prior-year shown while scoring; teams, coach's kids and drafts from --teams.`);
   log("  Registrar: registrar.riley@example.com. Avery (coach.avery@example.com) has age 7 left to score.");
   if (BOARD_SEATS) log(`  Board seats: board1@example.com to board${BOARD_SEATS}@example.com, coaches assigned to age 8 (open).`);
   log("\nPASS: demo league loaded. Follow docs/DEMO-SCRIPT.md. Re-run it the morning of the demo so the event date is today.");
+}
+
+// ---------- teams, staff, coach's kids, siblings and drafts (--teams; REAL app functions as admin.jordan) ----------
+async function loadTeams({ svc, admin, s2027, adminId, password, refToReg }) {
+  const load = require("jiti")(__filename, { alias: { "@": root } });
+  const csvUpload = load(path.join(root, "lib/csv-upload.ts"));
+  const teamsCsv = load(path.join(root, "lib/teams-csv.ts"));
+  const volunteerFile = "sports-connect-volunteers-teams-spring-2027.csv";
+  const table = csvUpload.readCsv(fs.readFileSync(path.join(gen, volunteerFile), "utf8"));
+  const divisions = await must(svc.from("season_divisions").select("id, divisions(name)").eq("season_id", s2027.id), "read divisions");
+  const divisionId = Object.fromEntries(divisions.map((d) => [d.divisions.name, d.id]));
+
+  // SIMULATED (People page invite): an account with the coach role for every volunteer in a coaching job, and their
+  // division (the volunteer report's Division Name, as the People import reads it).
+  const { data: existingUsers } = await svc.auth.admin.listUsers({ perPage: 1000 });
+  const byEmail = Object.fromEntries((existingUsers?.users ?? []).map((u) => [u.email, u.id]));
+  let created = 0;
+  for (const r of table.rows.filter((r) => teamsCsv.roleFromVolunteerRole(r["Volunteer Role"]))) {
+    const email = r["Volunteer Email Address"].toLowerCase();
+    if (!byEmail[email]) { byEmail[email] = await ensureUser(svc, existingUsers, email, password, `${r["Volunteer First Name"]} ${r["Volunteer Last Name"]}`); created++; }
+    const { data: role } = await svc.from("user_roles").select("id").eq("user_id", byEmail[email]).eq("season_id", s2027.id).eq("role_name", "coach").maybeSingle();
+    if (!role) await must(svc.from("user_roles").insert({ user_id: byEmail[email], role_name: "coach", season_id: s2027.id, created_by: adminId }), `coach role ${email}`);
+    if (divisionId[r["Division Name"]]) await must(svc.from("coach_divisions").upsert({ season_id: s2027.id, user_id: byEmail[email], division_id: divisionId[r["Division Name"]], created_by: adminId },
+      { onConflict: "season_id,user_id,division_id", ignoreDuplicates: true }), `coach division ${email}`);
+  }
+  log(`SIMULATED people: ${created} new coach accounts from the volunteer report (password from FIXTURE_PASSWORD)`);
+
+  // REAL: the Teams page upload (same parser), applied.
+  const parsed = teamsCsv.parseTeamsCsv(table);
+  if ("error" in parsed) fail(`teams file: ${parsed.error}`);
+  const results = await must(admin.rpc("admin_import_teams", { p_season_id: s2027.id, p_rows: parsed.rows, p_apply: true }), "import teams");
+  const bad = results.filter((r) => r.status === "error");
+  if (bad.length) fail(`teams upload: ${bad.map((r) => `line ${r.line} ${r.team}: ${r.message}`).join("; ")}`);
+  log(`REAL Teams upload (${volunteerFile}): ${results.length} teams; skipped ${parsed.skipped.length} rows (${[...new Set(parsed.skipped.map((x) => x.reason))].join("; ")})`);
+
+  // REAL: coach's kids linked to their parent, and sibling groups confirmed (one family is left as a suggestion).
+  const families = readCsv(path.join(gen, "draft-families-spring-2027.csv"));
+  let links = 0, groups = 0;
+  for (const f of families.filter((f) => f["Parent Email"])) {
+    await must(admin.rpc("admin_link_coach_kid", { p_player_season_id: refToReg(f["Fixture Key"]).id, p_parent_user_id: byEmail[f["Parent Email"]] }), `link ${f["Fixture Key"]}`);
+    links++;
+  }
+  for (const key of [...new Set(families.filter((f) => f["Confirm Siblings"] === "YES").map((f) => f.Family))]) {
+    const ids = families.filter((f) => f.Family === key).map((f) => refToReg(f["Fixture Key"]).id);
+    await must(admin.rpc("admin_group_siblings", { p_player_season_ids: ids }), `siblings ${key}`);
+    groups++;
+  }
+  log(`REAL families: ${links} coach's kids linked to a parent, ${groups} sibling groups confirmed (others stay as suggestions)`);
+
+  // REAL: drafts set up with roster sizes and a drawn first-round order; not started.
+  for (const [name, size] of [["Juniors", 13], ["Majors", 12], ["AAA", 12]]) {
+    const draftId = await must(admin.rpc("admin_create_draft", { p_season_division_id: divisionId[name] }), `create ${name} draft`);
+    await must(admin.rpc("admin_save_draft_settings", { p_draft_id: draftId, p_settings: { roster_size: size } }), `${name} roster size`);
+    await must(admin.rpc("admin_draw_draft_order", { p_draft_id: draftId }), `${name} order`);
+  }
+  log("REAL drafts: Juniors (2 x 13), Majors (8 x 12) and AAA (8 x 12) set up with a drawn order; start them from Drafts once their age groups are released");
 }
 
 main().catch((e) => fail(e.stack || e.message));

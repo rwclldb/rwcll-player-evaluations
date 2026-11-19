@@ -30,14 +30,17 @@ Generated (in `generated/`, rebuild with `node scripts/generate-fictional-league
 | File | What it is |
 |---|---|
 | `sports-connect-spring-2027-scenarios.csv` | The 45 scenario players in exact Sports Connect format. Small, every edge case. |
-| `sports-connect-spring-2027-full.csv` | The 45 scenario players plus the 323-row fake sample (368 rows, 290 in the evaluation pool). Realistic size. |
+| `sports-connect-spring-2027-full.csv` | The 45 scenario players, the 323-row fake sample and 76 generated draft players (444 rows, 357 in the evaluation pool). Sized like the real league: Majors ~110 asking (68 twelves), AAA and Majors 8 teams of 12, AA ~100, Juniors 26, Seniors 15 (seven sample Seniors and two Juniors moved to softball programs). |
+| `draft-players-spring-2027.csv` | The 76 generated draft players (DRF-001...): fixture key, Player Id, name, birthdate, age, requested division, bib (601-676), family. |
+| `draft-families-spring-2027.csv` | Families that exercise the draft rules: coach's kids (with the parent's email), twins, siblings in and across divisions, an assistant coach's kid, a kid too young for the parent's division, an unconfirmed sibling suggestion, a kid registered with a coach's email, a 12 who asked for Juniors. "Scenario" says what each tests. |
+| `sports-connect-volunteers-teams-spring-2027.csv` | The Sports Connect volunteer report: 27 teams (8 Majors, 8 AAA, 8 AA, 2 Juniors, 1 Seniors) with a Team Manager and Coach each, three assistants, one Unallocated coach and one Team Parent (both skipped by the Teams upload). |
 | `scenario-notes.csv` | For each scenario player: tags and the expected import result. |
 | `bib-numbers-by-player-id.csv` | Bib upload keyed by Sports Connect Player Id. |
 | `bib-numbers-by-name-and-birthdate.csv` | The same bibs keyed by name plus birthdate. |
 | `bib-numbers-with-errors.csv` | Bad uploads (duplicate bib, non-numeric, blank, unknown player, out-of-scope player, one player listed twice). The `Expected Result` column says what should happen. |
 | `spring-2026-coach-ratings.csv` | Prior-year end-of-season coach ratings of players, on the same form as evaluations (5 core skills plus optional pitching and catching). Sparse, as real data will be. |
 | `spring-2026-expected-matches.csv` | For each prior-year row: the player it should match and the admin action (confirm, review then confirm, or keep unmatched). |
-| `scored/spring-2027-evaluations.csv` | 1,230 Spring 2027 evaluations (submitted, draft, not evaluated) by coaches and independent evaluators. |
+| `scored/spring-2027-evaluations.csv` | 1,502 Spring 2027 evaluations (submitted, draft, not evaluated) by coaches and independent evaluators. |
 | `scored/expected-draft-report.csv` | The coach and evaluator averages, per-skill averages, prior-year averages, and flags the draft report should show. |
 
 ## Rules baked into the expected report

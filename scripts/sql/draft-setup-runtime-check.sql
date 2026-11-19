@@ -23,7 +23,8 @@ UPDATE public.season_divisions sd SET min_age = x.lo, max_age = x.hi
 FROM public.divisions d, (VALUES ('AA', 7, 9), ('AAA', 8, 11), ('Majors', 10, 12), ('Juniors', 13, 14), ('Seniors', 15, 16)) x(n, lo, hi)
 WHERE d.id = sd.division_id AND d.name = x.n AND sd.season_id IN (:old, :s);
 SELECT max(sd.id) FILTER (WHERE d.name = 'Majors' AND sd.season_id = :s) AS majors, max(sd.id) FILTER (WHERE d.name = 'AAA' AND sd.season_id = :s) AS aaa,
-       max(sd.id) FILTER (WHERE d.name = 'Majors' AND sd.season_id = :old) AS oldmajors
+       max(sd.id) FILTER (WHERE d.name = 'Majors' AND sd.season_id = :old) AS oldmajors,
+       max(sd.id) FILTER (WHERE d.name = 'AA' AND sd.season_id = :s) AS aa
 FROM public.season_divisions sd JOIN public.divisions d ON d.id = sd.division_id \gset
 
 -- Players: name tells age and request. Rows in the Sports Connect staging table give the requested division.
@@ -96,6 +97,7 @@ SELECT pg_temp.check(pg_temp.pool(:majors) = 'ElevenMaj:requested,TenKid:coach_k
   'Majors pool: every 12 (must draft), 10-11s who asked for Majors, the manager''s kid (must draft); not the coach''s 9-year-old, not "Softball Majors", not players already on a team');
 SELECT pg_temp.check(pg_temp.pool(:aaa) = 'ElevenAaa:must_draft_age!,ElevenMaj:must_draft_age!,Nine:requested,TenKid:requested',
   'AAA pool: every 11 (must draft) and younger players who asked for AAA (the Majors manager''s kid too, until Majors takes him)');
+SELECT pg_temp.check(pg_temp.pool(:aa) IS NULL, 'AA (the youngest division) has no must-draft age: a 9 who asked for AAA is not in the AA pool');
 
 -- ---------- creating a draft ----------
 SELECT pg_temp.as_user('00000000-0000-4000-8000-0000000d0005');

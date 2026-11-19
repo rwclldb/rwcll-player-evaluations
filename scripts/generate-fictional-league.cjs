@@ -5,6 +5,7 @@
 //   rwcll-fictional-test-league/fictional_player_roster.csv   45 scenario players with tags
 //   rwcll-fictional-test-league/fictional_people.csv          admins, coaches, evaluators (emails)
 //   docs/test-fixtures/sports-connect-sample-spring-2027-fake.csv   323 fake Sports Connect rows
+//   (plus generated draft players, families and team staff: section 1b)
 //   lib/data/age-chart-2027.json                              official 2027 age chart
 //
 // Outputs: rwcll-fictional-test-league/generated/  (see README.md there)
@@ -114,6 +115,186 @@ sample.forEach((r, i) => {
     inPool: ACTIVE.has(r["Division Name"].toUpperCase()) && inPoolAge(age), sc: r,
   });
 });
+// ---------- 1b. Draft-sized league (decided 2026-11-21) ----------
+// Realistic division sizes for the draft, and families that exercise the draft rules:
+//   Majors ~110 asking (68 twelves), 8 teams of 12, so 10-11s fall to AAA; AAA 8 teams of 12, so some 8-9s fall
+//   to AA; AA ~100 (teams made by the generator); Juniors 26 (2 teams of 13); Seniors 15 (1 team).
+// Seven sample Seniors move to "Senior Softball" (out of scope); with the Athletics manager's son that makes 15.
+const seniorsOut = players.filter((p) => p.source === "sample" && p.inPool && p.division.toUpperCase() === "SENIORS").slice(-7);
+for (const p of seniorsOut) { p.division = "Senior Softball"; p.sc = { ...p.sc, "Division Name": "Senior Softball" }; p.inPool = false; }
+
+const DRF_FIRST = ["Ari", "Blake", "Cruz", "Drew", "Eden", "Flynn", "Gale", "Hollis", "Ira", "Jules", "Kai", "Lane", "Milo", "Nash", "Oakley", "Parker",
+  "Quinn", "Reese", "Sage", "Tate", "Uri", "Vaughn", "Wren", "Xavi", "Yuri", "Zane", "Arlo", "Bodhi", "Cyrus", "Dax", "Emery", "Finch", "Gus", "Hank",
+  "Idris", "Jett", "Koa", "Leif", "Mack", "Nico", "Otis", "Pax", "Rhys", "Silas", "Theo", "Vince", "Wade", "Zeke"];
+const DRF_LAST = ["Abernathy", "Bellamy", "Castellano", "Delacroix", "Esposito", "Fairbanks", "Galloway", "Hargrove", "Iverson", "Jablonski", "Kowalczyk",
+  "Lindgren", "Montague", "Nakamura", "Okonkwo", "Pemberton", "Quintero", "Rasmussen", "Sandoval", "Thibodeaux", "Underwood", "Valenzuela", "Whitaker",
+  "Yamamoto", "Zielinski", "Ashby", "Brennan", "Calloway", "Donovan", "Eastwood", "Fitzgerald", "Gallagher", "Holloway", "Ingram", "Jamison", "Kingsley",
+  "Lockhart", "Maddox", "Northcott", "Prescott", "Radcliffe", "Sinclair", "Tremblay", "Wexler"];
+const monthsFor = (age) => [...chart.entries()].filter(([, a]) => a === age).map(([k]) => k);
+let drfN = 0;
+function addDraftPlayer({ first, last, age, division, family = null, twinOf = null, email = null, note = "" }) {
+  drfN++;
+  const ref = `DRF-${String(drfN).padStart(3, "0")}`;
+  const r = rng(`drf|${ref}`);
+  let dob = twinOf?.dob;
+  if (!dob) {
+    const ms = monthsFor(age);
+    const [y, m] = ms[Math.floor(r() * ms.length)].split("-");
+    dob = `${y}-${m.padStart(2, "0")}-${String(1 + Math.floor(r() * 28)).padStart(2, "0")}`;
+  }
+  if (ageFromIso(dob) !== age) throw new Error(`${ref}: birthdate ${dob} gives age ${ageFromIso(dob)}, wanted ${age}`);
+  first ??= DRF_FIRST[Math.floor(r() * DRF_FIRST.length)];
+  last ??= DRF_LAST[Math.floor(r() * DRF_LAST.length)];
+  const p = {
+    ref, source: "draft", n: drfN, playerId: String(77300000 + drfN), first, last, dob, age, division, payment: "Completed", bib: String(600 + drfN),
+    tags: family ? `FAMILY_${family}` : "", notes: note, family, inPool: true,
+    sc: {
+      "Program Name": "2027 Spring Season", "Division Name": division, "Player Id": String(77300000 + drfN), "Registration Number": "",
+      "Account First Name": PARENTS[drfN % PARENTS.length], "Account Last Name": last, "Player First Name": first, "Player Last Name": last,
+      "Player Gender": drfN % 2 ? "Male" : "Female", "Player Birth Date": isoToUs(dob),
+      // Siblings share the family's account email: the import suggests them as siblings from it.
+      "User Email": email ?? `family.${last.toLowerCase()}.${(family ?? ref).toLowerCase()}@example.com`,
+      "Order Date": `08/${String((drfN % 28) + 1).padStart(2, "0")}/2026 06:00:00 PM`, "Order No": String(93000000 + drfN), "Order Payment Status": "Completed",
+    },
+  };
+  players.push(p);
+  return p;
+}
+
+// Team staff (the Sports Connect volunteer report, one row per person) and accounts for the new people.
+const STAFF_FIRST = ["Morgan", "Riley", "Sam", "Taylor", "Jordan", "Casey", "Alex", "Robin", "Jesse", "Kerry", "Dana", "Shawn", "Pat", "Lee", "Chris",
+  "Devon", "Emerson", "Frankie", "Glen", "Hayden", "Jody", "Kim", "Logan", "Marlow", "Noel", "Peyton", "Rowan", "Skyler", "Toby", "Val"];
+const STAFF_LAST = ["Ortiz", "Nguyen", "Patel", "Kowalski", "Bennett", "Chandler", "Dalton", "Ellison", "Forbes", "Garrison", "Hensley", "Irwin",
+  "Jarvis", "Keller", "Lawson", "Mercer", "Nolan", "Osborne", "Pruitt", "Ramsey", "Sutherland", "Tanner", "Upton", "Vickers", "Walsh", "Yates"];
+const staffPeople = new Map(); // email -> { first, last, key }
+let staffN = 0;
+function newStaff() {
+  const first = STAFF_FIRST[staffN % STAFF_FIRST.length];
+  const last = STAFF_LAST[(staffN * 7) % STAFF_LAST.length];
+  staffN++;
+  const email = `${first}.${last}@example.com`.toLowerCase();
+  if (staffPeople.has(email)) throw new Error(`duplicate staff email ${email}`);
+  staffPeople.set(email, { first, last, key: `STF-${String(staffN).padStart(2, "0")}` });
+  return email;
+}
+const existing = (key) => ({ email: person[key].email, first: person[key].first_name, last: person[key].last_name });
+const staffRows = [];
+function staff(division, team, role, who) {
+  const e = typeof who === "string" ? { email: who, ...staffPeople.get(who) } : who;
+  staffRows.push({ "Program Name": "2027 Spring Season", "Division Name": division, "Team Name": team, "Volunteer Role": role,
+    "Volunteer First Name": e.first, "Volunteer Last Name": e.last, "Volunteer Email Address": e.email });
+  return e.email;
+}
+const TEAMS = {
+  Majors: ["Giants", "Cubs", "Mets", "Rays", "Pirates", "Tigers", "Orioles", "Padres"],
+  AAA: ["Astros", "Braves", "Cardinals", "Dodgers", "Mariners", "Reds", "Rockies", "Royals"],
+  Juniors: ["Angels", "Nationals"],
+  Seniors: ["Athletics"],
+  AA: ["Blue Jays", "Brewers", "Diamondbacks", "Guardians", "Marlins", "Phillies", "Rangers", "Twins"],
+};
+// Who runs which team. Existing fixture coaches take some jobs; everyone else is a new account.
+const roleOf = {};
+const pick = (division, team, role, who) => { roleOf[`${division}|${team}|${role}`] = staff(division, team, role, who); };
+pick("Majors", "Giants", "Team Manager", existing("COA-05"));   // Elliot Brandt: manager with twin 12-year-olds
+pick("Majors", "Cubs", "Team Manager", existing("COA-06"));     // Finley Moss: also coaches in AAA (two divisions)
+pick("Majors", "Mets", "Team Manager", existing("COA-08"));     // Harper Quill: kid is 9 (too young for Majors)
+pick("Juniors", "Angels", "Team Manager", existing("COA-09"));  // Indigo Ferris
+pick("Seniors", "Athletics", "Team Manager", existing("COA-10")); // Jamie Sutton
+pick("AA", "Blue Jays", "Team Manager", existing("COA-01"));    // Avery Linden
+pick("AA", "Brewers", "Team Manager", existing("COA-02"));      // Bailey Marsh
+pick("AAA", "Astros", "Team Manager", existing("COA-03"));      // Cameron Reyes
+pick("AAA", "Braves", "Team Manager", existing("COA-04"));      // Dakota Shore
+pick("AAA", "Braves", "Coach", existing("COA-06"));             // Finley Moss again (Majors Cubs manager)
+pick("Majors", "Rays", "Team Manager", newStaff());
+const raysManager = roleOf["Majors|Rays|Team Manager"];
+pick("AAA", "Astros", "Coach", { email: raysManager, ...staffPeople.get(raysManager) }); // manages Rays (Majors), coaches Astros (AAA)
+for (const [division, teams] of Object.entries(TEAMS)) {
+  for (const team of teams) {
+    if (!roleOf[`${division}|${team}|Team Manager`]) pick(division, team, "Team Manager", newStaff());
+    if (!roleOf[`${division}|${team}|Coach`]) pick(division, team, "Coach", newStaff());
+  }
+}
+const piratesAssistant = newStaff();
+staff("Majors", "Pirates", "Assistant Coach", piratesAssistant);  // assistant: their kid gets no privilege
+staff("AAA", "Reds", "Assistant Coach", newStaff());
+staff("AA", "Twins", "Assistant Coach", newStaff());
+const unallocated = newStaff();
+staff("AA", "Unallocated", "Coach", unallocated);                 // volunteer not placed on a team yet: skipped by the upload
+staffRows.push({ "Program Name": "2027 Spring Season", "Division Name": "Majors", "Team Name": "Giants", "Volunteer Role": "Team Parent",
+  "Volunteer First Name": "Sky", "Volunteer Last Name": "Helper", "Volunteer Email Address": "team.parent@example.com" }); // not a coach role: skipped
+
+// Families: coach's kids, twins and siblings. "group" = the loader confirms the sibling group (otherwise it stays a
+// suggestion from the shared account email). "parent" = linked as that coach's kid.
+const families = [];
+// A coach's kid shares the parent's last name.
+const lastOf = (email) => staffPeople.get(email)?.last ?? people.find((p) => p.email === email)?.last_name;
+function family(key, scenario, kids, { parent = null, group = true, email = null } = {}) {
+  let first = null;
+  for (const k of kids) {
+    const p = addDraftPlayer({ ...k, family: key, twinOf: k.twin ? first : null, email, note: scenario });
+    first ??= p;
+    families.push({ Family: key, "Fixture Key": p.ref, "Player First Name": p.first, "Player Last Name": p.last, "League Age": p.age,
+      "Requested Division": p.division, "Parent Email": k.kid === false ? "" : parent ?? "", "Confirm Siblings": kids.length > 1 && group ? "YES" : "NO", Scenario: scenario });
+  }
+}
+const M = (age) => ({ age, division: "Majors" });
+family("F01", "Twin 12-year-olds of the Giants manager: rounds 1 and 2 go to them automatically",
+  [{ first: "Mateo", last: "Ramirez", ...M(12) }, { first: "Lucia", last: "Ramirez", ...M(12), twin: true }], { parent: roleOf["Majors|Giants|Team Manager"] });
+family("F02", "Cubs manager's 12-year-old and Cubs coach's 11-year-old (different families, same team)",
+  [{ first: "Owen", last: "Moss", ...M(12) }], { parent: roleOf["Majors|Cubs|Team Manager"] });
+family("F03", "Cubs coach's 11-year-old who asked for Majors: the team's round-2 coach's kid",
+  [{ first: "Ivy", last: lastOf(roleOf["Majors|Cubs|Coach"]), ...M(11) }], { parent: roleOf["Majors|Cubs|Coach"] });
+family("F04", "Mets manager's 9-year-old: too young for Majors, so a regular AAA player (no privilege there)",
+  [{ first: "Penny", last: "Quill", age: 9, division: "AAA" }], { parent: roleOf["Majors|Mets|Team Manager"] });
+family("F05", "Rays manager also coaches AAA Astros. Both kids are Rays coach's kids in Majors (the 10 too, though she asked for AAA: coach's kids are must-draft); take her out of the Majors pool to let her play AAA for Astros",
+  [{ first: "Gabe", last: lastOf(raysManager), ...M(12) }, { first: "Nora", last: lastOf(raysManager), age: 10, division: "AAA" }], { parent: raysManager });
+family("F06", "Siblings: a 12 and a 10 who asked for Majors. Picking the 12 asks about the 10 (take or send down)",
+  [{ first: "Tess", last: "Whitaker", ...M(12) }, { first: "Leo", last: "Whitaker", ...M(10) }]);
+family("F07", "Siblings: a 12 (Majors) and an 11 who asked for AAA. Different pools, so no sibling rule in Majors",
+  [{ first: "Hugo", last: "Lindgren", ...M(12) }, { first: "Maya", last: "Lindgren", age: 11, division: "AAA" }]);
+family("F08", "Twin 11-year-olds who asked for Majors: picking one asks about the other",
+  [{ first: "Eli", last: "Nakamura", ...M(11) }, { first: "Ada", last: "Nakamura", ...M(11), twin: true }]);
+family("F09", "Siblings in AAA: an 11 (must draft) and a 9 who asked for AAA",
+  [{ first: "Sol", last: "Galloway", age: 11, division: "AAA" }, { first: "June", last: "Galloway", age: 9, division: "AAA" }]);
+family("F10", "Siblings: a 10 (AAA) and an 8 (AA): different pools; AA teams keep them together later",
+  [{ first: "Rex", last: "Prescott", age: 10, division: "AAA" }, { first: "Bea", last: "Prescott", age: 8, division: "AA" }]);
+family("F11", "Pirates assistant coach's 12-year-old: assistants get no coach's-kid privilege (not linked)",
+  [{ first: "Cole", last: lastOf(piratesAssistant), ...M(12), kid: false }]);
+family("F12", "Not confirmed: two players on one family account, left as a sibling suggestion",
+  [{ first: "Ivo", last: "Sinclair", ...M(10) }, { first: "Lily", last: "Sinclair", age: 8, division: "AA" }], { group: false });
+family("F13", "Registered with the Tigers coach's own sign-in email: suggested as that coach's kid (not linked)",
+  [{ first: "Sami", last: lastOf(roleOf["Majors|Tigers|Coach"]), ...M(12) }], { email: roleOf["Majors|Tigers|Coach"] });
+family("F14", "A 12-year-old who asked for Juniors (plays up?): still must-draft in Majors until an admin moves them",
+  [{ first: "Kit", last: "Holloway", age: 12, division: "Juniors" }]);
+family("F15", "AAA Astros manager's 8-year-old who asked for AAA: AAA coach's kid",
+  [{ first: "Remy", last: "Reyes", age: 8, division: "AAA" }], { parent: roleOf["AAA|Astros|Team Manager"] });
+family("F16", "AA Blue Jays manager's twins (7): kept with their parent's team when AA teams are made",
+  [{ first: "Fern", last: "Linden", age: 7, division: "AA" }, { first: "Moss", last: "Linden", age: 7, division: "AA", twin: true }], { parent: roleOf["AA|Blue Jays|Team Manager"] });
+family("F17", "AA siblings: a 9 and a 7",
+  [{ first: "Ruby", last: "Eastwood", age: 9, division: "AA" }, { first: "Abe", last: "Eastwood", age: 7, division: "AA" }]);
+family("F18", "Angels manager's 13 and a 14-year-old sibling: Juniors coach's kid and sibling",
+  [{ first: "Wes", last: "Ferris", age: 14, division: "Juniors" }, { first: "Iris", last: "Ferris", age: 13, division: "Juniors" }], { parent: roleOf["Juniors|Angels|Team Manager"] });
+family("F19", "Athletics manager's 16-year-old (Seniors: one team, everyone on it)",
+  [{ first: "Dean", last: "Sutton", age: 16, division: "Seniors" }], { parent: roleOf["Seniors|Athletics|Team Manager"] });
+
+// Fill to the target sizes (age|requested division -> total wanted in the pool).
+const TARGET = { "12|Majors": 68, "11|Majors": 31, "10|Majors": 11, "9|AAA": 20, "8|AAA": 5, "8|AA": 56, "9|AA": 31 };
+for (const [k, want] of Object.entries(TARGET)) {
+  const [age, division] = [Number(k.split("|")[0]), k.split("|")[1]];
+  const have = () => players.filter((p) => p.inPool && p.age === age && p.division.toUpperCase() === division.toUpperCase() && !p.heldDuplicate).length;
+  while (have() < want) addDraftPlayer({ age, division });
+}
+// The two Juniors coach's-kid family members join a full Juniors group: move two sample Juniors out to keep 26.
+const juniorsOut = players.filter((p) => p.source === "sample" && p.inPool && p.division.toUpperCase() === "JUNIORS").slice(-2);
+for (const p of juniorsOut) { p.division = "Junior Softball"; p.sc = { ...p.sc, "Division Name": "Junior Softball" }; p.inPool = false; }
+// One player per name and birthdate (the loader finds registrations that way).
+const nameKeys = new Set();
+for (const p of players) {
+  const k = `${p.first}|${p.last}|${p.dob}`;
+  if (nameKeys.has(k)) throw new Error(`two players share name and birthdate: ${k}`);
+  nameKeys.add(k);
+}
+
 // A repeated Sports Connect Player Id is a data error (decision 2026-11-10): the app flags it, the first
 // row commits, and later rows are held in import review until the Id is corrected. Held players are
 // not in the evaluation pool, have no bib, and get no scores.
@@ -136,6 +317,12 @@ const idCounts = players.reduce((m, p) => m.set(p.playerId, (m.get(p.playerId) ?
 const scenario = players.filter((p) => p.source === "scenario");
 writeCsv("sports-connect-spring-2027-scenarios.csv", SC_HEADERS, scenario.map((p) => p.sc));
 writeCsv("sports-connect-spring-2027-full.csv", SC_HEADERS, players.map((p) => p.sc));
+// Draft fixtures: the volunteer report (teams and staff), the draft players and the families the loader links.
+writeCsv("sports-connect-volunteers-teams-spring-2027.csv", ["Program Name", "Division Name", "Team Name", "Volunteer Role", "Volunteer First Name", "Volunteer Last Name", "Volunteer Email Address"], staffRows);
+writeCsv("draft-players-spring-2027.csv", ["Fixture Key", "Player Id", "Player First Name", "Player Last Name", "Player Birth Date", "League Age", "Requested Division", "Evaluation Number", "Family", "Notes"],
+  players.filter((p) => p.source === "draft").map((p) => ({ "Fixture Key": p.ref, "Player Id": p.playerId, "Player First Name": p.first, "Player Last Name": p.last, "Player Birth Date": isoToUs(p.dob),
+    "League Age": p.age, "Requested Division": p.division, "Evaluation Number": p.bib, Family: p.family ?? "", Notes: p.notes })));
+writeCsv("draft-families-spring-2027.csv", ["Family", "Fixture Key", "Player First Name", "Player Last Name", "League Age", "Requested Division", "Parent Email", "Confirm Siblings", "Scenario"], families);
 
 function expectedImport(p) {
   const out = [];
@@ -223,7 +410,7 @@ histRow("PLY-018", "COA-03", S(2, 2, 2, 2, 2), { player: byRef["PLY-018"], first
   note: "Played 2026, did not register for 2027", expected: "UNMATCHED", action: "Keep unmatched", reason: "No 2027 registration" });
 // Sparse prior-year data for the bulk sample: about 8% of returning-age players.
 const COACH_KEYS_2026 = Object.keys(COACH_2026);
-for (const p of players.filter((p) => p.source === "sample" && p.inPool && p.age >= 8)) {
+for (const p of players.filter((p) => p.source !== "scenario" && p.inPool && p.age >= 8)) {
   const r = rng(`hist|${p.ref}`);
   if (r() >= 0.08) continue;
   const coach = COACH_KEYS_2026[Math.floor(r() * COACH_KEYS_2026.length)];
@@ -244,7 +431,7 @@ for (const p of players.filter((p) => p.inPool)) {
   if (NO_EVALS.has(p.ref)) continue;
   const coaches = COACHES_BY_AGE[p.age]; const ies = IES_BY_AGE(p.age);
   let raters = [...coaches.map((k) => [k, "coach"]), ...ies.map((k) => [k, "independent_evaluator"])];
-  if (p.source === "sample") raters = raters.filter(([k]) => rng(`present|${p.ref}|${k}`)() < 0.92 || k.startsWith("EVA"));
+  if (p.source !== "scenario") raters = raters.filter(([k]) => rng(`present|${p.ref}|${k}`)() < 0.92 || k.startsWith("EVA"));
   if (p.ref === "PLY-012") raters = raters.filter(([k, t]) => t === "independent_evaluator" || k === coaches[0]);
   for (const [key, type] of raters) {
     const r = rng(`eval|${p.ref}|${key}`);
@@ -253,7 +440,7 @@ for (const p of players.filter((p) => p.inPool)) {
     for (const k of CORE) s[k] = score(p, k, key, "2027");
     if (ab.pitcher && r() < 0.75) for (const k of PITCH) s[k] = score(p, k, key, "2027");
     if (ab.catcher && r() < 0.75) for (const k of CATCH) s[k] = score(p, k, key, "2027");
-    if (p.source === "sample") {
+    if (p.source !== "scenario") {
       const x = r();
       if (x < 0.01) { status = "not_evaluated"; note = "Random not-evaluated"; }
       else if (x < 0.04) { status = "draft"; note = "Random unsubmitted draft; excluded from averages"; }

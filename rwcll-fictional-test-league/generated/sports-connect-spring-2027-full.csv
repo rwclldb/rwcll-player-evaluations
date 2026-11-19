@@ -298,13 +298,13 @@ Program Name,Division Name,Player Id,Registration Number,Account First Name,Acco
 2027 Spring Season,Seniors,84275299,,Jack,Powell,Theo,Powell,Male,05/28/2011,jack.powell253@yahoo.com,07/17/2026 12:43:57 PM,91267979,Pending
 2027 Spring Season,Seniors,84279245,,Felix,Morales,Hugo,Morales,Male,04/08/2011,felix.morales254@gmail.com,07/20/2026 12:28:40 AM,91266106,Completed
 2027 Spring Season,Seniors,84309629,,Julian,Moore,Julian,Moore,Male,11/23/2010,julian.moore255@gmail.com,07/01/2026 05:57:17 PM,91283376,Pending
-2027 Spring Season,Seniors,84325092,,Simon,Ward,Mason,Ward,Male,01/07/2011,simon.ward256@gmail.com,08/14/2026 06:55:04 PM,91267536,Completed
-2027 Spring Season,Seniors,85127363,,Layla,Price,Owen,Price,Male,10/22/2010,layla.price257@gmail.com,08/20/2026 06:24:40 PM,91266604,Completed
-2027 Spring Season,Seniors,85955991,,Henry,Scott,Roman,Scott,Male,11/09/2011,henry.scott258@yahoo.com,06/22/2026 02:10:17 PM,90874456,Completed
-2027 Spring Season,Seniors,86005106,,Chloe,Long,Adrian,Long,Male,05/06/2011,chloe.long259@gmail.com,07/03/2026 06:31:14 PM,91266603,Completed
-2027 Spring Season,Seniors,86118490,,Ivy,Butler,Finn,Butler,Male,05/31/2011,ivy.butler260@yahoo.com,08/17/2026 10:47:01 PM,91266306,Completed
-2027 Spring Season,Seniors,86122079,,Leah,Butler,Nolan,Butler,Male,10/03/2011,leah.butler261@gmail.com,08/26/2026 02:15:15 AM,91283378,Pending
-2027 Spring Season,Seniors,86165300,,Rhys,Turner,Jasper,Turner,Male,04/15/2011,rhys.turner262@gmail.com,09/23/2026 12:13:12 AM,91323467,Pending
+2027 Spring Season,Senior Softball,84325092,,Simon,Ward,Mason,Ward,Male,01/07/2011,simon.ward256@gmail.com,08/14/2026 06:55:04 PM,91267536,Completed
+2027 Spring Season,Senior Softball,85127363,,Layla,Price,Owen,Price,Male,10/22/2010,layla.price257@gmail.com,08/20/2026 06:24:40 PM,91266604,Completed
+2027 Spring Season,Senior Softball,85955991,,Henry,Scott,Roman,Scott,Male,11/09/2011,henry.scott258@yahoo.com,06/22/2026 02:10:17 PM,90874456,Completed
+2027 Spring Season,Senior Softball,86005106,,Chloe,Long,Adrian,Long,Male,05/06/2011,chloe.long259@gmail.com,07/03/2026 06:31:14 PM,91266603,Completed
+2027 Spring Season,Senior Softball,86118490,,Ivy,Butler,Finn,Butler,Male,05/31/2011,ivy.butler260@yahoo.com,08/17/2026 10:47:01 PM,91266306,Completed
+2027 Spring Season,Senior Softball,86122079,,Leah,Butler,Nolan,Butler,Male,10/03/2011,leah.butler261@gmail.com,08/26/2026 02:15:15 AM,91283378,Pending
+2027 Spring Season,Senior Softball,86165300,,Rhys,Turner,Jasper,Turner,Male,04/15/2011,rhys.turner262@gmail.com,09/23/2026 12:13:12 AM,91323467,Pending
 2027 Spring Season,Tee Ball,84914801,,Ivy,Martin,Elise,Martin,Female,03/21/2022,ivy.martin263@gmail.com,07/01/2026 06:36:06 PM,90914665,Completed
 2027 Spring Season,Tee Ball,85254446,,Levi,Ortiz,Simon,Ortiz,Male,07/15/2021,levi.ortiz264@gmail.com,07/06/2026 06:34:23 PM,90933657,Completed
 2027 Spring Season,Tee Ball,85365189,,Felix,Morales,Jonah,Morales,Male,09/03/2020,felix.morales265@me.com,07/02/2026 12:08:46 PM,90917730,Completed
@@ -344,8 +344,8 @@ Program Name,Division Name,Player Id,Registration Number,Account First Name,Acco
 2027 Spring Season,AAA,84084546,,Audrey,Kim,Oscar,Kim,Male,02/16/2017,audrey.kim299@gmail.com,11/03/2026 02:35:58 PM,91421159,Completed
 2027 Spring Season,AAA,84283997,,Willa,Coleman,Adrian,Coleman,Male,07/26/2017,willa.coleman300@gmail.com,11/03/2026 01:01:45 PM,91420813,Completed
 2027 Spring Season,AAA,82672673,,Hazel,Howard,Dylan,Howard,Male,07/08/2017,hazel.howard301@gmail.com,11/01/2026 10:28:52 PM,91414949,Completed
-2027 Spring Season,Juniors,84083965,,Henry,Patterson,Hugo,Patterson,Male,01/03/2013,henry.patterson302@gmail.com,11/03/2026 09:03:30 PM,91422474,Completed
-2027 Spring Season,Juniors,86023992,,Finn,Reed,Logan,Reed,Male,03/03/2014,finn.reed303@yahoo.com,11/01/2026 11:12:27 PM,91415080,Completed
+2027 Spring Season,Junior Softball,84083965,,Henry,Patterson,Hugo,Patterson,Male,01/03/2013,henry.patterson302@gmail.com,11/03/2026 09:03:30 PM,91422474,Completed
+2027 Spring Season,Junior Softball,86023992,,Finn,Reed,Logan,Reed,Male,03/03/2014,finn.reed303@yahoo.com,11/01/2026 11:12:27 PM,91415080,Completed
 2027 Spring Season,Majors,84083712,,Violet,Morgan,Oscar,Morgan,Male,11/03/2016,violet.morgan304@gmail.com,11/01/2026 08:37:00 PM,91414773,Completed
 2027 Spring Season,Majors,84083777,,Zoe,Evans,Felix,Evans,Male,01/01/2016,zoe.evans305@gmail.com,11/03/2026 12:54:49 PM,91420781,Completed
 2027 Spring Season,Majors,82427153,,Nora,Bell,Hugo,Bell,Male,07/18/2015,nora.bell306@yahoo.com,11/03/2026 05:42:17 PM,91421798,Completed
@@ -367,3 +367,79 @@ Program Name,Division Name,Player Id,Registration Number,Account First Name,Acco
 2027 Spring Season,Tee Ball,80009750,,Lily,Roberts,Eli,Roberts,Male,04/01/2022,lily.roberts322@gmail.com,11/02/2026 10:33:35 PM,91419355,Completed
 2027 Spring Season,Tee Ball,86210876,,Elena,Watson,Simon,Watson,Male,05/22/2022,elena.watson323@gmail.com,11/02/2026 02:46:16 PM,91417310,Completed
 2027 Spring Season,Wiffle Ball,86212859,,Sarah,Davis,Liam,Davis,Male,09/13/2022,sarah.davis324@yahoo.com,11/03/2026 06:46:41 PM,91422029,Completed
+2027 Spring Season,Majors,77300001,,Casey,Ramirez,Mateo,Ramirez,Male,02/27/2015,family.ramirez.f01@example.com,08/02/2026 06:00:00 PM,93000001,Completed
+2027 Spring Season,Majors,77300002,,Morgan,Ramirez,Lucia,Ramirez,Female,02/27/2015,family.ramirez.f01@example.com,08/03/2026 06:00:00 PM,93000002,Completed
+2027 Spring Season,Majors,77300003,,Jesse,Moss,Owen,Moss,Male,06/02/2015,family.moss.f02@example.com,08/04/2026 06:00:00 PM,93000003,Completed
+2027 Spring Season,Majors,77300004,,Terry,Lawson,Ivy,Lawson,Female,11/16/2015,family.lawson.f03@example.com,08/05/2026 06:00:00 PM,93000004,Completed
+2027 Spring Season,AAA,77300005,,Kerry,Quill,Penny,Quill,Male,07/16/2018,family.quill.f04@example.com,08/06/2026 06:00:00 PM,93000005,Completed
+2027 Spring Season,Majors,77300006,,Dana,Ortiz,Gabe,Ortiz,Female,10/02/2014,family.ortiz.f05@example.com,08/07/2026 06:00:00 PM,93000006,Completed
+2027 Spring Season,AAA,77300007,,Shawn,Ortiz,Nora,Ortiz,Male,12/01/2016,family.ortiz.f05@example.com,08/08/2026 06:00:00 PM,93000007,Completed
+2027 Spring Season,Majors,77300008,,Pat,Whitaker,Tess,Whitaker,Female,02/09/2015,family.whitaker.f06@example.com,08/09/2026 06:00:00 PM,93000008,Completed
+2027 Spring Season,Majors,77300009,,Lee,Whitaker,Leo,Whitaker,Male,07/01/2017,family.whitaker.f06@example.com,08/10/2026 06:00:00 PM,93000009,Completed
+2027 Spring Season,Majors,77300010,,Robin,Lindgren,Hugo,Lindgren,Female,09/25/2014,family.lindgren.f07@example.com,08/11/2026 06:00:00 PM,93000010,Completed
+2027 Spring Season,AAA,77300011,,Casey,Lindgren,Maya,Lindgren,Male,01/06/2016,family.lindgren.f07@example.com,08/12/2026 06:00:00 PM,93000011,Completed
+2027 Spring Season,Majors,77300012,,Morgan,Nakamura,Eli,Nakamura,Female,05/20/2016,family.nakamura.f08@example.com,08/13/2026 06:00:00 PM,93000012,Completed
+2027 Spring Season,Majors,77300013,,Jesse,Nakamura,Ada,Nakamura,Male,05/20/2016,family.nakamura.f08@example.com,08/14/2026 06:00:00 PM,93000013,Completed
+2027 Spring Season,AAA,77300014,,Terry,Galloway,Sol,Galloway,Female,08/21/2016,family.galloway.f09@example.com,08/15/2026 06:00:00 PM,93000014,Completed
+2027 Spring Season,AAA,77300015,,Kerry,Galloway,June,Galloway,Male,02/12/2018,family.galloway.f09@example.com,08/16/2026 06:00:00 PM,93000015,Completed
+2027 Spring Season,AAA,77300016,,Dana,Prescott,Rex,Prescott,Female,08/17/2017,family.prescott.f10@example.com,08/17/2026 06:00:00 PM,93000016,Completed
+2027 Spring Season,AA,77300017,,Shawn,Prescott,Bea,Prescott,Male,09/14/2018,family.prescott.f10@example.com,08/18/2026 06:00:00 PM,93000017,Completed
+2027 Spring Season,Majors,77300018,,Pat,Mercer,Cole,Mercer,Female,01/12/2015,family.mercer.f11@example.com,08/19/2026 06:00:00 PM,93000018,Completed
+2027 Spring Season,Majors,77300019,,Lee,Sinclair,Ivo,Sinclair,Male,04/06/2017,family.sinclair.f12@example.com,08/20/2026 06:00:00 PM,93000019,Completed
+2027 Spring Season,AA,77300020,,Robin,Sinclair,Lily,Sinclair,Female,10/15/2018,family.sinclair.f12@example.com,08/21/2026 06:00:00 PM,93000020,Completed
+2027 Spring Season,Majors,77300021,,Casey,Bennett,Sami,Bennett,Male,01/14/2015,jesse.bennett@example.com,08/22/2026 06:00:00 PM,93000021,Completed
+2027 Spring Season,Juniors,77300022,,Morgan,Holloway,Kit,Holloway,Female,10/14/2014,family.holloway.f14@example.com,08/23/2026 06:00:00 PM,93000022,Completed
+2027 Spring Season,AAA,77300023,,Jesse,Reyes,Remy,Reyes,Male,03/09/2019,family.reyes.f15@example.com,08/24/2026 06:00:00 PM,93000023,Completed
+2027 Spring Season,AA,77300024,,Terry,Linden,Fern,Linden,Female,09/05/2019,family.linden.f16@example.com,08/25/2026 06:00:00 PM,93000024,Completed
+2027 Spring Season,AA,77300025,,Kerry,Linden,Moss,Linden,Male,09/05/2019,family.linden.f16@example.com,08/26/2026 06:00:00 PM,93000025,Completed
+2027 Spring Season,AA,77300026,,Dana,Eastwood,Ruby,Eastwood,Female,07/02/2018,family.eastwood.f17@example.com,08/27/2026 06:00:00 PM,93000026,Completed
+2027 Spring Season,AA,77300027,,Shawn,Eastwood,Abe,Eastwood,Male,10/27/2019,family.eastwood.f17@example.com,08/28/2026 06:00:00 PM,93000027,Completed
+2027 Spring Season,Juniors,77300028,,Pat,Ferris,Wes,Ferris,Female,07/08/2013,family.ferris.f18@example.com,08/01/2026 06:00:00 PM,93000028,Completed
+2027 Spring Season,Juniors,77300029,,Lee,Ferris,Iris,Ferris,Male,04/17/2014,family.ferris.f18@example.com,08/02/2026 06:00:00 PM,93000029,Completed
+2027 Spring Season,Seniors,77300030,,Robin,Sutton,Dean,Sutton,Female,10/11/2010,family.sutton.f19@example.com,08/03/2026 06:00:00 PM,93000030,Completed
+2027 Spring Season,Majors,77300031,,Casey,Eastwood,Idris,Eastwood,Male,12/13/2014,family.eastwood.drf-031@example.com,08/04/2026 06:00:00 PM,93000031,Completed
+2027 Spring Season,Majors,77300032,,Morgan,Fairbanks,Vince,Fairbanks,Female,08/19/2015,family.fairbanks.drf-032@example.com,08/05/2026 06:00:00 PM,93000032,Completed
+2027 Spring Season,Majors,77300033,,Jesse,Northcott,Milo,Northcott,Male,06/11/2015,family.northcott.drf-033@example.com,08/06/2026 06:00:00 PM,93000033,Completed
+2027 Spring Season,Majors,77300034,,Terry,Tremblay,Milo,Tremblay,Female,04/04/2015,family.tremblay.drf-034@example.com,08/07/2026 06:00:00 PM,93000034,Completed
+2027 Spring Season,Majors,77300035,,Kerry,Kingsley,Nico,Kingsley,Male,08/15/2015,family.kingsley.drf-035@example.com,08/08/2026 06:00:00 PM,93000035,Completed
+2027 Spring Season,Majors,77300036,,Dana,Fairbanks,Silas,Fairbanks,Female,11/04/2014,family.fairbanks.drf-036@example.com,08/09/2026 06:00:00 PM,93000036,Completed
+2027 Spring Season,Majors,77300037,,Shawn,Northcott,Mack,Northcott,Male,01/22/2015,family.northcott.drf-037@example.com,08/10/2026 06:00:00 PM,93000037,Completed
+2027 Spring Season,Majors,77300038,,Pat,Calloway,Reese,Calloway,Female,02/06/2015,family.calloway.drf-038@example.com,08/11/2026 06:00:00 PM,93000038,Completed
+2027 Spring Season,Majors,77300039,,Lee,Esposito,Pax,Esposito,Male,05/14/2015,family.esposito.drf-039@example.com,08/12/2026 06:00:00 PM,93000039,Completed
+2027 Spring Season,Majors,77300040,,Robin,Northcott,Leif,Northcott,Female,11/09/2014,family.northcott.drf-040@example.com,08/13/2026 06:00:00 PM,93000040,Completed
+2027 Spring Season,Majors,77300041,,Casey,Calloway,Kai,Calloway,Male,05/05/2016,family.calloway.drf-041@example.com,08/14/2026 06:00:00 PM,93000041,Completed
+2027 Spring Season,Majors,77300042,,Morgan,Jamison,Quinn,Jamison,Female,03/18/2016,family.jamison.drf-042@example.com,08/15/2026 06:00:00 PM,93000042,Completed
+2027 Spring Season,Majors,77300043,,Jesse,Pemberton,Rhys,Pemberton,Male,02/24/2016,family.pemberton.drf-043@example.com,08/16/2026 06:00:00 PM,93000043,Completed
+2027 Spring Season,Majors,77300044,,Terry,Nakamura,Finch,Nakamura,Female,08/26/2016,family.nakamura.drf-044@example.com,08/17/2026 06:00:00 PM,93000044,Completed
+2027 Spring Season,Majors,77300045,,Kerry,Zielinski,Ira,Zielinski,Male,12/23/2015,family.zielinski.drf-045@example.com,08/18/2026 06:00:00 PM,93000045,Completed
+2027 Spring Season,Majors,77300046,,Dana,Delacroix,Xavi,Delacroix,Female,04/26/2016,family.delacroix.drf-046@example.com,08/19/2026 06:00:00 PM,93000046,Completed
+2027 Spring Season,Majors,77300047,,Shawn,Jamison,Drew,Jamison,Male,02/18/2017,family.jamison.drf-047@example.com,08/20/2026 06:00:00 PM,93000047,Completed
+2027 Spring Season,Majors,77300048,,Pat,Fitzgerald,Pax,Fitzgerald,Female,09/19/2016,family.fitzgerald.drf-048@example.com,08/21/2026 06:00:00 PM,93000048,Completed
+2027 Spring Season,Majors,77300049,,Lee,Lockhart,Silas,Lockhart,Male,05/18/2017,family.lockhart.drf-049@example.com,08/22/2026 06:00:00 PM,93000049,Completed
+2027 Spring Season,Majors,77300050,,Robin,Eastwood,Emery,Eastwood,Female,08/24/2017,family.eastwood.drf-050@example.com,08/23/2026 06:00:00 PM,93000050,Completed
+2027 Spring Season,AAA,77300051,,Casey,Eastwood,Oakley,Eastwood,Male,02/26/2018,family.eastwood.drf-051@example.com,08/24/2026 06:00:00 PM,93000051,Completed
+2027 Spring Season,AAA,77300052,,Morgan,Thibodeaux,Leif,Thibodeaux,Female,02/15/2018,family.thibodeaux.drf-052@example.com,08/25/2026 06:00:00 PM,93000052,Completed
+2027 Spring Season,AAA,77300053,,Jesse,Iverson,Yuri,Iverson,Male,12/25/2017,family.iverson.drf-053@example.com,08/26/2026 06:00:00 PM,93000053,Completed
+2027 Spring Season,AAA,77300054,,Terry,Wexler,Idris,Wexler,Female,10/15/2017,family.wexler.drf-054@example.com,08/27/2026 06:00:00 PM,93000054,Completed
+2027 Spring Season,AAA,77300055,,Kerry,Abernathy,Jules,Abernathy,Male,02/11/2018,family.abernathy.drf-055@example.com,08/28/2026 06:00:00 PM,93000055,Completed
+2027 Spring Season,AAA,77300056,,Dana,Lindgren,Wade,Lindgren,Female,06/14/2018,family.lindgren.drf-056@example.com,08/01/2026 06:00:00 PM,93000056,Completed
+2027 Spring Season,AAA,77300057,,Shawn,Okonkwo,Vaughn,Okonkwo,Male,01/19/2018,family.okonkwo.drf-057@example.com,08/02/2026 06:00:00 PM,93000057,Completed
+2027 Spring Season,AAA,77300058,,Pat,Ingram,Yuri,Ingram,Female,06/04/2019,family.ingram.drf-058@example.com,08/03/2026 06:00:00 PM,93000058,Completed
+2027 Spring Season,AAA,77300059,,Lee,Zielinski,Hollis,Zielinski,Male,07/27/2019,family.zielinski.drf-059@example.com,08/04/2026 06:00:00 PM,93000059,Completed
+2027 Spring Season,AAA,77300060,,Robin,Holloway,Vaughn,Holloway,Female,12/19/2018,family.holloway.drf-060@example.com,08/05/2026 06:00:00 PM,93000060,Completed
+2027 Spring Season,AA,77300061,,Casey,Brennan,Quinn,Brennan,Male,11/28/2018,family.brennan.drf-061@example.com,08/06/2026 06:00:00 PM,93000061,Completed
+2027 Spring Season,AA,77300062,,Morgan,Delacroix,Eden,Delacroix,Female,07/12/2019,family.delacroix.drf-062@example.com,08/07/2026 06:00:00 PM,93000062,Completed
+2027 Spring Season,AA,77300063,,Jesse,Jablonski,Bodhi,Jablonski,Male,05/24/2019,family.jablonski.drf-063@example.com,08/08/2026 06:00:00 PM,93000063,Completed
+2027 Spring Season,AA,77300064,,Terry,Zielinski,Zane,Zielinski,Female,07/26/2019,family.zielinski.drf-064@example.com,08/09/2026 06:00:00 PM,93000064,Completed
+2027 Spring Season,AA,77300065,,Kerry,Pemberton,Quinn,Pemberton,Male,01/04/2019,family.pemberton.drf-065@example.com,08/10/2026 06:00:00 PM,93000065,Completed
+2027 Spring Season,AA,77300066,,Dana,Radcliffe,Tate,Radcliffe,Female,04/23/2019,family.radcliffe.drf-066@example.com,08/11/2026 06:00:00 PM,93000066,Completed
+2027 Spring Season,AA,77300067,,Shawn,Valenzuela,Ari,Valenzuela,Male,11/19/2018,family.valenzuela.drf-067@example.com,08/12/2026 06:00:00 PM,93000067,Completed
+2027 Spring Season,AA,77300068,,Pat,Zielinski,Rhys,Zielinski,Female,09/06/2018,family.zielinski.drf-068@example.com,08/13/2026 06:00:00 PM,93000068,Completed
+2027 Spring Season,AA,77300069,,Lee,Holloway,Jules,Holloway,Male,02/15/2018,family.holloway.drf-069@example.com,08/14/2026 06:00:00 PM,93000069,Completed
+2027 Spring Season,AA,77300070,,Robin,Thibodeaux,Hollis,Thibodeaux,Female,07/23/2018,family.thibodeaux.drf-070@example.com,08/15/2026 06:00:00 PM,93000070,Completed
+2027 Spring Season,AA,77300071,,Casey,Lockhart,Ari,Lockhart,Male,03/25/2018,family.lockhart.drf-071@example.com,08/16/2026 06:00:00 PM,93000071,Completed
+2027 Spring Season,AA,77300072,,Morgan,Fairbanks,Zeke,Fairbanks,Female,04/25/2018,family.fairbanks.drf-072@example.com,08/17/2026 06:00:00 PM,93000072,Completed
+2027 Spring Season,AA,77300073,,Jesse,Jamison,Idris,Jamison,Male,10/13/2017,family.jamison.drf-073@example.com,08/18/2026 06:00:00 PM,93000073,Completed
+2027 Spring Season,AA,77300074,,Terry,Rasmussen,Lane,Rasmussen,Female,09/19/2017,family.rasmussen.drf-074@example.com,08/19/2026 06:00:00 PM,93000074,Completed
+2027 Spring Season,AA,77300075,,Kerry,Pemberton,Wade,Pemberton,Male,10/25/2017,family.pemberton.drf-075@example.com,08/20/2026 06:00:00 PM,93000075,Completed
+2027 Spring Season,AA,77300076,,Dana,Kowalczyk,Reese,Kowalczyk,Female,09/23/2017,family.kowalczyk.drf-076@example.com,08/21/2026 06:00:00 PM,93000076,Completed

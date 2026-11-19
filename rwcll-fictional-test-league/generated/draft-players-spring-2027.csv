@@ -1,0 +1,77 @@
+Fixture Key,Player Id,Player First Name,Player Last Name,Player Birth Date,League Age,Requested Division,Evaluation Number,Family,Notes
+DRF-001,77300001,Mateo,Ramirez,02/27/2015,12,Majors,601,F01,Twin 12-year-olds of the Giants manager: rounds 1 and 2 go to them automatically
+DRF-002,77300002,Lucia,Ramirez,02/27/2015,12,Majors,602,F01,Twin 12-year-olds of the Giants manager: rounds 1 and 2 go to them automatically
+DRF-003,77300003,Owen,Moss,06/02/2015,12,Majors,603,F02,"Cubs manager's 12-year-old and Cubs coach's 11-year-old (different families, same team)"
+DRF-004,77300004,Ivy,Lawson,11/16/2015,11,Majors,604,F03,Cubs coach's 11-year-old who asked for Majors: the team's round-2 coach's kid
+DRF-005,77300005,Penny,Quill,07/16/2018,9,AAA,605,F04,"Mets manager's 9-year-old: too young for Majors, so a regular AAA player (no privilege there)"
+DRF-006,77300006,Gabe,Ortiz,10/02/2014,12,Majors,606,F05,"Rays manager also coaches AAA Astros. Both kids are Rays coach's kids in Majors (the 10 too, though she asked for AAA: coach's kids are must-draft); take her out of the Majors pool to let her play AAA for Astros"
+DRF-007,77300007,Nora,Ortiz,12/01/2016,10,AAA,607,F05,"Rays manager also coaches AAA Astros. Both kids are Rays coach's kids in Majors (the 10 too, though she asked for AAA: coach's kids are must-draft); take her out of the Majors pool to let her play AAA for Astros"
+DRF-008,77300008,Tess,Whitaker,02/09/2015,12,Majors,608,F06,Siblings: a 12 and a 10 who asked for Majors. Picking the 12 asks about the 10 (take or send down)
+DRF-009,77300009,Leo,Whitaker,07/01/2017,10,Majors,609,F06,Siblings: a 12 and a 10 who asked for Majors. Picking the 12 asks about the 10 (take or send down)
+DRF-010,77300010,Hugo,Lindgren,09/25/2014,12,Majors,610,F07,"Siblings: a 12 (Majors) and an 11 who asked for AAA. Different pools, so no sibling rule in Majors"
+DRF-011,77300011,Maya,Lindgren,01/06/2016,11,AAA,611,F07,"Siblings: a 12 (Majors) and an 11 who asked for AAA. Different pools, so no sibling rule in Majors"
+DRF-012,77300012,Eli,Nakamura,05/20/2016,11,Majors,612,F08,Twin 11-year-olds who asked for Majors: picking one asks about the other
+DRF-013,77300013,Ada,Nakamura,05/20/2016,11,Majors,613,F08,Twin 11-year-olds who asked for Majors: picking one asks about the other
+DRF-014,77300014,Sol,Galloway,08/21/2016,11,AAA,614,F09,Siblings in AAA: an 11 (must draft) and a 9 who asked for AAA
+DRF-015,77300015,June,Galloway,02/12/2018,9,AAA,615,F09,Siblings in AAA: an 11 (must draft) and a 9 who asked for AAA
+DRF-016,77300016,Rex,Prescott,08/17/2017,10,AAA,616,F10,Siblings: a 10 (AAA) and an 8 (AA): different pools; AA teams keep them together later
+DRF-017,77300017,Bea,Prescott,09/14/2018,8,AA,617,F10,Siblings: a 10 (AAA) and an 8 (AA): different pools; AA teams keep them together later
+DRF-018,77300018,Cole,Mercer,01/12/2015,12,Majors,618,F11,Pirates assistant coach's 12-year-old: assistants get no coach's-kid privilege (not linked)
+DRF-019,77300019,Ivo,Sinclair,04/06/2017,10,Majors,619,F12,"Not confirmed: two players on one family account, left as a sibling suggestion"
+DRF-020,77300020,Lily,Sinclair,10/15/2018,8,AA,620,F12,"Not confirmed: two players on one family account, left as a sibling suggestion"
+DRF-021,77300021,Sami,Bennett,01/14/2015,12,Majors,621,F13,Registered with the Tigers coach's own sign-in email: suggested as that coach's kid (not linked)
+DRF-022,77300022,Kit,Holloway,10/14/2014,12,Juniors,622,F14,A 12-year-old who asked for Juniors (plays up?): still must-draft in Majors until an admin moves them
+DRF-023,77300023,Remy,Reyes,03/09/2019,8,AAA,623,F15,AAA Astros manager's 8-year-old who asked for AAA: AAA coach's kid
+DRF-024,77300024,Fern,Linden,09/05/2019,7,AA,624,F16,AA Blue Jays manager's twins (7): kept with their parent's team when AA teams are made
+DRF-025,77300025,Moss,Linden,09/05/2019,7,AA,625,F16,AA Blue Jays manager's twins (7): kept with their parent's team when AA teams are made
+DRF-026,77300026,Ruby,Eastwood,07/02/2018,9,AA,626,F17,AA siblings: a 9 and a 7
+DRF-027,77300027,Abe,Eastwood,10/27/2019,7,AA,627,F17,AA siblings: a 9 and a 7
+DRF-028,77300028,Wes,Ferris,07/08/2013,14,Juniors,628,F18,Angels manager's 13 and a 14-year-old sibling: Juniors coach's kid and sibling
+DRF-029,77300029,Iris,Ferris,04/17/2014,13,Juniors,629,F18,Angels manager's 13 and a 14-year-old sibling: Juniors coach's kid and sibling
+DRF-030,77300030,Dean,Sutton,10/11/2010,16,Seniors,630,F19,"Athletics manager's 16-year-old (Seniors: one team, everyone on it)"
+DRF-031,77300031,Idris,Eastwood,12/13/2014,12,Majors,631,,
+DRF-032,77300032,Vince,Fairbanks,08/19/2015,12,Majors,632,,
+DRF-033,77300033,Milo,Northcott,06/11/2015,12,Majors,633,,
+DRF-034,77300034,Milo,Tremblay,04/04/2015,12,Majors,634,,
+DRF-035,77300035,Nico,Kingsley,08/15/2015,12,Majors,635,,
+DRF-036,77300036,Silas,Fairbanks,11/04/2014,12,Majors,636,,
+DRF-037,77300037,Mack,Northcott,01/22/2015,12,Majors,637,,
+DRF-038,77300038,Reese,Calloway,02/06/2015,12,Majors,638,,
+DRF-039,77300039,Pax,Esposito,05/14/2015,12,Majors,639,,
+DRF-040,77300040,Leif,Northcott,11/09/2014,12,Majors,640,,
+DRF-041,77300041,Kai,Calloway,05/05/2016,11,Majors,641,,
+DRF-042,77300042,Quinn,Jamison,03/18/2016,11,Majors,642,,
+DRF-043,77300043,Rhys,Pemberton,02/24/2016,11,Majors,643,,
+DRF-044,77300044,Finch,Nakamura,08/26/2016,11,Majors,644,,
+DRF-045,77300045,Ira,Zielinski,12/23/2015,11,Majors,645,,
+DRF-046,77300046,Xavi,Delacroix,04/26/2016,11,Majors,646,,
+DRF-047,77300047,Drew,Jamison,02/18/2017,10,Majors,647,,
+DRF-048,77300048,Pax,Fitzgerald,09/19/2016,10,Majors,648,,
+DRF-049,77300049,Silas,Lockhart,05/18/2017,10,Majors,649,,
+DRF-050,77300050,Emery,Eastwood,08/24/2017,10,Majors,650,,
+DRF-051,77300051,Oakley,Eastwood,02/26/2018,9,AAA,651,,
+DRF-052,77300052,Leif,Thibodeaux,02/15/2018,9,AAA,652,,
+DRF-053,77300053,Yuri,Iverson,12/25/2017,9,AAA,653,,
+DRF-054,77300054,Idris,Wexler,10/15/2017,9,AAA,654,,
+DRF-055,77300055,Jules,Abernathy,02/11/2018,9,AAA,655,,
+DRF-056,77300056,Wade,Lindgren,06/14/2018,9,AAA,656,,
+DRF-057,77300057,Vaughn,Okonkwo,01/19/2018,9,AAA,657,,
+DRF-058,77300058,Yuri,Ingram,06/04/2019,8,AAA,658,,
+DRF-059,77300059,Hollis,Zielinski,07/27/2019,8,AAA,659,,
+DRF-060,77300060,Vaughn,Holloway,12/19/2018,8,AAA,660,,
+DRF-061,77300061,Quinn,Brennan,11/28/2018,8,AA,661,,
+DRF-062,77300062,Eden,Delacroix,07/12/2019,8,AA,662,,
+DRF-063,77300063,Bodhi,Jablonski,05/24/2019,8,AA,663,,
+DRF-064,77300064,Zane,Zielinski,07/26/2019,8,AA,664,,
+DRF-065,77300065,Quinn,Pemberton,01/04/2019,8,AA,665,,
+DRF-066,77300066,Tate,Radcliffe,04/23/2019,8,AA,666,,
+DRF-067,77300067,Ari,Valenzuela,11/19/2018,8,AA,667,,
+DRF-068,77300068,Rhys,Zielinski,09/06/2018,8,AA,668,,
+DRF-069,77300069,Jules,Holloway,02/15/2018,9,AA,669,,
+DRF-070,77300070,Hollis,Thibodeaux,07/23/2018,9,AA,670,,
+DRF-071,77300071,Ari,Lockhart,03/25/2018,9,AA,671,,
+DRF-072,77300072,Zeke,Fairbanks,04/25/2018,9,AA,672,,
+DRF-073,77300073,Idris,Jamison,10/13/2017,9,AA,673,,
+DRF-074,77300074,Lane,Rasmussen,09/19/2017,9,AA,674,,
+DRF-075,77300075,Wade,Pemberton,10/25/2017,9,AA,675,,
+DRF-076,77300076,Reese,Kowalczyk,09/23/2017,9,AA,676,,

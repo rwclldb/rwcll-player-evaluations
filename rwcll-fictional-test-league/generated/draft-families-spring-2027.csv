@@ -1,0 +1,31 @@
+Family,Fixture Key,Player First Name,Player Last Name,League Age,Requested Division,Parent Email,Confirm Siblings,Scenario
+F01,DRF-001,Mateo,Ramirez,12,Majors,coach.elliot@example.com,YES,Twin 12-year-olds of the Giants manager: rounds 1 and 2 go to them automatically
+F01,DRF-002,Lucia,Ramirez,12,Majors,coach.elliot@example.com,YES,Twin 12-year-olds of the Giants manager: rounds 1 and 2 go to them automatically
+F02,DRF-003,Owen,Moss,12,Majors,coach.finley@example.com,NO,"Cubs manager's 12-year-old and Cubs coach's 11-year-old (different families, same team)"
+F03,DRF-004,Ivy,Lawson,11,Majors,sam.lawson@example.com,NO,Cubs coach's 11-year-old who asked for Majors: the team's round-2 coach's kid
+F04,DRF-005,Penny,Quill,9,AAA,coach.harper@example.com,NO,"Mets manager's 9-year-old: too young for Majors, so a regular AAA player (no privilege there)"
+F05,DRF-006,Gabe,Ortiz,12,Majors,morgan.ortiz@example.com,YES,"Rays manager also coaches AAA Astros. Both kids are Rays coach's kids in Majors (the 10 too, though she asked for AAA: coach's kids are must-draft); take her out of the Majors pool to let her play AAA for Astros"
+F05,DRF-007,Nora,Ortiz,10,AAA,morgan.ortiz@example.com,YES,"Rays manager also coaches AAA Astros. Both kids are Rays coach's kids in Majors (the 10 too, though she asked for AAA: coach's kids are must-draft); take her out of the Majors pool to let her play AAA for Astros"
+F06,DRF-008,Tess,Whitaker,12,Majors,,YES,Siblings: a 12 and a 10 who asked for Majors. Picking the 12 asks about the 10 (take or send down)
+F06,DRF-009,Leo,Whitaker,10,Majors,,YES,Siblings: a 12 and a 10 who asked for Majors. Picking the 12 asks about the 10 (take or send down)
+F07,DRF-010,Hugo,Lindgren,12,Majors,,YES,"Siblings: a 12 (Majors) and an 11 who asked for AAA. Different pools, so no sibling rule in Majors"
+F07,DRF-011,Maya,Lindgren,11,AAA,,YES,"Siblings: a 12 (Majors) and an 11 who asked for AAA. Different pools, so no sibling rule in Majors"
+F08,DRF-012,Eli,Nakamura,11,Majors,,YES,Twin 11-year-olds who asked for Majors: picking one asks about the other
+F08,DRF-013,Ada,Nakamura,11,Majors,,YES,Twin 11-year-olds who asked for Majors: picking one asks about the other
+F09,DRF-014,Sol,Galloway,11,AAA,,YES,Siblings in AAA: an 11 (must draft) and a 9 who asked for AAA
+F09,DRF-015,June,Galloway,9,AAA,,YES,Siblings in AAA: an 11 (must draft) and a 9 who asked for AAA
+F10,DRF-016,Rex,Prescott,10,AAA,,YES,Siblings: a 10 (AAA) and an 8 (AA): different pools; AA teams keep them together later
+F10,DRF-017,Bea,Prescott,8,AA,,YES,Siblings: a 10 (AAA) and an 8 (AA): different pools; AA teams keep them together later
+F11,DRF-018,Cole,Mercer,12,Majors,,NO,Pirates assistant coach's 12-year-old: assistants get no coach's-kid privilege (not linked)
+F12,DRF-019,Ivo,Sinclair,10,Majors,,NO,"Not confirmed: two players on one family account, left as a sibling suggestion"
+F12,DRF-020,Lily,Sinclair,8,AA,,NO,"Not confirmed: two players on one family account, left as a sibling suggestion"
+F13,DRF-021,Sami,Bennett,12,Majors,,NO,Registered with the Tigers coach's own sign-in email: suggested as that coach's kid (not linked)
+F14,DRF-022,Kit,Holloway,12,Juniors,,NO,A 12-year-old who asked for Juniors (plays up?): still must-draft in Majors until an admin moves them
+F15,DRF-023,Remy,Reyes,8,AAA,coach.cameron@example.com,NO,AAA Astros manager's 8-year-old who asked for AAA: AAA coach's kid
+F16,DRF-024,Fern,Linden,7,AA,coach.avery@example.com,YES,AA Blue Jays manager's twins (7): kept with their parent's team when AA teams are made
+F16,DRF-025,Moss,Linden,7,AA,coach.avery@example.com,YES,AA Blue Jays manager's twins (7): kept with their parent's team when AA teams are made
+F17,DRF-026,Ruby,Eastwood,9,AA,,YES,AA siblings: a 9 and a 7
+F17,DRF-027,Abe,Eastwood,7,AA,,YES,AA siblings: a 9 and a 7
+F18,DRF-028,Wes,Ferris,14,Juniors,coach.indigo@example.com,YES,Angels manager's 13 and a 14-year-old sibling: Juniors coach's kid and sibling
+F18,DRF-029,Iris,Ferris,13,Juniors,coach.indigo@example.com,YES,Angels manager's 13 and a 14-year-old sibling: Juniors coach's kid and sibling
+F19,DRF-030,Dean,Sutton,16,Seniors,coach.jamie@example.com,NO,"Athletics manager's 16-year-old (Seniors: one team, everyone on it)"

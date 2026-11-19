@@ -5,8 +5,8 @@ The deck `RWCLL-Player-Evaluations-Board.pptx` (same folder) is the backup: ever
 demo step has a matching slide with speaker notes, so you can switch to slides at
 any point.
 
-Everything in the demo is fictional: the "Fixture Park" league, 290 made-up
-players, 18 test accounts. Nothing touches the hosted site.
+Everything in the demo is fictional: the "Fixture Park" league, 357 made-up
+players, about 70 test accounts. Nothing touches the hosted site.
 
 ---
 
@@ -43,17 +43,21 @@ players, 18 test accounts. Nothing touches the hosted site.
 
 5. **Click through once**: Window A roadmap, Window B the age 7 list, Window C
    Check-in. Don't score or check anyone in yet: Avery's age 7 list should
-   still say "0 of 13 players done". (If you practised, run step 2 again.)
+   still say "0 of 16 players done". (If you practised, run step 2 again.)
 6. Open the deck in PowerPoint on slide 1, ready to present.
 
 **What the demo data looks like**
 
-- Spring 2027, 290 players ages 7–16, bibs 201–548.
+- Spring 2027, 357 players ages 7–16, bibs 201–676. Sized like the real league: about 110 asking for
+  Majors (68 twelve-year-olds), 8 Majors and 8 AAA teams of 12, AA about 100, Juniors 26, Seniors 15.
 - Ages **7 and 8** are open for scoring (about 60% scored). Avery (coach) hasn't
   started age 7: you'll score live.
 - Ages **9–12** are locked and **released** to coaches; ages **13–16** are locked.
 - 46 players checked in, one injured player excused (Luke Rivera, age 7), four
-  coach's kids, and one possible duplicate (a walk-up, Elliot Carter, bib 990).
+  and one possible duplicate (a walk-up, Elliot Carter, bib 990).
+- 27 teams with a manager and coach, 13 coach's kids linked to their parents, sibling groups, and the
+  Juniors, Majors and AAA drafts set up with their order drawn (not started). See
+  `rwcll-fictional-test-league/generated/draft-families-spring-2027.csv` for what each family tests.
 - Avery has starred three age 9 players and written two private notes.
 - An announcer (`announcer.alex@example.com`) has called about 60% of ages 7–8
   (the players already scored).
@@ -82,11 +86,11 @@ players, 18 test accounts. Nothing touches the hosted site.
 ### 3. Getting ready: the Before evaluations steps (Window A, 5 min)
 
 - Step **Import registrations** → **Review imports** → **View Rows** on batch #1.
-  "This is the Sports Connect export, 368 rows."
+  "This is the Sports Connect export, 444 rows."
   - The **Bulk review** box says 0 out-of-scope rows and 0 clean rows: that was
     done when the league was loaded. **Don't click** "Ignore out-of-scope rows" or
     "Approve and commit clean rows" (there's nothing left for them). Say: "Normally
-    this is two clicks: 77 rows from other programs ignored, 290 players added."
+    this is two clicks: 86 rows from other programs ignored, 357 players added."
   - Click **Open Administrator Row Review**. The **Needs work** tab has one row:
     **Harper Oak**, "Duplicate Player ID in file". "Two children came in with the
     same Sports Connect Player Id. The app won't guess; a person decides." Don't

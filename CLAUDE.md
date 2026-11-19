@@ -21,7 +21,8 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 - `npm run fixtures:load -- --reset`: wipe local Supabase and load the fictional league (ask first)
 - `npm run fixtures:generate`: rebuild the fixture CSVs from the roster and people files
 - `npm run fixtures:load -- --reset --bare`: wipe local Supabase and create only the two admin accounts and seasons, for walking through setup in the app (`docs/TEST-PLAN-SEASON-SETUP.xlsx`) (ask first)
-- `npm run demo:load`: wipe local Supabase and load the board demo (scored league staged as a live evaluation day dated today; registrar account `registrar.riley@example.com`). Run sheet and slides: `docs/board-demo/` (ask first)
+- `npm run demo:load`: wipe local Supabase and load the board demo (scored league staged as a live evaluation day dated today; registrar account `registrar.riley@example.com`; includes `--teams`). Run sheet and slides: `docs/board-demo/` (ask first)
+- `--teams` on `fixtures:load`: teams and staff from the volunteer report (Teams upload), coach's kids linked, sibling groups, and the Juniors, Majors and AAA drafts set up with a drawn order (not started)
 - `npm run e2e:evaluation-navigation`: browser test of the scoring screen in phone-sized Chrome. It needs `npm run dev` running and fixtures loaded with `--open-sessions`, cleans up after itself, and is not part of `test:all`. Run it after any change to the evaluation screen.
 - `npm run e2e:offline-scoring`: browser test of scoring with no signal (Chrome's offline mode): saves kept on the phone, the header badge, automatic sending when back online, and refused saves. Same needs as above; run it after any change to the evaluation screen too.
 
@@ -295,6 +296,8 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
   - **Who** (`private.can_watch_draft`): admins and registrars of the season run it; each team's Manager and Coach in the division watch (stars via `toggle_player_star`, private notes via `save_private_note`). `my_drafts()` feeds a Drafts card on the home page ("Watch the draft"). Same privacy as the draft report: averages only, plus the viewer's own scores.
   - Roadmap step "Run the Juniors, Majors and AAA drafts" is live. Help: coach "Watching the draft", registrar "Running the draft".
 
+- **Draft-sized fixtures** (2026-11-21; migration 20261121100000): the generator adds 76 draft players, families and a 27-team volunteer report (`generated/sports-connect-volunteers-teams-spring-2027.csv`); `--teams` loads them through the app's functions. The youngest division (AA) has no default must-draft age (`private.default_must_draft_ages`), so a 9 who asked for AAA isn't pulled into AA. `docs/TEST-PLAN-SEASON-SETUP.xlsx` needs rebuilding (`python scripts/build-test-plan-season-setup.py`, needs openpyxl) to pick up the new counts.
+
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Teams and the draft** (approved 2026-11-19; spec `docs/DRAFT-SPEC.md`; steps 1–3 built, steps 4–6 to do): teams with a Manager, Coach and assistants; coach's kids linked to a parent; sibling groups; per-division drafts (Juniors Feb 1, Majors Feb 2, AAA Feb 4, 2027) with pool rules, a draw, snake order and rule switches copied forward; a live draft room (admins pick; the division's managers and coaches watch, sort and keep stars and notes); undrafted players fall through to the next division; a team generator for AA (rosters by Feb 6) and Seniors; Move player with notes; a roster CSV.
@@ -319,11 +322,11 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 All local data is disposable. Rebuild it with `npm run fixtures:load -- --reset`, which wipes local Supabase and loads the **pre-evaluation** fictional league. Ask the user before wiping. Details are in `rwcll-fictional-test-league/README.md`.
 
 - Season Spring 2026 (id 1, closed) and Spring 2027 (id 2).
-- 290 registrations ages 7–16, 287 with bibs. Harper Oak (PLY-008) stays in import review because of the duplicate Player Id.
-- 36 prior-year coach ratings of players (2 rows left pending), 10 age-group sessions in Setup with events and assignments.
-- 18 accounts: `admin.jordan@example.com`, `coach.avery@example.com`, `eval.kendall@example.com`, and so on. The password is `FIXTURE_PASSWORD` in `.env.local`. Never print it.
+- 357 registrations ages 7–16, 354 with bibs (201–676). Harper Oak (PLY-008) stays in import review because of the duplicate Player Id. Sized like the real league (decided 2026-11-21): Majors ~110 asking (68 twelves), AAA, AA ~100, Juniors 26–27, Seniors 15. 76 generated draft players (DRF-001..., bibs 601–676) carry the draft scenarios in `generated/draft-families-spring-2027.csv`.
+- 40 prior-year coach ratings of players (2 rows left pending), 10 age-group sessions in Setup with events and assignments.
+- 18 fixture accounts: `admin.jordan@example.com`, `coach.avery@example.com`, `eval.kendall@example.com`, and so on; `--teams` adds 47 coach accounts from the volunteer report (`first.last@example.com`). The password is `FIXTURE_PASSWORD` in `.env.local`. Never print it.
 - Fixtures are regenerated with `npm run fixtures:generate`. Never hand-edit `generated/`.
-- `npm run fixtures:load -- --reset --scored` also enters all 1,230 Spring 2027 evaluations through `save_evaluation`, signed in as each evaluator. It then checks the database averages against `scored/expected-draft-report.csv`. Sessions are left Open.
+- `npm run fixtures:load -- --reset --scored` also enters all 1,502 Spring 2027 evaluations through `save_evaluation`, signed in as each evaluator. It then checks the database averages against `scored/expected-draft-report.csv`. Sessions are left Open.
 
 ## Reference docs
 
