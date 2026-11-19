@@ -1,6 +1,6 @@
 # Teams and the draft: spec
 
-Status: **proposed, waiting for approval** (2026-11-19). Nothing here is built yet.
+Status: **questions answered 2026-11-19; waiting for the go-ahead to build.** Nothing here is built yet.
 
 The league runs its spring draft inside the app, straight from the evaluation data:
 the Juniors, Majors and AAA drafts, players who aren't drafted moving down a
@@ -59,13 +59,26 @@ Players can now also be linked to a parent account:
 
 - **Sibling groups** are kept per season and set by an admin on the player edit
   page or the Teams page.
-- **Suggestions:** the app suggests groups from players registered under the same
-  Sports Connect account.
-  - Today the import doesn't keep the account at all.
-  - The proposal: at import, store only a fingerprint (hash) of the account email,
-    never the email itself.
-  - Re-importing the full export fills it in for players already registered.
 - **Suggestions are never automatic:** an admin confirms each group.
+
+**Suggestions from the Sports Connect import** (approved 2026-11-19), so that
+little has to be entered by hand:
+
+- **Account fingerprint:** at import, the app keeps a fingerprint (hash) of each
+  player's Sports Connect account email, never the email itself. Re-importing the
+  full export fills it in for players already registered.
+- **Siblings:** players with the same fingerprint are suggested as a sibling
+  group.
+- **Coach's kids:** a player whose account fingerprint matches a manager's or
+  coach's sign-in email is suggested as that person's kid. This only works when the
+  parent registered with the same email they sign in with.
+- **Optional extra columns** in the registration file, used when present:
+  - "Sibling Player Ids";
+  - "Parent Coach Email", for when the parent's registration email differs from
+    their sign-in email.
+
+  These need a custom registration question in Sports Connect, so they're for
+  next year if this year's registration is already open.
 
 ---
 
@@ -84,6 +97,8 @@ Sports Connect:
 - **Must-draft ages** (default: the division's top age). Every player of that age
   is in the pool, whatever they requested. Example: every 12-year-old is in the
   Majors pool.
+- **Coach's kids are always must-draft,** whatever their age. This covers a kid of
+  the division's managers and coaches only.
 - **Other ages in the range:** only players who requested this division. Example:
   an 11-year-old who requested AAA is not in the Majors pool.
 - **Switch, "Pool by age only":** ignores the requested division, so everyone in
@@ -140,8 +155,11 @@ and sibling groups. It warns about:
   - Each time a 12 is taken, N drops by one and the marks shrink.
   - In your example (round 11, 10 twelve-year-olds left), the last 10 picks are
     marked. If the next pick is a 12, the last 9 are marked.
-  - When a marked pick comes up, the app only offers must-draft players. An admin
-    can override with a note.
+  - When a marked pick comes up, the screen says "Only must-draft players can be
+    picked now" and offers only those players. An admin can override with a
+    note.
+  - The must-draft list holds the must-draft ages plus any coach's kids not yet
+    placed.
 - **Oldest first:** all 12s, then all 11s, then all 10s.
   - The board shows which age is being drafted.
   - The next age opens when the older one is used up.
@@ -161,8 +179,11 @@ and sibling groups. It warns about:
 - **c. By a round:** the team picks its kids itself, any time up to round N.
   - If a kid is still unpicked when the team's round N pick comes, the app makes
     that pick with the kid.
-- **d. Placed before the draft:** the kids go on the team before round 1.
-  - See open question 1 for whether a placed kid uses up one of the team's picks.
+- **d. Placed before the draft:** the admin places each kid on the team in a round
+  of their choosing before round 1.
+  - The kid uses up the team's pick in that round, which shows on the board from the
+    start.
+  - The difference from b: the board is filled in before the draft starts.
 
 In **Oldest first**, rules a–c apply within the kid's own age. Example: rule a with
 round 1 puts a 10-year-old coach's kid at the team's first pick once the 10s open.
@@ -174,6 +195,16 @@ Automatic picks show on the board as "Coach's kid".
 - **Switch, "Siblings play together"** (on by default).
 - When one sibling is drafted, the other is placed on the same team with that
   team's next pick, marked "Sibling".
+- **When the other sibling doesn't have to be in this draft:** for example, a
+  12-year-old (must-draft) and a 10-year-old (who could play in AAA) in Majors. One
+  setting, used every time this happens:
+  - **Always take them:** the 10-year-old comes with the team's next pick;
+  - **Ask at the pick** (default): the admin chooses **Take with next pick** or
+    **Send down**. Send down takes the 10-year-old out of this pool now, and they go
+    to the next division with the undrafted players;
+  - **Always send down.**
+- **The reverse case:** if the 10-year-old is picked first, the 12-year-old
+  always comes with the next pick (must-draft players can't be sent down).
 - Siblings in different pools (different divisions) are not affected.
 
 **Pick timer**
@@ -186,7 +217,7 @@ Automatic picks show on the board as "Coach's kid".
 
 ## 3. The draft room
 
-**Admin view (laptop):**
+**Admin and registrar view (laptop):**
 
 - **The board:** rounds down, teams across, the team on the clock highlighted.
   Must-draft marks and automatic picks are shown on it.
@@ -203,7 +234,7 @@ Automatic picks show on the board as "Coach's kid".
 - **Finish the draft:** drops the undrafted players into the next pool.
 
 **Manager and coach view** (phone or laptop; only that division's managers and
-coaches, plus admins and registrars):
+coaches):
 
 - **Live:** the same board, updated live.
 - **The available players:** sortable by:
@@ -303,16 +334,21 @@ Birthdates are not included; the Player Id identifies the child.
 
 ## 6. Who sees what
 
-| | Admin | Registrar | Division's manager/coach | Assistant coach | Other coaches, evaluators |
-|---|---|---|---|---|---|
-| Teams and staff setup | edit | see | own team | own team | no |
-| Draft setup | edit | see | no | no | no |
-| Draft room | picks | watch | watch, sort, star, note | no | no |
-| Ratings in the room | everything | none (names, bibs, ages) | averages + own scores | no | no |
-| Rosters | edit, move, CSV | see, CSV | own team after release | own team after release | no |
+| | Admin or registrar | Division's manager/coach | Assistant coach | Other coaches, evaluators |
+|---|---|---|---|---|
+| Teams and staff setup | edit | own team | own team | no |
+| Draft setup | edit | no | no | no |
+| Draft room | run it, pick | watch, sort, star, note | no | no |
+| Ratings in the room | averages, as admins see them in the draft report | averages + own scores | no | no |
+| Rosters, generator | edit, move, CSV | own team after release | own team after release | no |
+| Release draft reports (needed before a draft starts) | admin only | | | |
 
-Registrars watch without ratings, because registrars never see scores today. See
-open question 4.
+**Registrars run the draft like admins** (decided 2026-11-19), because a registrar
+may be the one running it. This is the one place registrars see ratings. Elsewhere
+they still don't see scores, notes or draft reports.
+
+**Starting a draft needs released age groups:** a draft can't start until an admin
+has released every age group in its pool to coaches.
 
 ---
 
@@ -353,20 +389,17 @@ drafts need. Step 5 is needed by Feb 6.
 
 ---
 
-## Open questions
+## Decisions from the questions (2026-11-19)
 
-1. **Coach's kids placed before the draft (rule d):** does each placed kid use up
-   one of the team's picks (which round: first, last?), or are they extra, so the
-   team still makes 12 picks?
-2. **Siblings:** when one sibling is drafted, should the other use the team's
-   *next* pick (proposed), or the pick in the following round that best matches
-   their ranking?
-3. **Must-draft picks:** should the app block a non-must-draft player on a marked
-   pick (with an admin override and note, proposed), or only warn?
-4. **Registrars in the draft room:** watch the board only, with no ratings
-   (proposed, matching today's rule), or see ratings like coaches?
-5. **Sibling suggestions:** is it OK to keep a fingerprint of the Sports Connect
-   account email (not the email itself) to suggest siblings? The alternative is to
-   enter every sibling group by hand.
-6. **Draft reports:** should the draft room refuse to start until the division's
-   age groups are released to coaches, or only warn?
+1. **Kids placed before the draft** use up the team's pick in a round the admin
+   chooses.
+2. **The second sibling** uses the team's next pick. When that sibling doesn't
+   have to be in the draft, a setting decides: always take them, ask at the pick
+   (default), or always send them down.
+3. **Coach's kids are always must-draft.** On marked picks, the app says only
+   must-draft players can be picked, with an admin override and a note.
+4. **Registrars run the draft like admins,** ratings included.
+5. **Siblings are suggested** from a fingerprint of the account email. The same
+   fingerprint suggests coach's-kid links, and optional extra columns can be added
+   later.
+6. **A draft can't start** until an admin has released its age groups.
