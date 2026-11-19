@@ -92,7 +92,7 @@ async function SetupContent({ params, searchParams }: { params: Params; searchPa
         <div className={`${card} flex flex-wrap items-center justify-between gap-3`}>
           <p className="text-sm text-muted-foreground">
             No {s.division.name} draft yet. The pool below is who would be in it.
-            {s.previous ? ` Setting it up copies the rules from ${s.previous.season}.` : " It starts with the usual rules: the top age must be drafted, 12 per team, snake order."}
+            {s.previous ? ` Setting it up copies the rules from ${s.previous.season}.` : ` It starts with the usual rules: ${s.division.name === "Juniors" ? "every age" : `every ${s.division.max_age}-year-old`} must be drafted, 12 per team, snake order.`}
           </p>
           <form action={createDraft}>{hidden}<Button type="submit"><Plus className="mr-1 h-4 w-4" /> Set up the {s.division.name} draft</Button></form>
         </div>

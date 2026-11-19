@@ -86,13 +86,14 @@ SELECT public.admin_save_team(NULL, :majors, 'Cubs') AS t2 \gset
 SELECT public.admin_save_team(NULL, :majors, 'Mets') AS t3 \gset
 SELECT public.admin_set_team_staff(:t1, '00000000-0000-4000-8000-0000000d0003', '00000000-0000-4000-8000-0000000d0004', NULL);
 SELECT public.admin_link_coach_kid(:tenkid, '00000000-0000-4000-8000-0000000d0003');
+SELECT public.admin_link_coach_kid(:nine, '00000000-0000-4000-8000-0000000d0004');
 RESET ROLE;
 UPDATE public.player_seasons SET team_id = :t1, season_division_id = :majors WHERE id = :placed;
 SET LOCAL ROLE authenticated;
 
 -- ---------- the pool ----------
 SELECT pg_temp.check(pg_temp.pool(:majors) = 'ElevenMaj:requested,TenKid:coach_kid!,TenMaj:requested,Twelve:must_draft_age!',
-  'Majors pool: every 12 (must draft), 10-11s who asked for Majors, the manager''s kid (must draft); not "Softball Majors", not players already on a team');
+  'Majors pool: every 12 (must draft), 10-11s who asked for Majors, the manager''s kid (must draft); not the coach''s 9-year-old, not "Softball Majors", not players already on a team');
 SELECT pg_temp.check(pg_temp.pool(:aaa) = 'ElevenAaa:must_draft_age!,ElevenMaj:must_draft_age!,Nine:requested,TenKid:requested',
   'AAA pool: every 11 (must draft) and younger players who asked for AAA (the Majors manager''s kid too, until Majors takes him)');
 
@@ -104,6 +105,11 @@ SELECT public.admin_create_draft(:majors) AS d \gset
 SELECT pg_temp.check(pg_temp.sys(format('SELECT must_draft_ages::text || roster_size || order_type || coach_kid_rule FROM public.drafts WHERE id = %s', :d))
   = '{12}12snakefixed_rounds', 'a new draft: must-draft age is the top age, roster 12, snake, coach''s kids in fixed rounds');
 SELECT pg_temp.expect_error(format('SELECT public.admin_create_draft(%s)', :majors), 'already has a draft', 'one draft per division');
+SELECT pg_temp.sys(format('SELECT max(sd.id) FROM public.season_divisions sd JOIN public.divisions dv ON dv.id = sd.division_id WHERE dv.name = ''Juniors'' AND sd.season_id = %s', :s)) AS juniors \gset
+SELECT public.admin_create_draft(:juniors) AS dj \gset
+SELECT pg_temp.check(pg_temp.sys(format('SELECT must_draft_ages::text FROM public.drafts WHERE id = %s', :dj)) = '{13,14}',
+  'Juniors: every 13 and 14 must be drafted by default');
+SELECT public.admin_delete_draft(:dj);
 
 -- ---------- settings ----------
 SELECT pg_temp.expect_error(format('SELECT public.admin_save_draft_settings(%s, ''{"must_draft_ages":[9]}'')', :d), 'within the division', 'must-draft ages stay within the division''s ages');
@@ -118,8 +124,8 @@ SELECT public.admin_save_draft_settings(:d, '{"pool_by_age_only": false}');
 SELECT pg_temp.expect_error(format('SELECT public.admin_set_pool_override(%s, %s, ''in'', '''')', :majors, :nine), 'short note', 'an override needs a note');
 SELECT public.admin_set_pool_override(:majors, :nine, 'in', 'Plays up, board approved');
 SELECT public.admin_set_pool_override(:majors, :twelve, 'out', 'Medical: sitting out the season');
-SELECT pg_temp.check(pg_temp.pool(:majors) = 'ElevenMaj:requested,Nine:override_in,TenKid:coach_kid!,TenMaj:requested',
-  'an admin can put a 9-year-old in and take a 12 out');
+SELECT pg_temp.check(pg_temp.pool(:majors) = 'ElevenMaj:requested,Nine:override_in!,TenKid:coach_kid!,TenMaj:requested',
+  'an admin can put a 9-year-old in (a coach''s kid, so must draft once added) and take a 12 out');
 SELECT pg_temp.check(pg_temp.pool(:aaa) = 'ElevenAaa:must_draft_age!,ElevenMaj:must_draft_age!,TenKid:requested', 'a player put into Majors leaves AAA');
 SELECT public.admin_move_pool(:elevenaaa, :aaa, :majors, 'Parents asked; board approved');
 SELECT pg_temp.check(pg_temp.pool(:majors) LIKE '%ElevenAaa:override_in%' AND pg_temp.pool(:aaa) = 'ElevenMaj:must_draft_age!,TenKid:requested', 'moving a player from AAA to the Majors pool');
@@ -144,10 +150,10 @@ SELECT pg_temp.check(pg_temp.sys(format('SELECT roster_size FROM public.draft_te
 SELECT pg_temp.expect_error(format('SELECT public.admin_set_kid_round(%s, %s, 2)', :d, :tenmaj), 'isn''t the kid', 'only coach''s kids of this division get a round');
 SELECT public.admin_set_kid_round(:d, :tenkid, 3);
 SELECT pg_temp.check((SELECT (k->>'round')::int = 3 AND (k->>'suggested_round') IS NOT NULL AND k->>'team' = 'Giants'
-  FROM jsonb_array_elements(public.draft_setup(:majors)->'kids') k), 'the setup page shows the kid''s team, round and a suggested round');
+  FROM jsonb_array_elements(public.draft_setup(:majors)->'kids') k WHERE (k->>'player_season_id')::bigint = :tenkid), 'the setup page shows the kid''s team, round and a suggested round');
 SELECT pg_temp.check((SELECT p->'also_in' = '["AAA"]'::jsonb FROM jsonb_array_elements(public.draft_setup(:majors)->'pool') p
   WHERE (p->>'player_season_id')::bigint = :elevenmaj), 'the setup page says an 11 in the Majors pool is also in the AAA pool');
-SELECT pg_temp.check((SELECT (d->>'pool')::int = 6 AND (d->>'must_draft')::int = 2 AND (d->'draft'->>'order_set')::boolean
+SELECT pg_temp.check((SELECT (d->>'pool')::int = 6 AND (d->>'must_draft')::int = 3 AND (d->'draft'->>'order_set')::boolean
   FROM jsonb_array_elements(public.drafts_overview(:s)) d WHERE d->>'name' = 'Majors'), 'the drafts overview counts the pool and sees the order');
 
 -- ---------- after the draft starts; players left over ----------
