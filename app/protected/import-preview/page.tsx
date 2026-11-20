@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import type { ChartEntry } from "@/lib/age-chart";
 import { RegistrationImportPreview } from "./registration-import-preview";
 import { CsvTemplatePanel } from "@/components/csv-template";
 import { SPORTS_CONNECT_TEMPLATE } from "@/lib/csv-templates";
@@ -50,6 +51,13 @@ async function ImportPreviewContent() {
     .select("id, name, start_date, end_date, is_closed")
     .eq("is_closed", false)
     .order("start_date", { ascending: false });
+  // Each season's age chart (Age chart page); the preview works out league ages with the chosen season's.
+  const charts = new Map<number, ChartEntry[] | null>();
+  for (const s of seasons ?? []) {
+    const { data } = await supabase.rpc("season_age_chart", { p_season_id: s.id });
+    const rows = ((data as { rows?: ChartEntry[] } | null)?.rows ?? []);
+    charts.set(s.id, rows.length ? rows : null);
+  }
 
   return (
     <div className="space-y-6">
@@ -96,6 +104,7 @@ async function ImportPreviewContent() {
             name: season.name,
             startDate: season.start_date,
             endDate: season.end_date,
+            ageChart: charts.get(season.id) ?? null,
           }))}
         />
       )}

@@ -14,6 +14,7 @@ const ADMIN_ITEMS: NavItem[] = [
     { href: "/protected/players", label: "Players" },
     { href: "/protected/import-batches", label: "Imports" },
     { href: "/protected/players/duplicates", label: "Possible duplicates" },
+    { href: "/protected/age-chart", label: "Age chart" },
   ] },
   { label: "Evaluations", links: [
     { href: "/protected/sessions", label: "Sessions" },

@@ -1,4 +1,5 @@
 import ageChart2027 from "./data/age-chart-2027.json";
+import type { ChartEntry } from "./age-chart";
 
 type AgeEntry = { birth_year: number; birth_month: number; league_age: number };
 export type PreviewRow = {
@@ -55,6 +56,13 @@ const ALLOWED_PAYMENT_STATUSES = new Set([
 const chartByBirthMonth = new Map<string, number>(
   (ageChart2027 as AgeEntry[]).map((entry) => [`${entry.birth_year}-${entry.birth_month}`, entry.league_age]),
 );
+/** The built-in 2027 chart (the default when no season chart is given). */
+export const BUILT_IN_2027_CHART = ageChart2027 as ChartEntry[];
+// A season's chart (uploaded on the Age chart page): undefined = the built-in 2027 chart; null = the season has none.
+function chartMap(chart: ChartEntry[] | null | undefined) {
+  if (chart === undefined) return chartByBirthMonth;
+  return new Map((chart ?? []).map((e) => [`${e.birth_year}-${e.birth_month}`, e.league_age]));
+}
 
 export function parseCsv(text: string): string[][] {
   return parseCsvLines(text).map((r) => r.cells);
@@ -106,13 +114,14 @@ export function normalizeDate(value: string): { iso: string; year: number; month
   return { iso: `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`, year, month };
 }
 
-// League age from the 2027 age chart (by birth year and month), or null when the chart has no entry.
-export function leagueAgeForBirthDate(value: string | null | undefined): number | null {
+// League age from a season's age chart (by birth year and month), or null when the chart has no entry.
+export function leagueAgeForBirthDate(value: string | null | undefined, chart?: ChartEntry[] | null): number | null {
   const date = value ? normalizeDate(value) : null;
-  return date ? chartByBirthMonth.get(`${date.year}-${date.month}`) ?? null : null;
+  return date ? chartMap(chart).get(`${date.year}-${date.month}`) ?? null : null;
 }
 
-export function makePreview(text: string): { rows: PreviewRow[]; missingHeaders: string[] } {
+export function makePreview(text: string, chart?: ChartEntry[] | null): { rows: PreviewRow[]; missingHeaders: string[] } {
+  const ages = chartMap(chart);
   const records = parseCsvLines(text);
   const parsed = records.map((r) => r.cells);
   if (parsed.length < 2) throw new Error("The file must include a header row and at least one registration.");
@@ -138,8 +147,8 @@ export function makePreview(text: string): { rows: PreviewRow[]; missingHeaders:
     if (!date) issues.push("Invalid or missing birthdate");
     if (!paymentStatus || !ALLOWED_PAYMENT_STATUSES.has(paymentStatus.toUpperCase())) issues.push("Payment status needs review");
     if (!ACTIVE_DIVISIONS.has(division.toUpperCase())) issues.push("Division needs review");
-    const leagueAge = date ? chartByBirthMonth.get(`${date.year}-${date.month}`) ?? null : null;
-    if (date && leagueAge === null) issues.push("No reviewed age-chart entry");
+    const leagueAge = date ? ages.get(`${date.year}-${date.month}`) ?? null : null;
+    if (date && leagueAge === null) issues.push(chart === null ? "No age chart for this season (upload it on Age chart)" : "No reviewed age-chart entry");
     const kidRaw = kidHeader ? (cells[indexes.get(kidHeader)!] ?? "").trim() : "";
     const kid = parseCoachKid(kidRaw);
     if (kid === "bad") issues.push(`Coaches Kid value "${kidRaw}" not understood (use Yes or No)`);

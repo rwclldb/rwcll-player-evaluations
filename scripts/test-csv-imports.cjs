@@ -132,5 +132,25 @@ check("teams: volunteer report rows group into teams by role; other roles skippe
   && tp.skipped.length === 1 && tp.problems.length === 1 && tp.problems[0].team === "Cubs", tp);
 check("teams: a file without a team column is refused", "error" in TC.parseTeamsCsv(readCsv("Division,Email\nAA,x@x.test")));
 
+// Age chart (the official Little League CSV: JAN..DEC birth years, then AGE).
+const AC = jiti(path.join(root, "lib/age-chart.ts"));
+const builtIn = require(path.join(root, "lib/data/age-chart-2027.json"));
+const sampleChart = AC.parseAgeChart(fs.readFileSync(path.join(root, "rwcll-fictional-test-league/little-league-baseball-age-chart-2027.csv"), "utf8"));
+const key = (e) => `${e.birth_year}-${e.birth_month}-${e.league_age}`;
+check("age chart: the league's 2027 file reads cleanly, ages 4-16, 156 birth months", sampleChart.problems.length === 0 && sampleChart.entries.length === 156 && sampleChart.ages[0] === 4 && sampleChart.ages.at(-1) === 16, sampleChart.problems);
+check("age chart: it matches the built-in 2027 chart exactly", JSON.stringify(sampleChart.entries.map(key).sort()) === JSON.stringify(builtIn.map(key).sort()));
+const lookup = AC.chartLookup(sampleChart.entries);
+check("age chart: born Aug 2015 is 12, born Sep 2015 is 11", lookup(2015, 8) === 12 && lookup(2015, 9) === 11);
+check("age chart: a CSV written from the chart reads back the same", JSON.stringify(AC.parseAgeChart(AC.chartCsv(sampleChart.entries)).entries.map(key).sort()) === JSON.stringify(sampleChart.entries.map(key).sort()));
+const bad = AC.parseAgeChart("JAN,FEB,MAR,APR,MAY,JUN,JUL,AUG,SEP,OCT,NOV,DEC,AGE\n2015,2015,2015,2015,2015,2015,2015,2015,2014,2014,2014,2014,12\n2015,2016,2016,2016,2016,2016,2016,2016,2015,2015,2015,2015,11\n");
+check("age chart: a birth month in two ages is reported", bad.problems.some((p) => p.includes("JAN 2015 is in both")), bad.problems);
+check("age chart: a file without all twelve months or AGE is refused", AC.parseAgeChart("JAN,FEB,AGE\n2015,2015,12\n").problems.length > 0 && AC.parseAgeChart("JAN,FEB,MAR,APR,MAY,JUN,JUL,AUG,SEP,OCT,NOV,DEC\n").problems.length > 0);
+check("age chart: an age that isn't a whole number from 4 to 18 is reported", AC.parseAgeChart("JAN,FEB,MAR,APR,MAY,JUN,JUL,AUG,SEP,OCT,NOV,DEC,AGE\n2001,2001,2001,2001,2001,2001,2001,2001,2000,2000,2000,2000,26\n").problems.some((p) => p.includes("isn't a whole number")));
+const prev = jiti(path.join(root, "lib/sports-connect-preview.ts"));
+const oneRow = "Program Name,Division Name,Player Id,Registration Number,Player First Name,Player Last Name,Player Birth Date,Order Payment Status\n2027,Majors,1,,A,B,08/15/2015,Paid\n";
+check("import preview: the season's chart sets the age; a season without a chart flags the row",
+  prev.makePreview(oneRow, sampleChart.entries).rows[0].leagueAge === 12 && prev.makePreview(oneRow, null).rows[0].leagueAge === null
+  && prev.makePreview(oneRow, null).rows[0].issues.some((i) => i.includes("No age chart for this season")) && prev.makePreview(oneRow).rows[0].leagueAge === 12);
+
 if (failed) { console.error(`FAIL: ${failed} CSV import check(s) failed`); process.exit(1); }
 console.log("PASS: CSV import parsing and templates");

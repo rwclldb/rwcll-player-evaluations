@@ -317,11 +317,14 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
 
 - **Draft rehearsal: step 6** (no migration): `npm run e2e:draft` (see Commands; the room's player rows carry `data-player`, `data-must`, `data-reserved`, `data-queued`, `data-age` for it). The board demo has a "Teams and the draft" section in both run sheets (jump with `demo:draft-day` mid-talk) and five new deck slides (17 divider, 18 teams, 19 draft room, 20 managers' phones, 21 Make teams and rosters; 28 slides now); question 6 asks whether to run this year's draft in the app. Slide 3 still shows five stages.
 
+## Built 2026-11-24 (local only; migration not on hosted)
+
+- **Age chart upload** (migration 20261124090000, test `test:age-chart-runtime`; parser checks in `test:csv-imports`): Players ▾ → **Age chart** (`/protected/age-chart`; admins upload, registrars can look). Drop or choose the official Little League CSV (`JAN`…`DEC` birth years, then `AGE`, one row per league age; parser `lib/age-chart.ts`), check the preview grid and problems (a month in two ages, missing columns, bad ages or years), then save. `admin_save_age_chart` replaces the season's whole chart (`season_age_charts`, `season_age_chart_uploads`; no direct access; refused in a closed season; audited `age_chart_uploaded`). `season_age_chart(season)` feeds the page, the Sports Connect import preview (ages from the chosen season's chart; a season without one flags each row "No age chart for this season") and the player edit page. `age_chart_mismatches(season)` lists players whose age differs from the chart (birthdates compared in the database, never returned). Roadmap step "Upload the age chart" (Before evaluations). The migration fills Spring 2027 from the built-in chart; the fixture loader uploads `rwcll-fictional-test-league/little-league-baseball-age-chart-2027.csv` (not with `--bare`: the season-setup test plan uploads it in step 2.0).
+
 ## Tracked additions (confirmed requirements, not yet built)
 
 - **Teams and the draft** (approved 2026-11-19; spec `docs/DRAFT-SPEC.md`; steps 1–5 built; step 6, the rehearsal, is mostly covered by the draft fixtures, `demo:draft-day` and `docs/TEST-PLAN-DRAFT.xlsx`): teams with a Manager, Coach and assistants; coach's kids linked to a parent; sibling groups; per-division drafts (Juniors Feb 1, Majors Feb 2, AAA Feb 4, 2027) with pool rules, a draw, snake order and rule switches copied forward; a live draft room (admins pick; the division's managers and coaches watch, sort and keep stars and notes); undrafted players fall through to the next division; a team generator for AA (rosters by Feb 6) and Seniors; Move player with notes; a roster CSV.
 
-- **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)
 - **Shared test server.** Vercel + hosted Supabase is running; `SUPABASE_SECRET_KEY` is set on Vercel (2026-11-11). Hosted needs every 2026-11-11 migration and Site URL / Redirect URLs (user-run steps; see docs/FAQ.md). The hosted plan can't edit email templates, so the app doesn't depend on them.
 
 ## Working preferences

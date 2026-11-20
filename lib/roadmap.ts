@@ -31,6 +31,8 @@ export type RoadmapData = {
   season: { id: number; name: string; is_closed: boolean };
   /** Possible-duplicate player pairs waiting for a decision (all seasons); filled in by the page. */
   duplicates?: number;
+  /** The season's age chart: birth months uploaded and players whose age doesn't match it; filled in by the page. */
+  ageChart?: { rows: number; mismatches: number };
   /** Teams and family links for the Teams and draft stage; filled in by the page (teamsSummary). */
   teams?: TeamsSummary;
   stage: StageKey;
@@ -146,6 +148,13 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
           status: S.length > 0 ? "done" : "todo",
           detail: S.length > 0 ? `${plural(S.length, "age group")} (ages ${S[0].league_age}–${S[S.length - 1].league_age})` : "One age group per league age, 7 to 16.",
           links: [{ href: "/protected/sessions", label: S.length > 0 ? "Sessions" : "Create age groups", primary: S.length === 0 }],
+        },
+        {
+          key: "age-chart", title: "Upload the age chart",
+          status: (d.ageChart?.rows ?? 0) === 0 ? "todo" : d.ageChart!.mismatches > 0 ? "attention" : "done",
+          detail: (d.ageChart?.rows ?? 0) === 0 ? "The official Little League age chart for the season. The import works out each player's age from it."
+            : d.ageChart!.mismatches > 0 ? `${plural(d.ageChart!.mismatches, "player")} whose age doesn't match the chart.` : "Uploaded; every player's age matches it.",
+          links: [{ href: `/protected/age-chart?season=${sid}`, label: "Age chart", primary: (d.ageChart?.rows ?? 0) === 0 || d.ageChart!.mismatches > 0 }],
         },
         {
           key: "registrations", title: "Import registrations",

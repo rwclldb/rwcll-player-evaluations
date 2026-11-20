@@ -43,15 +43,18 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
     if (error || !data) {
       return <p role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-700 dark:text-rose-300">Could not load the roadmap: {error?.message ?? "no data"}</p>;
     }
-    const [{ data: duplicates }, { data: teamSetup }, { data: families }, { data: drafts }, { data: rosters }] = await Promise.all([
+    const [{ data: duplicates }, { data: teamSetup }, { data: families }, { data: drafts }, { data: rosters }, { data: chart }, { data: chartMismatches }] = await Promise.all([
       supabase.rpc("admin_possible_duplicate_count"),
       supabase.rpc("team_setup", { p_season_id: season.id }),
       supabase.rpc("family_overview", { p_season_id: season.id }),
       supabase.rpc("drafts_overview", { p_season_id: season.id }),
       supabase.rpc("season_rosters", { p_season_id: season.id }),
+      supabase.rpc("season_age_chart", { p_season_id: season.id }),
+      supabase.rpc("age_chart_mismatches", { p_season_id: season.id }),
     ]);
     const base = data as RoadmapData;
-    const roadmap: RoadmapData = { ...base, stage: suggestedStage(base), duplicates: Number(duplicates ?? 0), teams: teamsSummary(teamSetup, families, drafts, rosters) };
+    const roadmap: RoadmapData = { ...base, stage: suggestedStage(base), duplicates: Number(duplicates ?? 0), teams: teamsSummary(teamSetup, families, drafts, rosters),
+      ageChart: { rows: ((chart as { rows?: unknown[] } | null)?.rows ?? []).length, mismatches: (chartMismatches ?? []).length } };
     const viewing = (STAGES.some((s) => s.key === sp.stage) ? sp.stage : roadmap.stage) as StageKey;
     const { data: pending } = await supabase.rpc("admin_people_not_signed_in", { p_season_id: season.id });
     return (

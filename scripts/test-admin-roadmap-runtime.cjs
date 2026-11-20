@@ -101,6 +101,8 @@ const checks = [
   ["rosters step is done when every division with teams is released", step(data({ teams: { ...T0, rosters: { released: ["Majors", "AAA"], withTeams: ["Majors", "AAA"], unplaced: 0 } } }), "draft", "team-rosters").status === "done"],
   ["AA step: players waiting in the AA pool", step(data({ teams: { ...T0, rosters: { released: [], withTeams: ["AA"], unplaced: 5, aa: { id: 1, teams: 8, placed: 0, waiting: 5 } } } }), "draft", "aa-teams").detail.includes("5 players in the AA pool")],
   ["AA step is done when every AA player is on a team", step(data({ teams: { ...T0, rosters: { released: [], withTeams: ["AA"], unplaced: 0, aa: { id: 1, teams: 8, placed: 100, waiting: 0 } } } }), "draft", "aa-teams").status === "done"],
+  ["age chart step: to do without a chart, needs attention when ages don't match", step(data(), "before", "age-chart").status === "todo"
+    && step(data({ ageChart: { rows: 156, mismatches: 2 } }), "before", "age-chart").status === "attention" && step(data({ ageChart: { rows: 156, mismatches: 0 } }), "before", "age-chart").status === "done"],
   ["dates format without a time-zone shift", rm.formatDate("2027-01-23") === "Sat, Jan 23" && rm.formatTime("15:30:00") === "3:30 PM"],
 ];
 for (const [label, ok] of checks) {

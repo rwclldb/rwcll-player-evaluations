@@ -66,7 +66,14 @@ PHASES = [
          "Disable eval.orion@example.com, then Enable it again.",
          "\"Account disabled. They can no longer sign in.\" then \"Account enabled.\"", False),
     ]),
-    ("Phase 2: Registrations (Sports Connect import)", 20, "Stage the registration file, use the two bulk buttons, then decide the 17 rows that need a person.", [
+    ("Phase 2: Registrations (Sports Connect import)", 25, "Upload the age chart, stage the registration file, use the two bulk buttons, then decide the 17 rows that need a person.", [
+        ("2.0", "Admin", "Players, Age chart",
+         "Open Imports, Sports Connect import, choose the file in 2.1 and season Spring 2027, and look at the preview (don't save). Then open Players, Age chart "
+         "(season Spring 2027), drop rwcll-fictional-test-league/little-league-baseball-age-chart-2027.csv on the box (or click it and choose the file), "
+         "check the preview and press Save as the Spring 2027 chart.",
+         "Before: the preview flags rows \"No age chart for this season (upload it on Age chart)\" and shows no ages. The upload preview says \"ages 4-16, 156 birth months\"; "
+         "after saving: \"Saved: 156 birth months.\", a grid of ages 4 to 16 with the file name, and \"Players whose age doesn't match the chart (0)\". "
+         "Roadmap, Before evaluations: Upload the age chart is Done.", True),
         ("2.1", "Admin", "Imports, Sports Connect import",
          "Choose rwcll-fictional-test-league/generated/sports-connect-spring-2027-full.csv and season Spring 2027. Press Save Batch for Review, then open the batch.",
          "\"Saved staging batch #N with 444 rows.\" The batch page shows a Bulk review panel at the top.", True),
@@ -223,7 +230,8 @@ DB_CHECKS = [
      "select (select count(*) from public.player_seasons) as registrations,\n"
      "       (select count(*) from public.player_seasons where league_age is null) as no_age_group;\n"
      "select review_state, count(*) from public.sports_connect_import_rows group by 1 order by 1;",
-     "357 registrations, 0 with no age group (after 2.8). Import rows: committed 357, ignored 86, and Harper Oak's row not committed."),
+     "357 registrations, 0 with no age group (after 2.8). Import rows: committed 357, ignored 86, and Harper Oak's row not committed. "
+     "select count(*) from public.season_age_charts; gives 156 (the Spring 2027 chart from 2.0)."),
     ("3", "After Phase 3", "Prior-year ratings",
      "select (select count(*) from public.historical_evaluations) as ratings_imported;\n"
      "select review_state, match_status, count(*) from public.historical_evaluation_import_rows group by 1, 2 order by 1, 2;",

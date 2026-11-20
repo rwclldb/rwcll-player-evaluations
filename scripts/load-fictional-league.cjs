@@ -202,6 +202,13 @@ PASS: bare league loaded: ${Object.keys(userId).length} admin accounts, Spring 2
   // ---------- registration import (REAL: same parser and RPCs as the import screen) ----------
   const admin = createClient(status.API_URL, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
   await must(admin.auth.signInWithPassword({ email: "admin.jordan@example.com", password }), "sign in as admin.jordan");
+  // REAL: the Age chart page's upload (same parser), before the registrations are imported.
+  const ageChart = require("jiti")(__filename, { alias: { "@": root } })(path.join(root, "lib/age-chart.ts"));
+  const chartFile = "little-league-baseball-age-chart-2027.csv";
+  const chart = ageChart.parseAgeChart(fs.readFileSync(path.join(pack, chartFile), "utf8"));
+  if (chart.problems.length) fail(`age chart: ${chart.problems.join("; ")}`);
+  await must(admin.rpc("admin_save_age_chart", { p_season_id: s2027.id, p_rows: chart.entries, p_file_name: chartFile }), "upload age chart");
+  log(`REAL age chart: ${chart.entries.length} birth months (ages ${chart.ages[0]}-${chart.ages[chart.ages.length - 1]}) uploaded for Spring 2027`);
   const csvName = "sports-connect-spring-2027-full.csv";
   const { rows: previewRows, missingHeaders } = preview.makePreview(fs.readFileSync(path.join(gen, csvName), "utf8"));
   if (missingHeaders.length) fail(`CSV missing headers: ${missingHeaders.join(", ")}`);

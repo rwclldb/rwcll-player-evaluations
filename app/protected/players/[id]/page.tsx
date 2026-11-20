@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { type RegistrationRow } from "@/lib/players";
 import { BirthdateField } from "./birthdate-field";
+import type { ChartEntry } from "@/lib/age-chart";
 import { removeExemption, saveExemption, saveRegistration, setCoachKid } from "../actions";
 import { EXEMPT_LABEL, type ExemptScope } from "@/components/exempt-badge";
 
@@ -40,11 +41,13 @@ async function EditContent({ params, searchParams }: { params: Params; searchPar
   const reg = data as unknown as RegistrationRow & { external_registration_id: string | null; seasons: { name: string; is_closed: boolean } | null };
 
   // Through functions, so registrars see this player's history and score yes/no without reading the audit log or scores.
-  const [{ data: auditData }, { data: hasScores }, { data: exemptionData }] = await Promise.all([
+  const [{ data: auditData }, { data: hasScores }, { data: exemptionData }, { data: chartData }] = await Promise.all([
     supabase.rpc("registration_history", { p_player_season_id: psId }),
     supabase.rpc("registration_has_scores", { p_player_season_id: psId }),
     supabase.rpc("registration_exemption", { p_player_season_id: psId }),
+    supabase.rpc("season_age_chart", { p_season_id: reg.season_id }),
   ]);
+  const chartRows = ((chartData as { rows?: ChartEntry[] } | null)?.rows ?? []);
   const exemption = ((exemptionData ?? []) as { scope: ExemptScope; reason: string; approved_by_name: string | null; recorded_by_name: string | null; recorded_at: string }[])[0];
   const history = (auditData ?? []) as AuditRow[];
   const locked = hasScores === true;
@@ -136,7 +139,7 @@ async function EditContent({ params, searchParams }: { params: Params; searchPar
             <input name="lastName" required defaultValue={reg.players?.last_name} className={input} />
           </label>
           <label className="text-sm font-medium text-foreground">Birthdate
-            <BirthdateField playerSeasonId={reg.id} hasBirthDate={Boolean(reg.players?.has_birth_date)} className={input} />
+            <BirthdateField playerSeasonId={reg.id} hasBirthDate={Boolean(reg.players?.has_birth_date)} className={input} ageChart={chartRows.length ? chartRows : null} />
           </label>
           <label className="text-sm font-medium text-foreground">Age group (league age)
             <input name="leagueAge" inputMode="numeric" defaultValue={reg.league_age ?? ""} disabled={locked} className={input} />

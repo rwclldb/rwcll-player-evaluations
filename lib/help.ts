@@ -252,6 +252,7 @@ export const GUIDES: HelpGuide[] = [
             "Anything left needs a decision one row at a time in [[Open Administrator Row Review]].",
           ] },
           { tip: "Upload the full export as often as you like. Nothing is ever removed, and players missing from a later file are only listed." },
+          "Each player's Little League age comes from the season's official age chart, which a league admin uploads once a season. If the preview says **No age chart for this season**, ask an admin to upload it before you save the batch.",
         ],
       },
       {

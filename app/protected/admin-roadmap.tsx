@@ -20,7 +20,7 @@ const STEP_ICON: Record<string, LucideIcon> = {
   schedule: CalendarDays, "prior-switch": Eye, readiness: ShieldCheck, open: DoorOpen, signin: KeyRound, rosters: Printer,
   progress: Activity, walkups: UserPlus, help: LifeBuoy, find: Search, drafts: FileWarning, lock: Lock, check: FileSearch,
   release: Send, export: Download, teams: Shirt, rerate: Star, close: Archive, next: PlusCircle,
-  kids: Baby, siblings: Users, "release-first": Send, "setup-drafts": Settings2, "run-drafts": ListOrdered, "aa-teams": Shuffle, "team-rosters": Download,
+  "age-chart": CalendarDays, kids: Baby, siblings: Users, "release-first": Send, "setup-drafts": Settings2, "run-drafts": ListOrdered, "aa-teams": Shuffle, "team-rosters": Download,
 };
 
 const STATUS: Record<StepStatus, { icon: LucideIcon; badge: string; card: string; dot: string; label: string }> = {

@@ -3,6 +3,7 @@
 import { DobMarker } from "@/components/dob-marker";
 import { useMemo, useState, useRef, type ChangeEvent, type DragEvent } from "react";
 import { stageSportsConnectImport } from "./actions";
+import type { ChartEntry } from "@/lib/age-chart";
 import {
   ACTIVE_DIVISIONS,
   accountKey,
@@ -29,6 +30,8 @@ type AvailableSeason = {
   name: string;
   startDate: string | null;
   endDate: string | null;
+  /** The season's age chart; null when none is uploaded (ages are then left blank and flagged). */
+  ageChart: ChartEntry[] | null;
 };
 
 export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeason[] }) {
@@ -42,6 +45,15 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
   const [stageMessage, setStageMessage] = useState("");
   const [stagedBatchId, setStagedBatchId] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [fileText, setFileText] = useState("");
+  // League ages come from the chosen season's age chart (the built-in 2027 chart until a season is chosen).
+  const chartFor = (sid: string) => (sid ? seasons.find((s) => String(s.id) === sid)?.ageChart ?? null : undefined);
+  const rebuild = (text: string, sid: string) => {
+    const result = makePreview(text, chartFor(sid));
+    setMissingHeaders(result.missingHeaders);
+    setRows(result.rows);
+    return result;
+  };
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processFile = async (file: File) => {
@@ -62,10 +74,10 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
       return;
     }
     try {
-      const result = makePreview(await file.text());
+      const text = await file.text();
+      const result = rebuild(text, seasonId);
+      setFileText(text);
       setFileName(file.name);
-      setMissingHeaders(result.missingHeaders);
-      setRows(result.rows);
       if (result.missingHeaders.length === 0 && result.rows.length === 0) {
         setError("No registration rows were found.");
       }
@@ -273,6 +285,7 @@ export function RegistrationImportPreview({ seasons }: { seasons: AvailableSeaso
                 value={seasonId}
                 onChange={(event) => {
                   setSeasonId(event.target.value);
+                  if (fileText) rebuild(fileText, event.target.value);
                   setStageMessage("");
                   setStagedBatchId(null);
                 }}
