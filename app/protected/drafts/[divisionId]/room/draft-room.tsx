@@ -291,7 +291,8 @@ export function DraftRoom({ draftId, divisionId, initialBoard, initialPlayers, p
           const reservedFor = board.reserved[String(p.player_season_id)];
           const picked = !available.has(p.player_season_id);
           return (
-            <li key={p.player_season_id}
+            <li key={p.player_season_id} data-player={p.player_season_id} data-must={p.must_draft ? "yes" : "no"} data-reserved={reservedFor ? "yes" : "no"}
+              data-queued={queued.has(p.player_season_id) ? "yes" : "no"} data-age={p.league_age ?? ""}
               className={`px-3 py-2 ${selected === p.player_season_id ? "bg-emerald-500/15" : isNext ? "bg-sky-500/10" : ""} ${board.can_run && running && !picked ? "cursor-pointer hover:bg-accent" : ""}`}
               onClick={() => { if (board.can_run && running && !picked) { setSelected(p.player_season_id); setNote(""); setError(""); } }}>
               <div className="flex items-center gap-2">

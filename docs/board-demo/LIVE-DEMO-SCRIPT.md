@@ -1,6 +1,6 @@
 # Board demo on the live site: run sheet
 
-About 35 minutes. The same story as the laptop demo (`DEMO-SCRIPT.md`), but on
+About 45 minutes. The same story as the laptop demo (`DEMO-SCRIPT.md`), but on
 the real website, so the board can **take part on their own phones**: they scan a
 QR code, sign in with a seat card, score a few players, and then see the draft
 report appear once you release it.
@@ -185,11 +185,33 @@ the real thing in your hand.
    and **Print**. Tap a **flag** in the last column (for example **No bib** or an
    **unsubmitted draft**): it says what it means and, for admins, links to the fix.
 
-### 7. Privacy and plan (slides 16 and 18, 2 min)
+### 7. Teams and the draft (Windows A and B, 8 min)
 
-### 8. Questions for the board (slides 19–22, 5+ min)
+**Jump to draft day first.** As soon as the age 8 report is released (step 6), run this in a terminal on the
+laptop (a couple of minutes on the live site; nothing is wiped, and the board's age 8 scores are kept):
+`npm run fixtures:load -- --hosted --confirm-project=<your project ref> --draft-day`. Every player is then scored
+and every age group locked and released. Window B: menu → **Sign out**, then sign in as `coach.finley@example.com`
+(the Majors Cubs manager).
 
-The ten questions are on slides 20 and 21 (and in `DEMO-SCRIPT.md`). Write the
+- **Window A:** **Roadmap** → **5 Teams and draft**. "After the reports, the app can run the draft too."
+- **Draft ▾ → Teams** (27 teams, each with a manager and a coach) and **Coach's kids and siblings** ("kids linked to
+  their parent, siblings found from the family's Sports Connect account; a person confirms each one").
+- **Draft ▾ → Drafts → Majors → Open setup**: 112 players for 96 spots; every 12-year-old and the coaches' kids must
+  be drafted. "The rules are switches, because ours change every year."
+- **Start the draft…** → **Yes, start**. Put the **Projector** view on the screen: the board members follow the
+  draft there.
+- Pick a few players. Pick **Tess Whitaker** and choose **Take with next pick** for her brother Leo. When Giants,
+  Cubs or Rays come up, their coach's kid goes on automatically.
+- **Window B (Finley):** **Watch the draft** on the phone view: the board live, ratings sorted any way including his
+  own scores, private stars and notes, **My team**. "Only that division's managers and coaches see this."
+- **Window A:** **Finish draft**, then **Drafts → AA → Make teams** ("balanced teams without a draft") and **Team
+  rosters** (moves with a note, **Release rosters**, **Download CSV**).
+
+### 8. Privacy and plan (slides 22 and 24, 2 min)
+
+### 9. Questions for the board (slides 25–28, 5+ min)
+
+The ten questions are on slides 26 and 27 (and in `DEMO-SCRIPT.md`). Write the
 answers down; they become settings or next year's work.
 
 ---
@@ -203,11 +225,13 @@ answers down; they become settings or next year's work.
 | The QR code opens the wrong page | They were already signed in as someone else. Menu (☰) → **Sign out**, then scan again. |
 | Progress doesn't move | Wait 30 seconds, or reload the page. |
 | Lock or release shows an error | Reload **Sessions** and try again. Saves still on a phone after the lock are refused; that phone shows a red badge with Discard. |
+| A draft won't start | Its age groups aren't released yet: run the `--draft-day` command (section 7). |
 | No "Here" badges or check-in list | The data was loaded on a different day. Re-run step 5 (10 minutes) or skip that part. |
 
-**Slide for each step:** roadmap 4 · imports 5 · duplicates 6 · assignments 7 ·
-check-in 9 · scoring 10 · progress 11 · draft report 13 · flags 14 ·
-coach view 15 · help and QR codes 17.
+**Slide for each step:** roadmap 4 · imports 5 · duplicates 6 ·
+assignments 7 · check-in 9 · announcer 10 · scoring 11 · progress 12 · draft report 14 ·
+flags 15 · coach view 16 · teams 18 · the draft 19 · managers' phones 20 ·
+Make teams and rosters 21 · help and QR codes 23.
 
 ## After the demo
 

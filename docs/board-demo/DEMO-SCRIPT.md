@@ -1,6 +1,6 @@
 # Board demo: run sheet
 
-About 30 minutes: 5 minutes of slides, 19 minutes of live demo, then questions.
+About 40 minutes: 5 minutes of slides, 27 minutes of live demo (8 of them the draft), then questions.
 The deck `RWCLL-Player-Evaluations-Board.pptx` (same folder) is the backup: every
 demo step has a matching slide with speaker notes, so you can switch to slides at
 any point.
@@ -153,15 +153,42 @@ players, about 70 test accounts. Nothing touches the hosted site.
   and private notes are theirs alone; even admins can't read them." Open
   **Vale, Indigo** to show the private note.
 
-### 6. Privacy and plan (slides 16 and 18, 3 min)
+### 6. Teams and the draft (Windows A and B, 8 min)
 
-- Back to PowerPoint: **slide 16** (protecting kids' information) and
-  **slide 18** (where we are: everything tested by Dec 31, evaluation day
+**Jump to draft day first.** While you show slides 17 and 18 (the draft section), run this in a terminal (about a minute; nothing is
+wiped): `npm run demo:draft-day`. Every player is scored and every age group locked and released.
+Window B: menu → **Sign out**, then sign in as `coach.finley@example.com` (the Majors Cubs manager).
+
+- **Window A:** **Roadmap** → **5 Teams and draft**. "After the reports, the app runs the draft too."
+- **Draft ▾ → Teams**: 27 teams, each with a manager and a coach, loaded from the Sports Connect volunteer report.
+  **Draft ▾ → Coach's kids and siblings**: "Kids are linked to their parent, and siblings found from the family's
+  Sports Connect account. A person confirms each one."
+- **Draft ▾ → Drafts → Majors → Open setup**: 112 players for 96 spots, 71 must be drafted (every 12-year-old and
+  the coaches' kids). Point at the rules: snake order, the drawn first-round order, coach's kids in rounds 1 and 2.
+  "These are switches, because our rules change every year."
+- **Start the draft…** → **Yes, start**. Open **Projector** in a new tab for the room.
+- Pick a few players (click a player, then **Pick for <team>** at the bottom). Pick **Tess Whitaker**: "Her brother
+  Leo, a 10-year-old, could go either way: take him with the team's next pick, or send him down to AAA." Choose
+  **Take with next pick**. When Giants, Cubs or Rays come up, their coach's kid goes on automatically.
+- **Window B (Finley, the Cubs manager):** **Watch the draft**. "Managers watch on their phones: the same board,
+  live, every rating sorted their way, including their own scores, with their private stars and notes." Show
+  **My team**.
+- **Window A:** **Finish draft** (you don't need all 96 picks): "Anyone not drafted drops to the next division."
+- **Draft ▾ → Drafts → AA → Make teams**: "AA has no draft. The app makes balanced teams from the ratings, keeps
+  coach's kids with their parent and siblings together." Point at the team averages. Don't place them (or do; it's
+  reset next time you load the demo).
+- **Draft ▾ → Team rosters**: every team's players, moves with a note, **Release rosters**, and **Download CSV** for
+  Sports Connect.
+
+### 7. Privacy and plan (slides 22 and 24, 3 min)
+
+- Back to PowerPoint: **slide 22** (protecting kids' information) and
+  **slide 24** (where we are: everything tested by Dec 31, evaluation day
   Jan 23, 2027).
 
-### 7. Questions for the board (slides 19–22, 5+ min)
+### 8. Questions for the board (slides 25–28, 5+ min)
 
-Go through slides 20 and 21. Write down answers; they become settings or
+Go through slides 26 and 27. Write down answers; they become settings or
 next year's work. The questions:
 
 1. Should coaches score only the age groups they're assigned to? *(today: yes)*
@@ -169,7 +196,7 @@ next year's work. The questions:
 3. When should coaches see the draft reports?
 4. What should "coach's kid" mean on the report? *(today: a label only)*
 5. Should coaches see last year's ratings while they score? *(a switch)*
-6. Teams and end-of-season coach ratings in the app next year?
+6. Run this year's draft in the app (just shown), or keep it on paper this year? *(built and tested)*
 7. Who will be admins and registrars?
 8. How long should we keep past seasons' player data?
 9. Who should own the hosting accounts long-term?
@@ -186,15 +213,17 @@ next year's work. The questions:
 | The app won't start | Docker Desktop running? `npx supabase start`, then `npm run start`. |
 | Offline step doesn't send | Make sure DevTools Network is back to **No throttling**; wait 15 seconds, or tap the badge's **Send now**. |
 | No "Here" badges or check-in list | The demo was loaded on a different day. Re-run `npm run demo:load` (5 minutes). |
+| A draft won't start | Its age groups aren't released: run `npm run demo:draft-day`. Already started or finished? Reload with `npm run demo:load`, then `npm run demo:draft-day`. |
 
 **Slide for each demo step:** roadmap 4 · imports 5 · duplicates 6 ·
-assignments 7 · check-in 9 · scoring 10 · progress 11 · draft report 13 ·
-flags 14 · coach view 15 · help and QR codes 17.
+assignments 7 · check-in 9 · announcer 10 · scoring 11 · progress 12 · draft report 14 ·
+flags 15 · coach view 16 · teams 18 · the draft 19 · managers' phones 20 ·
+Make teams and rosters 21 · help and QR codes 23.
 
 ## After the demo
 
-To show the draft next: `npm run demo:draft-day` jumps the same league to draft day (every player scored, every
-age group locked and released; nothing is wiped). Then **Draft ▾ → Drafts** and start Juniors, Majors or AAA.
+To practise the draft again: `npm run demo:load`, then `npm run demo:draft-day` (the draft can only be run once per load).
+`npm run e2e:draft` runs a mock Majors draft in the browser and puts everything back afterwards.
 
 The demo data is disposable. Load it again any time with `npm run demo:load`,
 or go back to the usual test league with `npm run fixtures:load -- --reset`.

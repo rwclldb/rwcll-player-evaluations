@@ -45,6 +45,7 @@
     "test:coach-divisions-runtime": "node scripts/test-coach-divisions-runtime.cjs",
     "e2e:evaluation-navigation": "node scripts/e2e-evaluation-navigation.cjs",
     "e2e:offline-scoring": "node scripts/e2e-offline-scoring.cjs",
+    "e2e:draft": "node scripts/e2e-draft.cjs",
     "test:csv-imports": "node scripts/test-csv-imports.cjs",
     "test:help-content": "node scripts/test-help-content.cjs",
     "test:qr-and-redirects": "node scripts/test-qr-and-redirects.cjs",
