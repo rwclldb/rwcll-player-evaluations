@@ -309,9 +309,14 @@ Internal tool for Redwood City Little League (RWCLL) to run spring player evalua
   - Menus: Draft ▾ → Team rosters (admins), Team rosters (registrars). Roadmap step "Release rosters and export" is live. Help: coach "Your team", registrar "Team rosters and moves". Season backup includes draft picks, roster moves and releases.
 - **Draft day jump** (no migration): `npm run demo:draft-day` (see Commands).
 
+## Built 2026-11-23 (local only; migration not on hosted)
+
+- **Make teams: draft step 5** (migration 20261123090000, tests `test:team-maker` (rules) and `test:team-maker-runtime`): any division can make balanced teams instead of a draft (RWCLL: AA, and Seniors when there's more than one team). `/protected/drafts/[seasonDivisionId]/make-teams` (admins and registrars; links on Drafts cards and Team rosters). `team_maker_data` gives the division's teams and players (its pool plus anyone already on its teams, who stay put) with evaluator, coach and prior-year overalls, sibling group and coach's-kid team. The balancing runs in the browser (`lib/team-maker.ts`, seeded): rating = mean of the ticked sources (median for players with none; nothing ticked = random), sizes at most 1 apart, coach's kids to the parent's team, sibling groups as one unit, then greedy lowest-total placement and pair swaps for even averages and, optionally, ages. Make again = new seed; players can be moved by hand. `admin_place_players` saves (refused while the division's draft runs, for players already on a team, or teams of another division); each placement is a `roster_moves` row of kind `team_maker`, one `teams_generated` audit entry keeps the settings. Rosters and the CSV say "Team maker". Roadmap "Make the AA teams" is live. Registrar help: "Making teams without a draft".
+- **Test plans**: `docs/TEST-PLAN-DRAFT.xlsx` (new; teams, families, draft setup, the Juniors/Majors/AAA drafts with a coach watching, Make teams, team rosters, what must not work; built by `scripts/build-test-plan-draft.py`) and `docs/TEST-PLAN-SEASON-SETUP.xlsx` (prior-year numbers updated). Both use the shared builder `scripts/test_plan_xlsx.py`; run `python scripts/build-test-plan-<name>.py docs/TEST-PLAN-<NAME>.xlsx` (needs openpyxl). Keep them current when the screens or fixtures change.
+
 ## Tracked additions (confirmed requirements, not yet built)
 
-- **Teams and the draft** (approved 2026-11-19; spec `docs/DRAFT-SPEC.md`; steps 1–4 built, steps 5–6 to do): teams with a Manager, Coach and assistants; coach's kids linked to a parent; sibling groups; per-division drafts (Juniors Feb 1, Majors Feb 2, AAA Feb 4, 2027) with pool rules, a draw, snake order and rule switches copied forward; a live draft room (admins pick; the division's managers and coaches watch, sort and keep stars and notes); undrafted players fall through to the next division; a team generator for AA (rosters by Feb 6) and Seniors; Move player with notes; a roster CSV.
+- **Teams and the draft** (approved 2026-11-19; spec `docs/DRAFT-SPEC.md`; steps 1–5 built; step 6, the rehearsal, is mostly covered by the draft fixtures, `demo:draft-day` and `docs/TEST-PLAN-DRAFT.xlsx`): teams with a Manager, Coach and assistants; coach's kids linked to a parent; sibling groups; per-division drafts (Juniors Feb 1, Majors Feb 2, AAA Feb 4, 2027) with pool rules, a draw, snake order and rule switches copied forward; a live draft room (admins pick; the division's managers and coaches watch, sort and keep stars and notes); undrafted players fall through to the next division; a team generator for AA (rosters by Feb 6) and Seniors; Move player with notes; a roster CSV.
 
 - **Age chart upload.** Admin uploads the official age chart for each season. (The 2027 chart is built in: `lib/data/age-chart-2027.json`.)
 - **Shared test server.** Vercel + hosted Supabase is running; `SUPABASE_SECRET_KEY` is set on Vercel (2026-11-11). Hosted needs every 2026-11-11 migration and Site URL / Redirect URLs (user-run steps; see docs/FAQ.md). The hosted plan can't edit email templates, so the app doesn't depend on them.
@@ -341,7 +346,7 @@ All local data is disposable. Rebuild it with `npm run fixtures:load -- --reset`
 
 ## Reference docs
 
-`ROADMAP.md`, `docs/DECISIONS.md`, `docs/DATABASE-DESIGN.md`, `docs/FAQ.md`, `docs/IMPORT-WORKFLOW-DESIGN.md`, `docs/SECURE-WORKFLOW-TEST-PLAN.md`. The old ChatGPT handoff (`docs/archive/CHATGPT_HANDOFF.md`) is history only. Where it conflicts with this file or the code, this file and the code win.
+`ROADMAP.md`, `docs/DRAFT-SPEC.md`, `docs/TEST-PLAN-SEASON-SETUP.xlsx`, `docs/TEST-PLAN-DRAFT.xlsx`, `docs/DECISIONS.md`, `docs/DATABASE-DESIGN.md`, `docs/FAQ.md`, `docs/IMPORT-WORKFLOW-DESIGN.md`, `docs/SECURE-WORKFLOW-TEST-PLAN.md`. The old ChatGPT handoff (`docs/archive/CHATGPT_HANDOFF.md`) is history only. Where it conflicts with this file or the code, this file and the code win.
 
 ## Working style
 

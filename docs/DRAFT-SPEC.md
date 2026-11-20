@@ -1,6 +1,6 @@
 # Teams and the draft: spec
 
-Status: **approved 2026-11-19.** Built locally: step 1 (teams and staff, coach's kids, siblings; migration 20261119090000) step 2 (draft setup; migrations 20261120090000 and 20261120100000) step 3 (the draft room; migration 20261121090000) and step 4 (team rosters; migration 20261122090000). Steps 5–6 to do.
+Status: **approved 2026-11-19.** Built locally: step 1 (teams and staff, coach's kids, siblings; migration 20261119090000) step 2 (draft setup; migrations 20261120090000 and 20261120100000) step 3 (the draft room; migration 20261121090000) step 4 (team rosters; migration 20261122090000) and step 5 (Make teams, for any division; migration 20261123090000). Step 6, the rehearsal: draft fixtures, `npm run demo:draft-day` and `docs/TEST-PLAN-DRAFT.xlsx`.
 
 The league runs its spring draft inside the app, straight from the evaluation data:
 the Juniors, Majors and AAA drafts, players who aren't drafted moving down a

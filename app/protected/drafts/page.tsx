@@ -77,7 +77,7 @@ async function DraftsContent({ searchParams }: { searchParams: SearchParams }) {
                 </p>
               ) : (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {drafted ? "Usually drafted." : d.name === "AA" ? "AA teams are usually made by the team generator (coming soon)." : d.name === "Seniors" ? "Usually one team, so no draft." : ""}
+                  {drafted ? "Usually drafted." : d.name === "AA" ? "AA teams are usually made with Make teams." : d.name === "Seniors" ? "Usually one team, so no draft: use Make teams." : ""}
                 </p>
               )}
               <div className="mt-auto flex flex-wrap gap-2 pt-3">
@@ -95,6 +95,9 @@ async function DraftsContent({ searchParams }: { searchParams: SearchParams }) {
                     </form>
                     <Button asChild size="sm" variant="ghost"><Link href={`/protected/drafts/${d.season_division_id}`}>See the pool</Link></Button>
                   </>
+                )}
+                {d.teams > 0 && d.draft?.status !== "live" && d.draft?.status !== "paused" && (
+                  <Button asChild size="sm" variant="ghost"><Link href={`/protected/drafts/${d.season_division_id}/make-teams`}>Make teams</Link></Button>
                 )}
                 {d.teams === 0 && (
                   <Button asChild size="sm" variant="ghost"><Link href={`/protected/teams?season=${season.id}#div-${d.season_division_id}`}><Shirt className="mr-1 h-4 w-4" /> Add teams</Link></Button>

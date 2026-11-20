@@ -54,13 +54,13 @@ export type TeamsSummary = {
   /** Per division: is there a draft, and is its first-round order set (drafts_overview). */
   drafts?: { name: string; draft: boolean; orderSet: boolean; status: string | null }[];
   /** Divisions with teams whose rosters are released, and how many players aren't on a team (season_rosters). */
-  rosters?: { released: string[]; withTeams: string[]; unplaced: number };
+  rosters?: { released: string[]; withTeams: string[]; unplaced: number; aa?: { id: number; teams: number; placed: number; waiting: number } };
 };
 
 type SetupJson = { divisions: { name: string; teams: { staff: { role: string }[] }[] }[] };
 type FamilyJson = { coach_kids: { parents: unknown[] }[]; sibling_groups: unknown[]; suggestions: unknown[] };
 type DraftsJson = { name: string; draft: { status: string; order_set: boolean } | null }[];
-type RostersJson = { divisions: { name: string; released_at: string | null; teams: unknown[] }[]; unplaced: unknown[] };
+type RostersJson = { divisions: { season_division_id: number; name: string; released_at: string | null; teams: { players: unknown[] }[] }[]; unplaced: { pools: string[] | null }[] };
 /** Roadmap numbers from team_setup() and family_overview(). */
 export function teamsSummary(setup: SetupJson | null, families: FamilyJson | null, drafts: DraftsJson | null = null, rosters: RostersJson | null = null): TeamsSummary {
   return {
@@ -73,7 +73,9 @@ export function teamsSummary(setup: SetupJson | null, families: FamilyJson | nul
     siblingGroups: families?.sibling_groups.length ?? 0,
     suggestions: families?.suggestions.length ?? 0,
     drafts: (drafts ?? []).map((x) => ({ name: x.name, draft: !!x.draft, orderSet: !!x.draft?.order_set, status: x.draft?.status ?? null })),
-    rosters: rosters ? { released: rosters.divisions.filter((d) => d.released_at).map((d) => d.name), withTeams: rosters.divisions.filter((d) => d.teams.length).map((d) => d.name), unplaced: rosters.unplaced.length } : undefined,
+    rosters: rosters ? { released: rosters.divisions.filter((d) => d.released_at).map((d) => d.name), withTeams: rosters.divisions.filter((d) => d.teams.length).map((d) => d.name), unplaced: rosters.unplaced.length,
+      aa: (() => { const d = rosters.divisions.find((x) => x.name === "AA"); return d ? { id: d.season_division_id, teams: d.teams.length, placed: d.teams.reduce((n, t) => n + t.players.length, 0),
+        waiting: rosters.unplaced.filter((u) => (u.pools ?? []).includes("AA")).length } : undefined; })() } : undefined,
   };
 }
 
@@ -417,7 +419,17 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
             links: [{ href: "/protected/drafts", label: "Drafts", primary: live.length > 0 }],
           };
         })(),
-        { key: "aa-teams", title: "Make the AA teams", status: "later", detail: "Coming next: balanced teams from the ratings, with coach's kids and siblings kept together.", links: [] },
+        (() => {
+          const aa = t.rosters?.aa;
+          return {
+            key: "aa-teams", title: "Make the AA teams",
+            status: (aa && aa.teams > 0 && aa.placed > 0 && aa.waiting === 0 ? "done" : "todo") as StepStatus,
+            detail: !aa || aa.teams === 0 ? "Add the AA teams first, then Make teams balances them from the ratings, with coach's kids and siblings kept together. Do it after the AAA draft, so its left-over players are included."
+              : aa.waiting > 0 ? `${plural(aa.waiting, "player")} in the AA pool not on a team yet${aa.placed ? ` (${aa.placed} placed)` : ""}. Make teams after the AAA draft finishes, so its left-over players are included.`
+              : `${plural(aa.placed, "player")} on ${plural(aa.teams, "AA team")}.`,
+            links: aa ? [{ href: `/protected/drafts/${aa.id}/make-teams`, label: "Make teams", primary: aa.waiting > 0 }] : [],
+          };
+        })(),
         (() => {
           const r = t.rosters;
           const waiting = r ? r.withTeams.filter((n) => !r.released.includes(n)) : [];

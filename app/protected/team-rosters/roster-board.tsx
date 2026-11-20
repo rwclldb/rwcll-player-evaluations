@@ -94,6 +94,7 @@ export function RosterBoard({ seasonId, initial, isAdmin }: { seasonId: number; 
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
             <h2 className="text-xl font-bold text-foreground">{d.name} <span className="text-sm font-normal text-muted-foreground">
               {d.teams.length} {d.teams.length === 1 ? "team" : "teams"} · {plural(d.teams.reduce((n, t) => n + t.players.length, 0), "player")}{d.draft_status ? ` · draft ${d.draft_status === "done" ? "finished" : d.draft_status}` : ""}</span></h2>
+            {d.teams.length > 0 && <a href={`/protected/drafts/${d.season_division_id}/make-teams`} className="text-sm font-medium text-emerald-700 hover:underline dark:text-emerald-400">Make teams</a>}
             {d.teams.length > 0 && (d.released_at ? (
               <span className="flex items-center gap-2 text-sm">
                 <span className="flex items-center gap-1 rounded bg-emerald-500/15 px-2 py-0.5 font-semibold text-emerald-800 dark:text-emerald-300"><Eye className="h-4 w-4" /> Released to managers and coaches</span>

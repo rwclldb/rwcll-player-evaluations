@@ -67,6 +67,8 @@
     "test:draft-setup-runtime": "node scripts/test-draft-setup-runtime.cjs",
     "test:draft-room-runtime": "node scripts/test-draft-room-runtime.cjs",
     "test:team-rosters-runtime": "node scripts/test-team-rosters-runtime.cjs",
+    "test:team-maker-runtime": "node scripts/test-team-maker-runtime.cjs",
+    "test:team-maker": "node scripts/test-team-maker.cjs",
     "test:season-backup-runtime": "node scripts/test-season-backup-runtime.cjs"
   },
   "dependencies": {

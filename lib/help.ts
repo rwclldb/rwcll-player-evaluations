@@ -318,6 +318,21 @@ export const GUIDES: HelpGuide[] = [
         ],
       },
       {
+        id: "make-teams",
+        title: "Making teams without a draft",
+        blocks: [
+          "Any division can have its teams made by the app instead of a draft. RWCLL does this for AA, and for Seniors when there's more than one team.",
+          { steps: [
+            "Add the division's teams first (Teams page). For AA, wait until the AAA draft is finished: its left-over 8- and 9-year-olds join the AA pool.",
+            "On [[Drafts]], tap [[Make teams]] on the division (also on Team rosters).",
+            "Tick what to balance on: evaluator, coach and prior-year ratings (none ticked makes random teams). Leave [[Balance ages too]] on to spread each age across the teams.",
+            "Check the teams. [[Make again]] gives a different mix; use a player's team box to move them by hand.",
+            "Tap Place to save. Players already on a team stay there; coach's kids go to their parent's team and siblings stay together.",
+          ] },
+          "Afterwards the teams are on Team rosters, where players can still be moved (with a note) and rosters released.",
+        ],
+      },
+      {
         id: "team-rosters",
         title: "Team rosters and moves",
         blocks: [

@@ -99,6 +99,8 @@ const checks = [
   ["room: the pick clock counts down from when the pick came up", room.clockLeft(B(), 0, Date.parse("2027-02-02T18:00:30Z")) === 90 && room.clockLeft(B(), 0, Date.parse("2027-02-02T18:03:00Z")) === -60],
   ["rosters step: unreleased divisions with teams are listed", step(data({ teams: { ...T0, rosters: { released: ["Majors"], withTeams: ["Majors", "AAA"], unplaced: 3 } } }), "draft", "team-rosters").detail.includes("Not released yet: AAA")],
   ["rosters step is done when every division with teams is released", step(data({ teams: { ...T0, rosters: { released: ["Majors", "AAA"], withTeams: ["Majors", "AAA"], unplaced: 0 } } }), "draft", "team-rosters").status === "done"],
+  ["AA step: players waiting in the AA pool", step(data({ teams: { ...T0, rosters: { released: [], withTeams: ["AA"], unplaced: 5, aa: { id: 1, teams: 8, placed: 0, waiting: 5 } } } }), "draft", "aa-teams").detail.includes("5 players in the AA pool")],
+  ["AA step is done when every AA player is on a team", step(data({ teams: { ...T0, rosters: { released: [], withTeams: ["AA"], unplaced: 0, aa: { id: 1, teams: 8, placed: 100, waiting: 0 } } } }), "draft", "aa-teams").status === "done"],
   ["dates format without a time-zone shift", rm.formatDate("2027-01-23") === "Sat, Jan 23" && rm.formatTime("15:30:00") === "3:30 PM"],
 ];
 for (const [label, ok] of checks) {

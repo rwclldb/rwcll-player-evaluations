@@ -3,6 +3,7 @@
 export type Placement =
   | { how: "drafted" | "coach_kid" | "sibling"; round: number; overall: number; override: boolean }
   | { how: "moved"; note: string; at: string; from: string | null }
+  | { how: "team_maker"; at: string }
   | { how: "placed" };
 export type RosterPlayer = {
   player_season_id: number; first_name: string; last_name: string; league_age: number | null; bib: number | null; is_coach_kid: boolean;
@@ -27,6 +28,7 @@ export function placementLabel(p: Placement): string {
     case "coach_kid": return `Coach's kid (round ${p.round})`;
     case "sibling": return `Sibling (round ${p.round})`;
     case "moved": return p.from ? `Moved from ${p.from}` : "Placed by admin";
+    case "team_maker": return "Team maker";
     default: return "Placed by admin";
   }
 }
