@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AccountMenu, DesktopNav, MobileMenu, type NavItem, type NavLink } from "@/components/app-nav";
 import { getMyRoles } from "@/lib/my-roles";
 import { OfflineStatus } from "@/components/offline-sync";
+import { modeLabel, testToolsEnabled } from "@/lib/test-tools";
 
 // Admins: grouped menus so everything fits in one row on a laptop. The phone menu uses the same groups.
 const ADMIN_ITEMS: NavItem[] = [
@@ -81,7 +82,13 @@ export async function AppHeader({ user }: { user: User }) {
     ...(roles.scores || !staff ? EVALUATOR_LINKS : []),
   ];
   // Someone with two roles gets each page once.
-  const items: NavItem[] = roles.isAdmin ? ADMIN_ITEMS : flat.filter((l, i) => flat.findIndex((x) => x.href === l.href) === i);
+  // Test tools (ENABLE_TEST_TOOLS=true): admins get Evaluation day > Test dates, and a strip while a season's dates are moved.
+  const testTools = roles.isAdmin && testToolsEnabled();
+  const adminItems: NavItem[] = testTools
+    ? ADMIN_ITEMS.map((g) => ("links" in g && g.label === "Evaluation day" ? { ...g, links: [...g.links, { href: "/protected/test-dates", label: "Test dates" }] } : g))
+    : ADMIN_ITEMS;
+  const items: NavItem[] = roles.isAdmin ? adminItems : flat.filter((l, i) => flat.findIndex((x) => x.href === l.href) === i);
+  const moved = testTools ? (((await supabase.rpc("admin_test_dates_moved")).data ?? []) as { season_id: number; season: string; mode: string | null }[]) : [];
   const email = user.email ?? "";
   // An admin's "View as" preview of this account (read-only), or null.
   const { data: preview } = await supabase.rpc("current_preview");
@@ -93,6 +100,12 @@ export async function AppHeader({ user }: { user: User }) {
         <div role="status" className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-violet-600 px-4 py-2 text-center text-sm text-white">
           <span><b>Admin preview:</b> you&apos;re seeing the app as {previewInfo.target_name}. Read-only; nothing you do is saved.</span>
           <a href="/auth/end-preview" className="rounded-md bg-white/15 px-2.5 py-1 font-semibold hover:bg-white/25">End preview</a>
+        </div>
+      )}
+      {moved.length > 0 && (
+        <div role="status" className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-amber-500 px-4 py-1.5 text-center text-sm text-amber-950">
+          <span><b>Test dates:</b> {moved.map((m) => `${m.season} (${modeLabel(m.mode)})`).join(", ")}. Evaluation dates aren&apos;t the real ones.</span>
+          <a href={`/protected/test-dates?season=${moved[0].season_id}`} className="rounded-md bg-black/10 px-2 py-0.5 font-semibold hover:bg-black/20">Test dates</a>
         </div>
       )}
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">

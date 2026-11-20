@@ -72,6 +72,7 @@
     "test:team-maker": "node scripts/test-team-maker.cjs",
     "test:age-chart-runtime": "node scripts/test-age-chart-runtime.cjs",
     "test:team-ratings-runtime": "node scripts/test-team-ratings-runtime.cjs",
+    "test:test-dates-runtime": "node scripts/test-test-dates-runtime.cjs",
     "test:season-backup-runtime": "node scripts/test-season-backup-runtime.cjs"
   },
   "dependencies": {

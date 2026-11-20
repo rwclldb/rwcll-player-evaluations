@@ -42,6 +42,11 @@ git check-ignore -v .env.local
 Variable names: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 `.env.example` may be committed only with placeholders. Never share `.env.local`, passwords, tokens, service-role keys, or database credentials. Never expose a service-role/secret key to browser code. Restart the dev server after changing environment variables.
 
+### Test dates (trying evaluation day before it happens)
+Add `ENABLE_TEST_TOOLS=true` to `.env.local` and restart `npm run dev` (or, for one run, in PowerShell: `$env:ENABLE_TEST_TOOLS='true'; npm run dev`). On a test server, add it in Vercel → Settings → Environment Variables and redeploy. **Leave it off on the real site.**
+
+Admins then get Evaluation day ▾ → **Test dates**: Make today the week before / evaluation day / a makeup day / evaluations finished. Each moves all of the season's evaluation dates by the same number of days (counted from the real dates, which are saved the first time); **Put the real dates back** restores them. An amber strip across the top says when a season's dates are moved. Only dates change: age-group status (Setup, Open, Locked) stays as it is, and the roadmap's stage goes by the age groups first (any locked = After evaluations, all released = Teams and draft). Every move is in the audit log.
+
 ## Supabase dashboard
 - **Authentication → Users:** manage test accounts.
 - **SQL Editor:** inspect the database and run carefully reviewed SQL.
