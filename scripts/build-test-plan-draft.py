@@ -162,31 +162,67 @@ PHASES = [
          "One row per placed player: Division, Team, Manager (with email), Coach, Player Id, Bib, Coach's Kid, Sibling Group, Placed By "
          "(\"Draft round 3, pick 21\", \"Team maker\", \"Moved by admin: ...\").", True),
     ]),
-    ("Phase 9: Things that must NOT work", 5, "People outside a division or role try to get in.", [
-        ("9.1", "Coach", "Private window",
+    ("Phase 9: End-of-season ratings", 15, "Managers rate their own players for next year's prior-year ratings.", [
+        ("9.1", "Admin", "Draft, End-of-season ratings",
+         "Read the page, then press Open ratings and OK.",
+         "Before: \"Not open yet.\" and a Teams table (Blue Jays shows its AA players, 0 done). After: \"End-of-season ratings are open.\" and Open since <now> (your name).", True),
+        ("9.2", "Coach", "Phone or private window",
+         "Sign in as coach.avery@example.com (Blue Jays manager). Look at Home, then tap Start rating.",
+         "A Rate your players card: Blue Jays · AA · 0 of N done. The list shows every Blue Jays player with To do.", True),
+        ("9.3", "Coach", "Avery, a player",
+         "Tap the first player. Press Save with nothing picked. Then pick Hitting 4, Throwing 3 and Pitching Mechanics 2 and press Save & Next.",
+         "The empty save is refused: \"Rate at least one of the five core skills, or choose Not rated.\" Then \"<first name> saved.\" and the next player opens.", True),
+        ("9.4", "Coach", "Avery, the next player",
+         "Press Not rated, OK. Then pick any score and press All players.",
+         "\"<first name> marked Not rated.\" Leaving asks \"You changed this player's scores without saving. Leave anyway?\"; Cancel stays. "
+         "Back on the list (phone Back works too): the first player is Rated, core average 3.5 · 3 blank; the second Not rated; 2 of N done.", True),
+        ("9.5", "Coach", "Private window",
+         "Sign in as coach.finley@example.com (Majors Cubs manager, AAA Braves coach).",
+         "Rate your players lists the Cubs only: the Braves' manager rates the Braves.", False),
+        ("9.6", "Admin", "End-of-season ratings, then Roadmap, End of season",
+         "Reload the ratings page; press Open on Blue Jays. Then open the Roadmap's End of season stage.",
+         "Blue Jays: 2 of N, Not rated 1, Last saved <now>. Its sheet shows an amber note that admin saves are recorded as yours. "
+         "Roadmap: \"Managers rate their players\" Needs attention, \"2 of ... players done; ratings are open.\"", True),
+        ("9.7", "Admin", "End-of-season ratings",
+         "Press Close ratings, OK. In Avery's window reload the player list, then go Home.",
+         "\"End-of-season ratings are closed.\" Avery sees \"Ratings are closed, so you can look but not change them.\" and no Save buttons; the Home card is gone.", True),
+        ("9.8", "Admin", "Roadmap, Seasons, Close… on Spring 2027",
+         "Read the checklist. Don't close the season.",
+         "A warning: \"N players on teams have no end-of-season rating.\" with a link to End-of-season ratings.", False),
+    ]),
+    ("Phase 10: Things that must NOT work", 5, "People outside a division or role try to get in.", [
+        ("10.1", "Coach", "Private window",
          "Sign in as coach.avery@example.com (AA Blue Jays manager). Open /protected/drafts/<Majors division id>/room (copy the address from the admin's room).",
          "\"This draft isn't open to you.\"", True),
-        ("9.2", "Coach", "Private window",
+        ("10.2", "Coach", "Private window",
          "Sign in as lee.mercer@example.com (Pirates assistant coach). Open the Majors room address.",
          "\"This draft isn't open to you.\" Assistants don't watch the draft.", True),
-        ("9.3", "Coach", "Coach's window",
+        ("10.3", "Coach", "Coach's window",
          "Type /protected/teams, /protected/drafts and /protected/team-rosters.",
          "Each sends the coach home.", True),
-        ("9.4", "Registrar", "Private window",
+        ("10.4", "Registrar", "Private window",
          "Sign in as registrar.riley@example.com. Open Drafts and Team rosters.",
          "Both open (registrars run the draft like admins). Team rosters shows staff names without emails.", False),
+        ("10.5", "Coach", "Private window",
+         "Sign in as lee.mercer@example.com (Pirates assistant coach). Type /protected/team-ratings, then /protected/team-ratings/<the Blue Jays id> (copy the number from the admin's Open link).",
+         "The first says \"Nothing to rate right now.\" The second says \"Only the team's manager and league admins can rate this team.\"", True),
     ]),
-    ("Phase 10: Wrap-up", 5, "Write down what you thought.", [
-        ("10.1", "Admin", "Notes and problems sheet",
+    ("Phase 11: Wrap-up", 5, "Write down what you thought.", [
+        ("11.1", "Admin", "Notes and problems sheet",
          "Fill in the Notes and problems sheet.",
          "A completed sheet.", False),
-        ("10.2", "Admin", "Terminal (local)",
+        ("11.2", "Admin", "Terminal (local)",
          "To start again: npm run demo:load (then npm run demo:draft-day for draft day).",
          "PASS: demo league loaded.", False),
     ]),
 ]
 
 DB_CHECKS = [
+    ("5", "After Phase 9", "End-of-season ratings",
+     "select t.name, count(h.id) filter (where not h.not_rated) as rated, count(h.id) filter (where h.not_rated) as not_rated\n"
+     "from public.historical_evaluations h join public.teams t on t.id = h.source_team_id group by 1 order by 1;\n"
+     "select * from public.team_rating_windows;",
+     "Blue Jays: rated 1, not_rated 1. One window row for Spring 2027 with closed_at filled in (after 9.7)."),
     ("1", "After Phase 0", "Teams per division",
      "select d.name, count(t.id) from public.season_divisions sd join public.divisions d on d.id = sd.division_id\n"
      "join public.seasons s on s.id = sd.season_id and s.name = 'Spring 2027'\nleft join public.teams t on t.season_division_id = sd.id group by 1 order by 1;",
@@ -212,7 +248,7 @@ DB_CHECKS = [
 
 SUBTITLE = "Test plan: teams and the draft"
 INTRO = ("A hands-on walkthrough of teams, coach's kids and siblings, draft setup, running the Juniors, Majors and AAA drafts, Make teams, "
-         "and team rosters, on the draft-sized fictional league. Expected numbers were checked on 2026-11-23 against the fixture files.")
+         "team rosters, and the managers' end-of-season ratings, on the draft-sized fictional league. Expected numbers were checked on 2026-11-23 against the fixture files.")
 CAST = [
     ("Admin (league administrator)", "admin.jordan@example.com, password FIXTURE_PASSWORD from .env.local (local) or .env.hosted.local (hosted)"),
     ("Coach: Finley Moss (Majors Cubs manager, AAA Braves coach)", "coach.finley@example.com, password FIXTURE_PASSWORD"),

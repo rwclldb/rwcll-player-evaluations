@@ -46,6 +46,7 @@ const jiti = require("jiti")(__filename);
 const rm = jiti(path.join(root, "lib/roadmap.ts"));
 const dr = jiti(path.join(root, "lib/drafts.ts"));
 const room = jiti(path.join(root, "lib/draft-room.ts"));
+const tr = jiti(path.join(root, "lib/team-ratings.ts"));
 const B = (o = {}) => ({ draft: { age_order: "open", status: "live", pick_timer_seconds: 120, clock_started_at: "2027-02-02T18:00:00Z" }, teams: [{ team_id: 1, name: "Aces" }, { team_id: 2, name: "Bats" }],
   next: { overall: 3, round: 2, pick_in_round: 1, team_id: 2, must_only: false }, tier_age: null, reserved: {}, ...o });
 const RP = (o = {}) => ({ player_season_id: 1, league_age: 11, must_draft: false, bib: 1, evaluator_overall: null, coach_overall: null, coach_trimmed_overall: null, prior_overall: null, my_overall: null, ...o });
@@ -73,7 +74,21 @@ const checks = [
   ["readiness links to players without bibs", step(data({ registrations: { total: 10, no_bib: 2, no_age: 0, on_site: 0 }, sessions: [sess({ no_bib: 2 })] }), "week", "readiness").links[0].href.includes("show=nobib")],
   ["an age group in Setup leaves Open scoring to do", step(data({ sessions: [sess({ status: "setup" })] }), "week", "open").status === "todo"],
   ["release is done only when every age group is released", step(data({ sessions: [sess({ status: "locked", released: true }), sess({ id: 2, league_age: 10, status: "locked" })] }), "after", "release").status === "todo"],
-  ["end-of-season re-rating is marked coming later", step(data(), "end", "rerate").status === "later"],
+  ["manager ratings step: to do before opening, needs attention while open with players left, done when everyone is done", (() => {
+    const sum = (window, rated, notRated) => rm.teamRatingSummary({ window, teams: [{ manager: "A", players: 12, rated, not_rated: notRated }, { manager: null, players: 10, rated: 10, not_rated: 0 }] });
+    const closedEarly = step(data({ teamRatings: sum({ is_open: false }, 5, 1) }), "end", "rerate");
+    const open = step(data({ teamRatings: sum({ is_open: true }, 5, 1) }), "end", "rerate");
+    return step(data(), "end", "rerate").status === "todo" && step(data({ teamRatings: sum(null, 0, 0) }), "end", "rerate").status === "todo"
+      && open.status === "attention" && open.detail.includes("16 of 22") && open.detail.includes("1 team has no manager")
+      && closedEarly.status === "todo" && step(data({ teamRatings: sum({ is_open: false }, 11, 1) }), "end", "rerate").status === "done";
+  })()],
+  ["rating sheet: Save & Next goes to the next player still to do (wrapping), core average leaves blanks out", (() => {
+    const p = (id, status, ratings = {}) => ({ player_season_id: id, first_name: "F", last_name: "L" + id, bib: null, league_age: 10, status, saved_at: null, ratings });
+    const list = [p(1, "rated"), p(2, "todo"), p(3, "rated"), p(4, "not_rated"), p(5, "todo")];
+    return tr.nextAfter(list, 2) === 5 && tr.nextAfter(list, 5) === 2 && tr.nextAfter([p(1, "rated"), p(2, "rated")], 1) === 2 && tr.nextAfter([p(1, "rated"), p(2, "rated")], 2) === null
+      && tr.coreAverage({ hitting: 2, throwing: 5, pitching_mechanics: 1 }) === 3.5 && tr.blankCore({ hitting: 2, throwing: 5 }) === 3
+      && tr.sheetProgress(list).done === 3 && tr.sheetProgress(list).total === 5;
+  })()],
   ["every age group released and the season open: the Teams and draft stage", rm.suggestedStage({ stage: "end", season: { is_closed: false } }) === "draft"
     && rm.suggestedStage({ stage: "end", season: { is_closed: true } }) === "end" && rm.suggestedStage({ stage: "after", season: { is_closed: false } }) === "after"],
   ["a team without a manager or coach needs attention", step(data({ teams: { divisions: [{ name: "Majors", teams: 2, incomplete: 1 }], coachKids: 0, coachKidsUnlinked: 0, siblingGroups: 0, suggestions: 0 } }), "draft", "teams").status === "attention"],

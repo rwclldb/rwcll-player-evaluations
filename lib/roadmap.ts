@@ -33,6 +33,8 @@ export type RoadmapData = {
   duplicates?: number;
   /** The season's age chart: birth months uploaded and players whose age doesn't match it; filled in by the page. */
   ageChart?: { rows: number; mismatches: number };
+  /** End-of-season ratings by team managers (admin_team_rating_progress); filled in by the page (teamRatingSummary). */
+  teamRatings?: TeamRatingSummary;
   /** Teams and family links for the Teams and draft stage; filled in by the page (teamsSummary). */
   teams?: TeamsSummary;
   stage: StageKey;
@@ -58,6 +60,18 @@ export type TeamsSummary = {
   /** Divisions with teams whose rosters are released, and how many players aren't on a team (season_rosters). */
   rosters?: { released: string[]; withTeams: string[]; unplaced: number; aa?: { id: number; teams: number; placed: number; waiting: number } };
 };
+
+export type TeamRatingSummary = { opened: boolean; open: boolean; teams: number; players: number; done: number; noManager: number };
+type RatingProgressJson = { window: { is_open: boolean } | null; teams: { manager: string | null; players: number; rated: number; not_rated: number }[] };
+/** Roadmap numbers from admin_team_rating_progress(). */
+export function teamRatingSummary(p: RatingProgressJson | null): TeamRatingSummary {
+  const teams = p?.teams ?? [];
+  return {
+    opened: !!p?.window, open: !!p?.window?.is_open, teams: teams.length,
+    players: teams.reduce((n, t) => n + t.players, 0), done: teams.reduce((n, t) => n + t.rated + t.not_rated, 0),
+    noManager: teams.filter((t) => !t.manager).length,
+  };
+}
 
 type SetupJson = { divisions: { name: string; teams: { staff: { role: string }[] }[] }[] };
 type FamilyJson = { coach_kids: { parents: unknown[] }[]; sibling_groups: unknown[]; suggestions: unknown[] };
@@ -92,7 +106,7 @@ export const STAGES: Stage[] = [
   { key: "day", title: "Evaluation day", short: "Eval day", blurb: "Keep an eye on scoring, add walk-ups, and help anyone who's stuck." },
   { key: "after", title: "After evaluations", short: "After", blurb: "Tidy up, lock each age group, check the numbers, then release draft reports to coaches." },
   { key: "draft", title: "Teams and draft", short: "Draft", blurb: "Set up teams with a manager and coach, link coach's kids and siblings, then run the Juniors, Majors and AAA drafts and make the AA teams." },
-  { key: "end", title: "End of season", short: "End", blurb: "Coaches re-rate their own players for next year, then the season is closed." },
+  { key: "end", title: "End of season", short: "End", blurb: "Each team's manager rates their players for next year, then the season is closed." },
 ];
 
 export const stageIndex = (k: StageKey) => STAGES.findIndex((s) => s.key === k);
@@ -455,7 +469,19 @@ export function buildSteps(d: RoadmapData, stage: StageKey): Step[] {
 
     case "end":
       return [
-        { key: "rerate", title: "Coaches re-rate their own players", status: "later", detail: "Coming later. For now, collect ratings in a spreadsheet and use the Prior-year upload next season.", links: [{ href: "/protected/prior-year", label: "Prior-year upload" }] },
+        (() => {
+          const r = d.teamRatings;
+          const href = `/protected/team-ratings?season=${d.season.id}`;
+          if (!r || r.teams === 0) return { key: "rerate", title: "Managers rate their players", status: "todo" as StepStatus, detail: "Each team's manager rates their own players for next year's prior-year ratings. Needs teams with players first.", links: [{ href, label: "End-of-season ratings" }] };
+          const left = r.players - r.done;
+          return {
+            key: "rerate", title: "Managers rate their players",
+            status: (r.opened && left === 0 ? "done" : r.open && left > 0 ? "attention" : "todo") as StepStatus,
+            detail: !r.opened ? `Open ratings when the season ends; each team's manager rates their players (${plural(r.players, "player")} on ${plural(r.teams, "team")}).`
+              : [`${r.done} of ${r.players} players done${r.open ? "; ratings are open" : "; ratings are closed"}.`, r.noManager ? `${plural(r.noManager, "team has", "teams have")} no manager.` : ""].filter(Boolean).join(" "),
+            links: [{ href, label: "End-of-season ratings", primary: !r.opened || (r.open && left > 0) }],
+          };
+        })(),
         { key: "final-backup", title: "Download a final backup", status: "info", detail: "Before closing, keep a copy of the season's scores, reports and people as spreadsheets.", links: [{ href: `/protected/seasons/${d.season.id}#backup`, label: "Season backup" }] },
         { key: "close", title: "Close the season", status: d.season.is_closed ? "done" : "todo", detail: d.season.is_closed ? "Closed. Nothing in it can change unless an admin reopens it (audited)." : "Freezes scores, imports, bibs and player edits. Needs a reason and the season's name typed; reopening is audited too.", links: [{ href: `/protected/seasons/${d.season.id}`, label: d.season.is_closed ? "Season page" : "Close the season" }] },
         { key: "next", title: "Set up next season", status: "info", detail: "Division setup carries forward. Teams, roles and evaluations don't.", links: [{ href: "#seasons", label: "Create a season" }] },

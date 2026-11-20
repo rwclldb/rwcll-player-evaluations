@@ -3,7 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Award, ClipboardList, NotebookPen, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { leagueToday, STAGES, suggestedStage, teamsSummary, type RoadmapData, type StageKey } from "@/lib/roadmap";
+import { teamRatingSummary, leagueToday, STAGES, suggestedStage, teamsSummary, type RoadmapData, type StageKey } from "@/lib/roadmap";
+import type { RatingTeam } from "@/lib/team-ratings";
 import { AdminRoadmap, Seasons } from "./admin-roadmap";
 import type { PendingPerson } from "./pending-signins";
 import { MySchedule, type ScheduleRow } from "./my-schedule";
@@ -43,7 +44,7 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
     if (error || !data) {
       return <p role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-700 dark:text-rose-300">Could not load the roadmap: {error?.message ?? "no data"}</p>;
     }
-    const [{ data: duplicates }, { data: teamSetup }, { data: families }, { data: drafts }, { data: rosters }, { data: chart }, { data: chartMismatches }] = await Promise.all([
+    const [{ data: duplicates }, { data: teamSetup }, { data: families }, { data: drafts }, { data: rosters }, { data: chart }, { data: chartMismatches }, { data: ratingProgress }] = await Promise.all([
       supabase.rpc("admin_possible_duplicate_count"),
       supabase.rpc("team_setup", { p_season_id: season.id }),
       supabase.rpc("family_overview", { p_season_id: season.id }),
@@ -51,10 +52,12 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
       supabase.rpc("season_rosters", { p_season_id: season.id }),
       supabase.rpc("season_age_chart", { p_season_id: season.id }),
       supabase.rpc("age_chart_mismatches", { p_season_id: season.id }),
+      supabase.rpc("admin_team_rating_progress", { p_season_id: season.id }),
     ]);
     const base = data as RoadmapData;
     const roadmap: RoadmapData = { ...base, stage: suggestedStage(base), duplicates: Number(duplicates ?? 0), teams: teamsSummary(teamSetup, families, drafts, rosters),
-      ageChart: { rows: ((chart as { rows?: unknown[] } | null)?.rows ?? []).length, mismatches: (chartMismatches ?? []).length } };
+      ageChart: { rows: ((chart as { rows?: unknown[] } | null)?.rows ?? []).length, mismatches: (chartMismatches ?? []).length },
+      teamRatings: teamRatingSummary(ratingProgress) };
     const viewing = (STAGES.some((s) => s.key === sp.stage) ? sp.stage : roadmap.stage) as StageKey;
     const { data: pending } = await supabase.rpc("admin_people_not_signed_in", { p_season_id: season.id });
     return (
@@ -69,7 +72,9 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
   const [{ data: schedule }, { data: account }, roles, { data: draftRows }] = await Promise.all([
     supabase.rpc("my_evaluation_schedule"), supabase.rpc("my_account"), getMyRoles(supabase), supabase.rpc("my_drafts"),
   ]);
-  const { data: myTeamRows } = await supabase.rpc("my_team_rosters");
+  const [{ data: myTeamRows }, { data: ratingRows }] = await Promise.all([supabase.rpc("my_team_rosters"), supabase.rpc("my_rating_teams")]);
+  // End-of-season ratings: teams this person manages, while the admin has ratings open.
+  const ratingTeams = ((ratingRows ?? []) as RatingTeam[]).filter((t) => t.is_open);
   const myTeams = (myTeamRows ?? []) as { team_id: number; team: string; division: string; players: unknown[] }[];
   // Drafts this person watches or runs (managers and coaches of the division; registrars), once set up.
   const drafts = (draftRows ?? []) as { draft_id: number; season_division_id: number; division: string; status: string }[];
@@ -80,6 +85,20 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <p className="text-sm text-muted-foreground">Welcome, <span className="font-medium text-foreground">{name}</span></p>
+      {ratingTeams.length > 0 && (
+        <section className="rounded-2xl border border-emerald-500/40 bg-card p-4">
+          <h2 className="font-bold text-foreground">Rate your players</h2>
+          <p className="mt-1 text-sm text-muted-foreground">The season is over: rate each player on your team for next year&apos;s coaches.</p>
+          <ul className="mt-2 space-y-2">
+            {ratingTeams.map((t) => (
+              <li key={t.team_id} className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-sm"><strong>{t.team}</strong> <span className="text-muted-foreground">· {t.division} · {t.rated + t.not_rated} of {t.players} done</span></span>
+                <Link href={`/protected/team-ratings/${t.team_id}`} className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500">{t.rated + t.not_rated === 0 ? "Start rating" : t.rated + t.not_rated < t.players ? "Keep rating" : "Look again"}</Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {myTeams.length > 0 && (
         <section className="rounded-2xl border border-emerald-500/40 bg-card p-4">
           <h2 className="font-bold text-foreground">Your team{myTeams.length === 1 ? "" : "s"}</h2>

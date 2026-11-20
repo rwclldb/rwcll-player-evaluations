@@ -141,6 +141,21 @@ export const GUIDES: HelpGuide[] = [
         ],
       },
       {
+        id: "end-of-season",
+        title: "Rating your team at the end of the season (managers)",
+        blocks: [
+          "When the season ends, the league opens end-of-season ratings and each team's **manager** gets a **Rate your players** card on the home page. Coaches and assistants don't rate; one rating per player per team.",
+          { steps: [
+            "Tap [[Start rating]]. Your players are listed with **To do**, **Rated** or **Not rated**.",
+            "Tap a player and score them 1 to 5 on the five core skills, the same scale as evaluation day. Pitching and catching are optional. Leave a skill blank (**Not scored**) if you didn't see it.",
+            "Tap [[Save & Next]] to save and go to the next player still to do, or [[Save]] to stay. [[All players]] goes back to the list.",
+            "If you can't rate a player at all (they hardly played, for example), tap [[Not rated]].",
+          ] },
+          "You can change a rating until the league closes ratings. After that you can still look at what you saved.",
+          { tip: "Next season, these ratings show as the player's prior-year ratings to the coaches and evaluators who score them, and on the draft report." },
+        ],
+      },
+      {
         id: "faq",
         title: "Questions",
         blocks: [

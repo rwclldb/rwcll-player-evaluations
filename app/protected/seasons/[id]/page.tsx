@@ -10,7 +10,7 @@ type Params = Promise<{ id: string }>;
 type SearchParams = Promise<{ message?: string; error?: string }>;
 type Check = {
   open_age_groups: number[]; setup_age_groups: number[]; unreleased_age_groups: number[];
-  import_rows_waiting: number; bib_rows_held: number; players_without_bib: number; draft_evaluations: number;
+  import_rows_waiting: number; bib_rows_held: number; players_without_bib: number; draft_evaluations: number; team_ratings_open?: boolean; team_players_unrated?: number;
 };
 type HistoryRow = { action: string; reason: string | null; actor_name: string; created_at: string };
 
@@ -85,6 +85,8 @@ async function SeasonContent({ params, searchParams }: { params: Params; searchP
     check.draft_evaluations > 0 && { text: `${plural(check.draft_evaluations, "draft evaluation", "draft evaluations")} (not counted in reports).`, href: "/protected/evaluation-review", link: "Data Review" },
     check.import_rows_waiting > 0 && { text: `${plural(check.import_rows_waiting, "Sports Connect row is", "Sports Connect rows are")} still waiting in import review.`, href: "/protected/import-batches", link: "Imports" },
     check.bib_rows_held > 0 && { text: `${plural(check.bib_rows_held, "bib upload row is", "bib upload rows are")} held.`, href: "/protected/players/bibs", link: "Bib upload" },
+    check.team_ratings_open && { text: "End-of-season ratings are still open for managers.", href: `/protected/team-ratings?season=${seasonId}`, link: "End-of-season ratings" },
+    (check.team_players_unrated ?? 0) > 0 && { text: `${plural(check.team_players_unrated ?? 0, "player on a team has", "players on teams have")} no end-of-season rating.`, href: `/protected/team-ratings?season=${seasonId}`, link: "End-of-season ratings" },
     check.players_without_bib > 0 && { text: `${plural(check.players_without_bib, "player has", "players have")} no bib.`, href: `/protected/players?season=${seasonId}`, link: "Players" },
   ].filter((w): w is { text: string; href: string; link: string } => Boolean(w)) : [];
 

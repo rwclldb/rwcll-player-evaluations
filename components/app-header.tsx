@@ -39,6 +39,7 @@ const ADMIN_ITEMS: NavItem[] = [
     { href: "/protected/teams/families", label: "Coach's kids and siblings" },
     { href: "/protected/drafts", label: "Drafts" },
     { href: "/protected/team-rosters", label: "Team rosters" },
+    { href: "/protected/team-ratings", label: "End-of-season ratings" },
   ] },
   { href: "/protected/people", label: "People" },
 ];
