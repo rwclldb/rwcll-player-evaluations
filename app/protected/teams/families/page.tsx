@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Baby, Lightbulb, Link2, Plus, Users, X } from "lucide-react";
+import { ArrowLeft, Baby, Link2, Plus, Users, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { dismissSuggestion, groupSiblings, linkCoachKid, removeSibling, unlinkCoachKid } from "../actions";
+import { groupSiblings, linkCoachKid, removeSibling, unlinkCoachKid } from "../actions";
+import { FamilySuggestions } from "./suggestions";
 
 type SearchParams = Promise<{ season?: string; message?: string; error?: string }>;
 
@@ -66,43 +67,8 @@ async function FamiliesContent({ searchParams }: { searchParams: SearchParams })
       {params.error && <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-700 dark:text-rose-300">{params.error}</div>}
       {error && <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-700 dark:text-rose-300">Could not load: {error.message}</div>}
 
-      {/* Suggestions */}
-      <section className="space-y-3">
-        <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
-          <Lightbulb className="h-5 w-5 text-amber-500" /> Suggestions <span className="text-sm font-normal text-muted-foreground">({o.suggestions.length})</span>
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          From the Sports Connect registration file: players registered by the same account, and players registered with a coach&apos;s
-          sign-in email. Nothing is linked until you accept. (Only a fingerprint of the account email is kept, never the email.)
-        </p>
-        {o.suggestions.length === 0 && <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">No suggestions waiting.</p>}
-        <ul className="grid gap-3 md:grid-cols-2">
-          {o.suggestions.map((s) => (
-            <li key={`${s.kind}-${s.key}`} className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
-                {s.kind === "siblings" ? "Same Sports Connect account" : "Registered with a coach's email"}
-              </p>
-              <p className="mt-1 text-sm text-foreground">
-                {s.kind === "siblings"
-                  ? <>Siblings? {s.players.map((p, i) => <span key={p.player_season_id}>{i > 0 && " and "}<strong>{who(p)}</strong> ({detail(p)})</span>)}</>
-                  : <><strong>{who(s.players[0])}</strong> ({detail(s.players[0])}) as <strong>{s.parent?.name}</strong>&apos;s kid?</>}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {s.kind === "siblings" ? (
-                  <form action={groupSiblings}>{hidden}{s.players.map((p) => <input key={p.player_season_id} type="hidden" name="playerSeasonId" value={p.player_season_id} />)}
-                    <Button type="submit" size="sm">Group as siblings</Button></form>
-                ) : (
-                  <form action={linkCoachKid}>{hidden}<input type="hidden" name="playerSeasonId" value={s.players[0].player_season_id} />
-                    <input type="hidden" name="parentUserId" value={s.parent?.user_id} />
-                    <Button type="submit" size="sm">Link as {s.parent?.name}&apos;s kid</Button></form>
-                )}
-                <form action={dismissSuggestion}>{hidden}<input type="hidden" name="kind" value={s.kind} /><input type="hidden" name="key" value={s.key} />
-                  <Button type="submit" size="sm" variant="outline">{s.kind === "siblings" ? "Not siblings" : "Not their kid"}</Button></form>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {/* Suggestions: tick several to accept or dismiss together. */}
+      <FamilySuggestions seasonId={season.id} suggestions={o.suggestions} />
 
       {/* Coach's kids */}
       <section className="space-y-3">

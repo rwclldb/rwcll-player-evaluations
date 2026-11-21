@@ -128,6 +128,43 @@ export async function removeSibling(formData: FormData) {
   go(back, "message", "Removed from the sibling group.");
 }
 
+export type FamilySuggestionChoice = { kind: "siblings" | "coach_kid"; key: string; playerSeasonIds: number[]; parentUserId: string | null; label: string };
+export type FamilySuggestionResult = { ok: true; done: number; failed: { key: string; label: string; message: string }[] } | { ok: false; message: string };
+
+// Accept or dismiss many suggestions at once (the checkboxes on Coach's kids and siblings). Each one goes through the same
+// audited function as the single buttons; one that's refused doesn't stop the rest, and comes back with the reason.
+export async function applyFamilySuggestions(input: { seasonId: number; action: "accept" | "dismiss"; items: FamilySuggestionChoice[] }): Promise<FamilySuggestionResult> {
+  if (!input || !Number.isSafeInteger(input.seasonId) || input.seasonId <= 0 || !["accept", "dismiss"].includes(input.action)
+    || !Array.isArray(input.items) || input.items.length < 1 || input.items.length > 500) {
+    return { ok: false, message: "Choose at least one suggestion." };
+  }
+  const supabase = await createClient();
+  let done = 0;
+  const failed: { key: string; label: string; message: string }[] = [];
+  for (const raw of input.items) {
+    const kind = raw?.kind === "coach_kid" ? "coach_kid" : raw?.kind === "siblings" ? "siblings" : null;
+    const key = String(raw?.key ?? "").slice(0, 200);
+    const label = String(raw?.label ?? "").slice(0, 200);
+    const ids = [...new Set((Array.isArray(raw?.playerSeasonIds) ? raw.playerSeasonIds : []).map((v) => id(String(v))).filter(Boolean))];
+    if (!kind || !key) { failed.push({ key, label, message: "Not a suggestion." }); continue; }
+    let error: { message: string } | null = null;
+    if (input.action === "dismiss") {
+      ({ error } = await supabase.rpc("admin_dismiss_family_suggestion", { p_season_id: input.seasonId, p_kind: kind, p_key: key }));
+    } else if (kind === "siblings") {
+      if (ids.length < 2) { failed.push({ key, label, message: "Needs at least two players." }); continue; }
+      ({ error } = await supabase.rpc("admin_group_siblings", { p_player_season_ids: ids }));
+    } else {
+      const parent = uuid(raw?.parentUserId ?? null);
+      if (!ids[0] || !parent) { failed.push({ key, label, message: "Missing the player or the parent." }); continue; }
+      ({ error } = await supabase.rpc("admin_link_coach_kid", { p_player_season_id: ids[0], p_parent_user_id: parent }));
+    }
+    if (error) failed.push({ key, label, message: error.message });
+    else done++;
+  }
+  revalidatePath("/protected/teams");
+  return { ok: true, done, failed };
+}
+
 export async function dismissSuggestion(formData: FormData) {
   const back = familiesPage(formData);
   const supabase = await createClient();

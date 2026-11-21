@@ -19,7 +19,7 @@ PHASES = [
          "The loader ends with: PASS: bare league loaded: 2 admin accounts, Spring 2026 (closed) and Spring 2027.", True),
         ("0.2", "Admin", "Sign-in page",
          "Sign in as admin.jordan@example.com with FIXTURE_PASSWORD (.env.local locally, .env.hosted.local for hosted).",
-         "You land on the dashboard. The menu shows Players, Sessions, People, Assignments, Imports, Data Review, Draft Reports, Reports "
+         "You land on the Roadmap. The menu shows Roadmap, Players, Evaluations, Evaluation day, Reports, Draft and People "
          "(on a phone or narrow window they are under the menu button).", True),
         ("0.3", "Admin", "Players",
          "Open Players.",
@@ -179,7 +179,7 @@ PHASES = [
         ("8.1", "Admin", "Sessions, Age 7",
          "Press Open Session.",
          "Age 7 is Open. (Opening refuses without a primary event and at least one evaluator.)", True),
-        ("8.2", "Admin", "Dashboard, Evaluation-Day Roster",
+        ("8.2", "Admin", "Evaluation day, Rosters",
          "Roster for age 7, sorted by bib. Print preview, then cancel.",
          "Bibs and names with blank Check-in and Notes columns; it fits the page.", False),
         ("8.3", "Admin", "Sessions",
@@ -272,4 +272,5 @@ HOSTING_NOTES = [
 EXAMPLE = ["Example", "Admin", "Players", "Open Players.", "Season Spring 2027, 0 registrations.", "", "Pass",
            "The No bib filter was hard to spot on my phone."]
 
-build(OUT, SUBTITLE, INTRO, PHASES, DB_CHECKS, CAST, HOSTING_NOTES, EXAMPLE)
+if __name__ == "__main__":  # the full-season plan imports PHASES and DB_CHECKS from here
+    build(OUT, SUBTITLE, INTRO, PHASES, DB_CHECKS, CAST, HOSTING_NOTES, EXAMPLE)

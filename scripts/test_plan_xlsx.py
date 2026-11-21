@@ -21,10 +21,11 @@ def f(size=10, bold=False, color="000000", italic=False):
     return Font(name=FONT, size=size, bold=bold, color=color, italic=italic)
 
 
-def build(out, subtitle, intro, PHASES, DB_CHECKS, cast_rows, hosting_notes, example_row):
+def build(out, subtitle, intro, PHASES, DB_CHECKS, cast_rows, hosting_notes, example_row, extra_sheets=None):
     """PHASES: [(phase, minutes, summary, [(id, who, where, what to do, what you should see, must_pass)])];
     DB_CHECKS: [(id, when, what, sql, expected)]; cast_rows: [(role, login)]; hosting_notes: [text];
-    example_row: the 8 cells of the grey example row on the Script sheet."""
+    example_row: the 8 cells of the grey example row on the Script sheet.
+    extra_sheets: optional [(title, intro, headers, widths, rows)] added after the Script sheet (plain tables)."""
     wb = Workbook()
 
     # ---------------------------------------------------------------- Overview
@@ -57,7 +58,7 @@ def build(out, subtitle, intro, PHASES, DB_CHECKS, cast_rows, hosting_notes, exa
     ov[f"B{row}"] = "The plan at a glance"
     ov[f"B{row}"].font = f(12, True, GREEN)
     row += 1
-    for col, text in zip("BCD", ("Phase", "What happens", "Minutes")):
+    for col, text in zip("BCD", ("Phase" if not PHASES[0][0].startswith("Stage") else "Stage", "What happens", "Minutes")):
         c = ov[f"{col}{row}"]
         c.value = text
         c.font = f(10, True)
@@ -86,7 +87,7 @@ def build(out, subtitle, intro, PHASES, DB_CHECKS, cast_rows, hosting_notes, exa
     ov[f"B{row}"].font = f(12, True, GREEN)
     summary_start = row + 1
     results = [
-        ("Steps", '=COUNTA(Script!A:A)-COUNTIF(Script!A:A,"Phase*")-COUNTIF(Script!A:A,"#")-COUNTIF(Script!A:A,"Example")'),
+        ("Steps", '=COUNTA(Script!A:A)-COUNTIF(Script!A:A,"Phase*")-COUNTIF(Script!A:A,"Stage*")-COUNTIF(Script!A:A,"#")-COUNTIF(Script!A:A,"Example")'),
         ("Pass", '=COUNTIF(Script!G:G,"Pass")'),
         ("Fail", '=COUNTIF(Script!G:G,"Fail")'),
         ("Skipped", '=COUNTIF(Script!G:G,"Skipped")'),
@@ -301,6 +302,35 @@ def build(out, subtitle, intro, PHASES, DB_CHECKS, cast_rows, hosting_notes, exa
     np_.merge_cells("B33:D33")
     np_["B33"].fill = INPUT_FILL
     np_["B33"].border = BOX
+
+    for title, sheet_intro, headers, widths, rows in (extra_sheets or []):
+        ws = wb.create_sheet(title, index=wb.sheetnames.index("Script") + 1)
+        ws.sheet_view.showGridLines = False
+        ws["A1"] = title
+        ws["A1"].font = f(14, True, GREEN)
+        ws["A2"] = sheet_intro
+        ws["A2"].font = f(10)
+        ws["A2"].alignment = WRAP
+        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=len(headers))
+        ws.row_dimensions[2].height = 45
+        for i, (h, w) in enumerate(zip(headers, widths), start=1):
+            c = ws.cell(row=4, column=i, value=h)
+            c.font = f(10, True)
+            c.fill = HEAD_FILL
+            c.border = BOX
+            c.alignment = WRAP
+            ws.column_dimensions[c.column_letter].width = w
+        for r, values in enumerate(rows, start=5):
+            for i, v in enumerate(values, start=1):
+                c = ws.cell(row=r, column=i, value=v)
+                c.font = f(10, i == 1)
+                c.alignment = WRAP
+                c.border = BOX
+                if v in ("Yes",):
+                    c.fill = PatternFill("solid", fgColor="E3EFE5")
+                elif v in ("No",):
+                    c.fill = PatternFill("solid", fgColor="F8E1E1")
+        ws.freeze_panes = "B5"
 
     for ws in wb.worksheets:
         ws.sheet_properties.tabColor = GREEN if ws.title == "Script" else "8FBC8F"

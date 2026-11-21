@@ -42,15 +42,16 @@ PHASES = [
     ("Phase 2: Coach's kids and siblings", 10, "Suggestions from the registration file, and the links the draft uses.", [
         ("2.1", "Admin", "Draft menu, Coach's kids and siblings",
          "Look at Suggestions.",
-         "Two: Ivo Sinclair (10) and Lily Sinclair (8) \"Siblings?\" (same family account), and Sami Bennett (12) as Jesse Bennett's kid "
-         "(registered with the Tigers coach's sign-in email).", True),
+         "Two, each with a checkbox: under \"Same Sports Connect account (siblings?)\" Ivo Sinclair (10) and Lily Sinclair (8); under "
+         "\"Registered with a coach's email (coach's kid?)\" Sami Bennett (12) as Jesse Bennett's kid (the Tigers coach's sign-in email).", True),
         ("2.2", "Admin", "Coach's kids table",
          "Find the Ramirez twins and Nora Ortiz.",
          "Mateo and Lucia Ramirez: parent Elliot Brandt (Manager, Majors Giants). Nora Ortiz: Morgan Ortiz (Manager, Majors Rays; Coach, AAA Astros). "
          "13 coach's kids, none without a parent.", True),
         ("2.3", "Admin", "Suggestions",
-         "Group as siblings on the Sinclairs. Not their kid on Sami Bennett.",
-         "Both suggestions go away. Sibling groups: 11. The roadmap's siblings step turns Done.", True),
+         "Tick Select all (the bar says 2 selected), then untick Sami Bennett and press Accept selected. Then press Not their kid on Sami Bennett.",
+         "\"1 suggestion accepted.\" and then \"1 suggestion dismissed.\", without the page reloading. Both suggestions go away. "
+         "Sibling groups: 11. The roadmap's siblings step turns Done. (With many suggestions, Select all and Accept selected does them all at once.)", True),
     ]),
     ("Phase 3: Draft setup", 15, "The pools, the rules and what must be fixed before a draft starts.", [
         ("3.1", "Admin", "Draft menu, Drafts",
@@ -265,4 +266,5 @@ HOSTING_NOTES = [
 EXAMPLE = ["Example", "Admin", "Teams", "Open Teams.", "Majors 8 teams, each with a Manager and a Coach.", "", "Pass",
            "Took a moment to find the Draft menu."]
 
-build(OUT, SUBTITLE, INTRO, PHASES, DB_CHECKS, CAST, HOSTING_NOTES, EXAMPLE)
+if __name__ == "__main__":  # the full-season plan imports PHASES and DB_CHECKS from here
+    build(OUT, SUBTITLE, INTRO, PHASES, DB_CHECKS, CAST, HOSTING_NOTES, EXAMPLE)
